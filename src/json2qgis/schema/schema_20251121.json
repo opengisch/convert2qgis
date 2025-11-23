@@ -1,0 +1,503 @@
+{
+  "$ref": "#/definitions/Json2qgisSchema",
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "definitions": {
+    "LayerTreeItem": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "layer_id": {
+          "type": "string"
+        },
+        "parent": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["group", "layer"]
+        },
+        "is_checked": {
+          "type": "boolean"
+        },
+        "is_mutually_exclusive": {
+          "type": "boolean"
+        },
+        "mutually_exclusive_child_index": {
+          "type": "integer",
+          "min": -1
+        }
+      },
+      "required": ["name", "parent", "type"],
+      "title": "Child",
+      "type": "object"
+    },
+    "Field": {
+      "additionalProperties": false,
+      "properties": {
+        "alias": {
+          "type": "string"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "default_value": {
+          "type": "string"
+        },
+        "is_not_null": {
+          "type": "boolean"
+        },
+        "is_not_null_strength": {
+          "enum": ["hard", "soft", "not_set"],
+          "type": "string"
+        },
+        "constraint_expression": {
+          "type": "string"
+        },
+        "constraint_expression_strength": {
+          "enum": ["hard", "soft", "not_set"],
+          "type": "string"
+        },
+        "constraint_expression_description": {
+          "type": "string"
+        },
+        "is_unique": {
+          "type": "boolean"
+        },
+        "unique_strength": {
+          "enum": ["hard", "soft", "not_set"],
+          "type": "string"
+        },
+        "length": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "parent": {
+          "type": "string"
+        },
+        "precision": {
+          "maximum": 15,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "set_default_value_on_update": {
+          "type": "boolean"
+        },
+        "type": {
+          "enum": ["string", "integer", "real", "boolean", "datetime"],
+          "type": "string"
+        },
+        "widget_config": {
+          "$ref": "#/definitions/WidgetConfig"
+        },
+        "widget_type": {
+          "enum": [
+            "Hidden",
+            "Color",
+            "TextEdit",
+            "Range",
+            "DateTime",
+            "ExternalResource",
+            "Checkbox",
+            "ValueMap"
+          ],
+          "type": "string"
+        }
+      },
+      "dependentRequired": {
+        "is_not_null": ["is_not_null_strength"],
+        "is_not_null_strength": ["is_not_null"],
+        "constraint_expression": [
+          "constraint_expression_strength",
+          "constraint_expression_description"
+        ],
+        "constraint_expression_strength": [
+          "constraint_expression",
+          "constraint_expression_description"
+        ],
+        "constraint_expression_description": [
+          "constraint_expression",
+          "constraint_expression_strength"
+        ],
+        "is_unique": ["unique_strength"],
+        "unique_strength": ["is_unique"]
+      },
+      "required": [
+        "alias",
+        "comment",
+        "default_value",
+        "length",
+        "name",
+        "precision",
+        "set_default_value_on_update",
+        "type",
+        "widget_config",
+        "widget_type"
+      ],
+      "title": "Field",
+      "type": "object"
+    },
+    "FormConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/definitions/Item"
+          },
+          "type": "array"
+        }
+      },
+      "required": ["items"],
+      "title": "FormConfig",
+      "type": "object"
+    },
+    "Item": {
+      "additionalProperties": false,
+      "properties": {
+        "background_color": {
+          "type": "string"
+        },
+        "column_count": {
+          "type": "integer"
+        },
+        "id": {
+          "type": "string"
+        },
+        "is_collapsed": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "parent_id": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/Type"
+        },
+        "visibility_expression": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "name", "type"],
+      "title": "Item",
+      "type": "object"
+    },
+    "Json2qgisSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "_relations": {
+          "items": {
+            "$ref": "#/definitions/Relation"
+          },
+          "type": "array"
+        },
+        "author": {
+          "type": "string"
+        },
+        "layer_tree": {
+          "$ref": "#/definitions/LayerTree"
+        },
+        "layers": {
+          "items": {
+            "$ref": "#/definitions/Layer"
+          },
+          "type": "array"
+        },
+        "title": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "_relations",
+        "author",
+        "layer_tree",
+        "layers",
+        "title",
+        "version"
+      ],
+      "title": "Empty",
+      "type": "object"
+    },
+    "Layer": {
+      "additionalProperties": false,
+      "properties": {
+        "_foreign_keys": {
+          "items": {},
+          "type": "array"
+        },
+        "_indexes": {
+          "items": {},
+          "type": "array"
+        },
+        "_primary_key": {
+          "type": "string"
+        },
+        "is_read_only": {
+          "type": "boolean"
+        },
+        "is_identifiable": {
+          "type": "boolean"
+        },
+        "is_private": {
+          "type": "boolean"
+        },
+        "is_removable": {
+          "type": "boolean"
+        },
+        "is_searchable": {
+          "type": "boolean"
+        },
+        "crs": {
+          "pattern": "^EPSG:\\d+$",
+          "type": "string"
+        },
+        "datasource_format": {
+          "enum": ["gpkg"],
+          "type": "string"
+        },
+        "fields": {
+          "items": {
+            "$ref": "#/definitions/Field"
+          },
+          "type": "array"
+        },
+        "form_config": {
+          "$ref": "#/definitions/FormConfig"
+        },
+        "geometry_type": {
+          "enum": [
+            "Point",
+            "LineString",
+            "Polygon",
+            "MultiPoint",
+            "MultiLineString",
+            "MultiPolygon",
+            "None"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "enum": ["vector", "raster", "mesh", "vector_tile", "point_cloud"],
+          "type": "string"
+        },
+        "layer_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "_foreign_keys",
+        "_indexes",
+        "_primary_key",
+        "crs",
+        "datasource_format",
+        "fields",
+        "form_config",
+        "geometry_type",
+        "name",
+        "type"
+      ],
+      "title": "Layer",
+      "type": "object"
+    },
+    "LayerTree": {
+      "additionalProperties": false,
+      "properties": {
+        "children": {
+          "items": {
+            "$ref": "#/definitions/LayerTreeItem"
+          },
+          "type": "array"
+        }
+      },
+      "required": ["children"],
+      "title": "LayerTree",
+      "type": "object"
+    },
+    "Relation": {
+      "additionalProperties": false,
+      "properties": {
+        "from_field": {
+          "type": "string"
+        },
+        "from_layer": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "to_field": {
+          "type": "string"
+        },
+        "to_layer": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "from_field",
+        "from_layer",
+        "name",
+        "to_field",
+        "to_layer",
+        "type"
+      ],
+      "title": "Relation",
+      "type": "object"
+    },
+    "Type": {
+      "enum": ["tab", "group_box", "field"],
+      "title": "Type",
+      "type": "string"
+    },
+    "WidgetConfig": {
+      "anyOf": [
+        {
+          "description": "Used by ValueMap widget",
+          "properties": {
+            "map": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "description": "Used by Range widget",
+          "properties": {
+            "allow_null": {
+              "type": "boolean"
+            },
+            "max": {
+              "type": "integer"
+            },
+            "min": {
+              "type": "integer"
+            },
+            "precision": {
+              "type": "integer"
+            },
+            "step": {
+              "type": "number"
+            },
+            "style": {
+              "type": "string"
+            },
+            "suffix": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "description": "Used by ExternalResource widget",
+          "properties": {
+            "document_viewer_height": {
+              "type": "integer"
+            },
+            "document_viewer_width": {
+              "type": "integer"
+            },
+            "file_widget_filter": {
+              "type": "string"
+            },
+            "is_document_viewer_enabled": {
+              "type": "boolean"
+            },
+            "show_file_widget_button": {
+              "type": "boolean"
+            },
+            "storage_auth_config_id": {
+              "type": "null"
+            },
+            "storage_mode": {
+              "type": "integer"
+            },
+            "storage_type": {
+              "type": "null"
+            },
+            "use_file_widget": {
+              "type": "boolean"
+            },
+            "use_relative_storage": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "description": "Used by DateTime widget",
+          "properties": {
+            "allow_null": {
+              "type": "boolean"
+            },
+            "calendar_popup": {
+              "type": "boolean"
+            },
+            "display_format": {
+              "type": "string"
+            },
+            "field_format": {
+              "type": "string"
+            },
+            "field_format_overwrite": {
+              "type": "boolean"
+            },
+            "field_iso_format": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "description": "Used by CheckBox widget",
+          "properties": {
+            "allow_null": {
+              "type": "boolean"
+            },
+            "checked_state": {
+              "type": "string"
+            },
+            "text_display_method": {
+              "enum": [0, 1, 2],
+              "type": "integer"
+            },
+            "unchecked_state": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "description": "Used by TextEdit widget",
+          "properties": {
+            "is_multiline": {
+              "type": "boolean"
+            },
+            "use_html": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        }
+      ]
+    }
+  }
+}

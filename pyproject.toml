@@ -1,0 +1,31 @@
+[project]
+name = "poetry-demo"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Ivan Ivanov",email = "ivan.ivanov@suricactus.com"}
+]
+readme = "README.md"
+requires-python = ">=3.10,<4.0"
+dependencies = [
+    "click (>=8.3.1,<9.0.0)",
+    "unidecode (>=1.4.0,<2.0.0)",
+    "fastjsonschema (>=2.21.2,<3.0.0)"
+]
+
+[tool.poetry]
+packages = [
+    {include = "json2qgis", from = "src"},
+    { include = "qgis", from = "/usr/lib/python3/dist-packages" },
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "pytest (>=9.0.1,<10.0.0)",
+    "ruff (>=0.14.6,<0.15.0)",
+    "pre-commit (>=4.5.0,<5.0.0)"
+]
