@@ -111,7 +111,7 @@ def set_field_constraints(field: QgsField, field_def: FieldDef) -> None:
         )
 
     if field_def.get("is_unique", False):
-        unique_strength = get_constraint_strength(field_def["unique_strength"])
+        is_unique_strength = get_constraint_strength(field_def["is_unique_strength"])
 
         constraints.setConstraint(
             QgsFieldConstraints.Constraint.ConstraintUnique,
@@ -119,7 +119,7 @@ def set_field_constraints(field: QgsField, field_def: FieldDef) -> None:
         )
         constraints.setConstraintStrength(
             QgsFieldConstraints.Constraint.ConstraintUnique,
-            unique_strength,
+            is_unique_strength,
         )
 
     if field_def.get("constraint_expression", ""):

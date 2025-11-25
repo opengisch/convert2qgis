@@ -10,9 +10,9 @@ import fastjsonschema
 from .types import FieldDef
 from .utils import (
     normalize_name,
-    get_constraint_strength,
     get_attribute_form_container_type,
     create_field,
+    set_field_constraints,
     set_field_default_value,
 )
 
@@ -338,7 +338,7 @@ class ProjectCreator:
             if field_def.get("alias"):
                 field.setAlias(field_def["alias"])
 
-            self._set_field_constraints(field, field_def)
+            set_field_constraints(field, field_def)
             set_field_default_value(field, field_def)
             self._set_field_widget(field, field_def)
 
@@ -445,58 +445,6 @@ class ProjectCreator:
 
         widget_setup = QgsEditorWidgetSetup(widget_type, wc)
         field.setEditorWidgetSetup(widget_setup)
-
-    def _set_field_constraints(self, field: QgsField, field_def: FieldDef) -> None:
-        constraints = field.constraints()
-
-        if field_def.get("is_not_null", False):
-            is_not_null_strength = get_constraint_strength(
-                field_def["is_not_null_strength"]
-            )
-
-            constraints.setConstraint(
-                QgsFieldConstraints.Constraint.ConstraintNotNull,
-                QgsFieldConstraints.ConstraintOrigin.ConstraintOriginLayer,
-            )
-            constraints.setConstraintStrength(
-                QgsFieldConstraints.Constraint.ConstraintNotNull,
-                is_not_null_strength,
-            )
-
-        if field_def.get("is_unique", False):
-            unique_strength = get_constraint_strength(field_def["unique_strength"])
-
-            constraints.setConstraint(
-                QgsFieldConstraints.Constraint.ConstraintUnique,
-                QgsFieldConstraints.ConstraintOrigin.ConstraintOriginLayer,
-            )
-            constraints.setConstraintStrength(
-                QgsFieldConstraints.Constraint.ConstraintUnique,
-                unique_strength,
-            )
-
-        if field_def.get("constraint_expression", ""):
-            constraint_expression = field_def.get("constraint_expression", "")
-            constraint_description = field_def.get(
-                "constraint_expression_description", ""
-            )
-            constraint_expression_strength = get_constraint_strength(
-                field_def["constraint_expression_strength"]
-            )
-
-            constraints.setConstraint(
-                QgsFieldConstraints.Constraint.ConstraintExpression,
-                QgsFieldConstraints.ConstraintOrigin.ConstraintOriginLayer,
-            )
-            constraints.setConstraintStrength(
-                QgsFieldConstraints.Constraint.ConstraintExpression,
-                constraint_expression_strength,
-            )
-            constraints.setConstraintExpression(
-                constraint_expression, constraint_description
-            )
-
-        field.setConstraints(constraints)
 
     def _set_layer_edit_form(self, layer: QgsVectorLayer, layer_def: LayerDef) -> None:
         fields = layer.fields()

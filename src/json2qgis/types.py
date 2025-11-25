@@ -20,7 +20,7 @@ class FieldDef(TypedDict):
     constraint_expression_strength: ConstraintStrength
 
     is_unique: bool
-    unique_strength: ConstraintStrength
+    is_unique_strength: ConstraintStrength
 
     default_value: str | None
     set_default_value_on_update: bool

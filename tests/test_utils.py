@@ -6,6 +6,7 @@ from json2qgis.utils import (
     get_attribute_form_container_type,
     create_field,
     set_field_default_value,
+    set_field_constraints,
 )
 from json2qgis.types import (
     FieldDef,
@@ -29,13 +30,13 @@ def sample_field_def():
         "length": 255,
         "precision": 0,
         "comment": "This is a sample field",
-        "is_not_null": True,
+        "is_not_null": False,
         "is_not_null_strength": "hard",
         "constraint_expression": "",
         "constraint_expression_description": "",
         "constraint_expression_strength": "not_set",
         "is_unique": False,
-        "unique_strength": "not_set",
+        "is_unique_strength": "not_set",
         "default_value": None,
         "set_default_value_on_update": False,
         "alias": "Sample Field Alias",
@@ -122,7 +123,7 @@ class TestUtils:
             "constraint_expression_description": "",
             "constraint_expression_strength": "not_set",
             "is_unique": False,
-            "unique_strength": "not_set",
+            "is_unique_strength": "not_set",
             "default_value": None,
             "set_default_value_on_update": False,
             "alias": "Field One",
@@ -153,7 +154,7 @@ class TestUtils:
             "constraint_expression_description": "",
             "constraint_expression_strength": "not_set",
             "is_unique": False,
-            "unique_strength": "not_set",
+            "is_unique_strength": "not_set",
             "default_value": None,
             "set_default_value_on_update": False,
             "alias": "Field One",
@@ -184,7 +185,7 @@ class TestUtils:
             "constraint_expression_description": "",
             "constraint_expression_strength": "not_set",
             "is_unique": False,
-            "unique_strength": "not_set",
+            "is_unique_strength": "not_set",
             "default_value": None,
             "set_default_value_on_update": False,
             "alias": "Field One",
@@ -232,49 +233,138 @@ class TestUtils:
         assert default_value.expression() == "'default value'"
         assert default_value.applyOnUpdate() is True
 
-    # def test_set_field_constraints_with_constraints(sample_field, sample_field_def):
-    #     """Test setting constraints for a field."""
+    def test_set_field_constraints_no_constraints(self, sample_field, sample_field_def):
+        """Test setting constraints for a field with no constraints."""
 
-    #     sample_field_def.update(
-    #         {
-    #             "is_not_null": True,
-    #             "is_not_null_strength": "hard",
-    #             "is_unique": True,
-    #             "unique_strength": "soft",
-    #             "constraint_expression": "\"sample_field\" > 0",
-    #             "constraint_expression_description": "Value must be greater than 0",
-    #             "constraint_expression_strength": "hard",
-    #         }
-    #     )
-    #     sample_field = cast(QgsField, sample_field)
+        sample_field_def.update(
+            {
+                "is_not_null": False,
+                "is_unique": False,
+                "constraint_expression": "",
+            }
+        )
 
-    #     set_field_constraints(sample_field, sample_field_def)
+        set_field_constraints(sample_field, sample_field_def)
 
-    #     constraints = sample_field.constraints()
+        constraints = sample_field.constraints()
 
-    #     # Check Not Null constraint
-    #     assert constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintNotNull
-    #     assert (
-    #         constraints.constraintStrength(
-    #             QgsFieldConstraints.Constraint.ConstraintNotNull
-    #         )
-    #         == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
-    #     )
+        # Check that no constraints are set
+        assert (
+            not constraints.constraints()
+            & QgsFieldConstraints.Constraint.ConstraintNotNull
+        )
+        assert (
+            not constraints.constraints()
+            & QgsFieldConstraints.Constraint.ConstraintUnique
+        )
+        assert (
+            not constraints.constraints()
+            & QgsFieldConstraints.Constraint.ConstraintExpression
+        )
 
-    #     # Check Unique constraint
-    #     assert constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintUnique
-    #     assert (
-    #         constraints.constraintStrength(
-    #             QgsFieldConstraints.Constraint.ConstraintUnique
-    #         )
-    #         == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthSoft
-    #     )
+    def test_set_field_constraints_with_not_null(self, sample_field, sample_field_def):
+        """Test setting constraints for a field."""
 
-    #     # Check Expression constraint
-    #     assert constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintExpression
-    #     assert (
-    #         constraints.constraintStrength(
-    #             QgsFieldConstraints.Constraint.ConstraintExpression
-    #         )
-    #         == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
-    #     )
+        sample_field_def.update(
+            {
+                "is_not_null": True,
+                "is_not_null_strength": "soft",
+            }
+        )
+
+        set_field_constraints(sample_field, sample_field_def)
+
+        constraints = sample_field.constraints()
+
+        # Check Not Null constraint
+        assert (
+            constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintNotNull
+        )
+        assert (
+            constraints.constraintStrength(
+                QgsFieldConstraints.Constraint.ConstraintNotNull
+            )
+            == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthSoft
+        )
+
+        assert (
+            not constraints.constraints()
+            & QgsFieldConstraints.Constraint.ConstraintUnique
+        )
+        assert (
+            not constraints.constraints()
+            & QgsFieldConstraints.Constraint.ConstraintExpression
+        )
+
+    def test_set_field_constraints_with_unique(self, sample_field, sample_field_def):
+        """Test setting constraints for a field."""
+
+        sample_field_def.update(
+            {
+                "is_unique": True,
+                "is_unique_strength": "hard",
+            }
+        )
+
+        set_field_constraints(sample_field, sample_field_def)
+
+        constraints = sample_field.constraints()
+
+        # Check Not Null constraint
+        assert (
+            constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintUnique
+        )
+        assert (
+            constraints.constraintStrength(
+                QgsFieldConstraints.Constraint.ConstraintUnique
+            )
+            == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
+        )
+
+        assert (
+            not constraints.constraints()
+            & QgsFieldConstraints.Constraint.ConstraintNotNull
+        )
+        assert (
+            not constraints.constraints()
+            & QgsFieldConstraints.Constraint.ConstraintExpression
+        )
+
+    def test_set_field_constraints_with_expression(
+        self, sample_field, sample_field_def
+    ):
+        """Test setting constraints for a field."""
+
+        sample_field_def.update(
+            {
+                "constraint_expression": "random() > 0.5",
+                "constraint_expression_strength": "hard",
+                "constraint_expression_description": "Random constraint message",
+            }
+        )
+
+        set_field_constraints(sample_field, sample_field_def)
+
+        constraints = sample_field.constraints()
+
+        # Check Not Null constraint
+        assert (
+            constraints.constraints()
+            & QgsFieldConstraints.Constraint.ConstraintExpression
+        )
+        assert (
+            constraints.constraintStrength(
+                QgsFieldConstraints.Constraint.ConstraintExpression
+            )
+            == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
+        )
+        assert constraints.constraintDescription() == "Random constraint message"
+
+        assert (
+            not constraints.constraints()
+            & QgsFieldConstraints.Constraint.ConstraintNotNull
+        )
+        assert (
+            not constraints.constraints()
+            & QgsFieldConstraints.Constraint.ConstraintUnique
+        )

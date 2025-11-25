@@ -68,7 +68,7 @@
         "is_unique": {
           "type": "boolean"
         },
-        "unique_strength": {
+        "is_unique_strength": {
           "enum": ["hard", "soft", "not_set"],
           "type": "string"
         },
@@ -126,8 +126,8 @@
           "constraint_expression",
           "constraint_expression_strength"
         ],
-        "is_unique": ["unique_strength"],
-        "unique_strength": ["is_unique"]
+        "is_unique": ["is_unique_strength"],
+        "is_unique_strength": ["is_unique"]
       },
       "required": [
         "alias",

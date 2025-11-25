@@ -1,35 +1,23 @@
-import pytest
-from unittest.mock import MagicMock, patch
-
-from json2qgis.json2qgis import (
-    ProjectCreator,
-)
-
-from qgis.core import (
-    QgsField,
-)
-
-
-@pytest.fixture
-def project_creator(definition):
-    """Create a ProjectCreator instance with given definition."""
-    with patch("json2qgis.json2qgis.QgsProject") as mock_qgs_project:
-        mock_instance = MagicMock()
-        mock_qgs_project.return_value.instance.return_value = mock_instance
-        creator = ProjectCreator(definition)
-        creator._project = mock_instance
-        return creator
+# @pytest.fixture
+# def project_creator(definition):
+#     """Create a ProjectCreator instance with given definition."""
+#     with patch("json2qgis.json2qgis.QgsProject") as mock_qgs_project:
+#         mock_instance = MagicMock()
+#         mock_qgs_project.return_value.instance.return_value = mock_instance
+#         creator = ProjectCreator(definition)
+#         creator._project = mock_instance
+#         return creator
 
 
-class TestProjectCreator:
-    def test_create_field(self, project_creator, field_def):
-        """Helper to create a field using ProjectCreator."""
-        field = project_creator._create_field(field_def)
+# class TestProjectCreator:
+#     def test_create_field(self, project_creator, field_def):
+#         """Helper to create a field using ProjectCreator."""
+#         field = project_creator._create_field(field_def)
 
-        assert field.name() == field_def["name"]
-        assert field.type() == QgsField.String
-        assert field.length() == field_def["length"]
-        assert field.comment() == field_def["comment"]
+#         assert field.name() == field_def["name"]
+#         assert field.type() == QgsField.String
+#         assert field.length() == field_def["length"]
+#         assert field.comment() == field_def["comment"]
 
 
 # @pytest.fixture
