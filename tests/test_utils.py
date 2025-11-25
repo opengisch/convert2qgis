@@ -9,9 +9,6 @@ from json2qgis.utils import (
     set_field_constraints,
     set_field_widget,
 )
-from json2qgis.types import (
-    FieldDef,
-)
 
 from qgis.PyQt.QtCore import QMetaType
 from qgis.core import QgsFieldConstraints, Qgis, QgsField
@@ -28,7 +25,7 @@ def sample_field_def():
         "id": "sample_field",
         "name": "Sample Field",
         "type": "string",
-        "length": 255,
+        "length": 0,
         "precision": 0,
         "comment": "This is a sample field",
         "is_not_null": False,
@@ -44,6 +41,11 @@ def sample_field_def():
         "widget_type": "text",
         "widget_config": {},
     }
+
+
+@pytest.fixture
+def pissi(sample_field_def):
+    return sample_field_def["widget_type"]
 
 
 class TestUtils:
@@ -109,30 +111,19 @@ class TestUtils:
         with pytest.raises(NotImplementedError):
             get_attribute_form_container_type("unsupported")
 
-    def test_create_field_def_as_string(self):
+    def test_create_field_def_as_string(self, sample_field_def):
         """Test creation of a FieldDef TypedDict."""
-        field_def: FieldDef = {
-            "id": "field_string",
-            "name": "Field String",
-            "type": "string",
-            "length": 255,
-            "precision": 0,
-            "comment": "This is a test string field",
-            "is_not_null": True,
-            "is_not_null_strength": "hard",
-            "constraint_expression": "",
-            "constraint_expression_description": "",
-            "constraint_expression_strength": "not_set",
-            "is_unique": False,
-            "is_unique_strength": "not_set",
-            "default_value": None,
-            "set_default_value_on_update": False,
-            "alias": "Field One",
-            "widget_type": "text",
-            "widget_config": {},
-        }
+        sample_field_def.update(
+            {
+                "name": "Field String",
+                "type": "string",
+                "length": 255,
+                "precision": 0,
+                "comment": "This is a test string field",
+            }
+        )
 
-        field = create_field(field_def)
+        field = create_field(sample_field_def)
 
         assert field.name() == "Field String"
         assert field.type() == QMetaType.Type.QString
@@ -140,30 +131,19 @@ class TestUtils:
         assert field.precision() == 0
         assert field.comment() == "This is a test string field"
 
-    def test_create_field_def_as_integer(self):
+    def test_create_field_def_as_integer(self, sample_field_def):
         """Test creation of a FieldDef TypedDict."""
-        field_def: FieldDef = {
-            "id": "field_integer",
-            "name": "Field Integer",
-            "type": "integer",
-            "length": 3,
-            "precision": 0,
-            "comment": "This is a test integer field",
-            "is_not_null": True,
-            "is_not_null_strength": "hard",
-            "constraint_expression": "",
-            "constraint_expression_description": "",
-            "constraint_expression_strength": "not_set",
-            "is_unique": False,
-            "is_unique_strength": "not_set",
-            "default_value": None,
-            "set_default_value_on_update": False,
-            "alias": "Field One",
-            "widget_type": "text",
-            "widget_config": {},
-        }
+        sample_field_def.update(
+            {
+                "name": "Field Integer",
+                "type": "integer",
+                "length": 3,
+                "precision": 0,
+                "comment": "This is a test integer field",
+            }
+        )
 
-        field = create_field(field_def)
+        field = create_field(sample_field_def)
 
         assert field.name() == "Field Integer"
         assert field.type() == QMetaType.Type.Int
@@ -171,30 +151,20 @@ class TestUtils:
         assert field.precision() == 0
         assert field.comment() == "This is a test integer field"
 
-    def test_create_field_def_as_real(self):
+    def test_create_field_def_as_real(self, sample_field_def):
         """Test creation of a FieldDef TypedDict."""
-        field_def: FieldDef = {
-            "id": "field_real",
-            "name": "Field Real",
-            "type": "real",
-            "length": 3,
-            "precision": 0,
-            "comment": "This is a test real field",
-            "is_not_null": True,
-            "is_not_null_strength": "hard",
-            "constraint_expression": "",
-            "constraint_expression_description": "",
-            "constraint_expression_strength": "not_set",
-            "is_unique": False,
-            "is_unique_strength": "not_set",
-            "default_value": None,
-            "set_default_value_on_update": False,
-            "alias": "Field One",
-            "widget_type": "text",
-            "widget_config": {},
-        }
+        sample_field_def.update(
+            {
+                "id": "field_real",
+                "name": "Field Real",
+                "type": "real",
+                "length": 3,
+                "precision": 0,
+                "comment": "This is a test real field",
+            }
+        )
 
-        field = create_field(field_def)
+        field = create_field(sample_field_def)
 
         assert field.name() == "Field Real"
         assert field.type() == QMetaType.Type.Double
