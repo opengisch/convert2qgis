@@ -6,6 +6,7 @@ from qgis.core import (
     QgsFieldConstraints,
     QgsField,
     QgsDefaultValue,
+    QgsEditorWidgetSetup,
 )
 
 from json2qgis.types import FieldDef
@@ -142,3 +143,79 @@ def set_field_constraints(field: QgsField, field_def: FieldDef) -> None:
         )
 
     field.setConstraints(constraints)
+
+
+def set_field_widget(field: QgsField, field_def: FieldDef) -> None:
+    widget_type = field_def["widget_type"]
+    # Widget configuration
+    wc = field_def.get("widget_config", {})
+
+    if widget_type == "Hidden":
+        pass
+    elif widget_type == "Color":
+        pass
+    elif widget_type == "CheckBox":
+        wc.update(
+            {
+                "AllowNullState": wc.get("allow_null", False),
+                "CheckedState": wc.get("checked_state", None),
+                "UncheckedState": wc.get("unchecked_state", None),
+                "TextDisplayMethod": wc.get("text_display_method", 1),
+            }
+        )
+    elif widget_type == "Range":
+        wc.update(
+            {
+                "Min": wc.get("min", 0),
+                "Max": wc.get("max", 100),
+                "Step": wc.get("step", 1),
+                "Precision": wc.get("precision", 0),
+                "Suffix": wc.get("suffix", ""),
+                "Style": wc.get("style", "Slider"),
+                "AllowNull": wc.get("allow_null", False),
+            }
+        )
+    elif widget_type == "TextEdit":
+        wc.update(
+            {
+                "IsMultiline": wc.get("is_multiline", False),
+                "UseHtml": wc.get("use_html", False),
+            }
+        )
+    elif widget_type == "DateTime":
+        wc.update(
+            {
+                "allow_null": wc.get("allow_null", True),
+                "calendar_popup": wc.get("calendar_popup", True),
+                "display_format": wc.get("display_format", "yyyy-MM-dd HH:mm:ss"),
+                "field_format": wc.get("field_format", "yyyy-MM-dd HH:mm:ss"),
+                "field_format_overwrite": wc.get("field_format_overwrite", False),
+                "field_iso_format": wc.get("field_iso_format", False),
+            }
+        )
+    elif widget_type == "ExternalResource":
+        wc.update(
+            {
+                "DocumentViewer": wc.get("is_document_viewer_enabled", True),
+                "DocumentViewerHeight": wc.get("document_viewer_height", 0),
+                "DocumentViewerWidth": wc.get("document_viewer_width", 0),
+                "FileWidget": wc.get("use_file_widget", True),
+                "FileWidgetButton": wc.get("show_file_widget_button", True),
+                "FileWidgetFilter": wc.get("file_widget_filter", ""),
+                "RelativeStorage": wc.get("use_relative_storage", 1),
+                "StorageAuthConfigId": wc.get("storage_auth_config_id", None),
+                "StorageMode": wc.get("storage_mode", 0),
+                "StorageType": wc.get("storage_type", None),
+            }
+        )
+    elif widget_type == "ValueMap":
+        wc.update(
+            {
+                "map": wc.get("map", {}),
+            }
+        )
+    else:
+        raise NotImplementedError(f"Unsupported widget type: {widget_type}")
+
+    widget_setup = QgsEditorWidgetSetup(widget_type, wc)
+    field.setEditorWidgetSetup(widget_setup)

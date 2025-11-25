@@ -7,6 +7,7 @@ from json2qgis.utils import (
     create_field,
     set_field_default_value,
     set_field_constraints,
+    set_field_widget,
 )
 from json2qgis.types import (
     FieldDef,
@@ -368,3 +369,112 @@ class TestUtils:
             not constraints.constraints()
             & QgsFieldConstraints.Constraint.ConstraintUnique
         )
+
+    def test_set_field_constraints_all(self, sample_field, sample_field_def):
+        """Test setting all constraints for a field."""
+
+        sample_field_def.update(
+            {
+                "is_not_null": True,
+                "is_not_null_strength": "soft",
+                "is_unique": True,
+                "is_unique_strength": "hard",
+                "constraint_expression": "random() > 0.5",
+                "constraint_expression_strength": "hard",
+                "constraint_expression_description": "Random constraint message",
+            }
+        )
+
+        set_field_constraints(sample_field, sample_field_def)
+
+        constraints = sample_field.constraints()
+
+        # Check Not Null constraint
+        assert (
+            constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintNotNull
+        )
+        assert (
+            constraints.constraintStrength(
+                QgsFieldConstraints.Constraint.ConstraintNotNull
+            )
+            == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthSoft
+        )
+
+        # Check Unique constraint
+        assert (
+            constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintUnique
+        )
+        assert (
+            constraints.constraintStrength(
+                QgsFieldConstraints.Constraint.ConstraintUnique
+            )
+            == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
+        )
+
+        # Check Expression constraint
+        assert (
+            constraints.constraints()
+            & QgsFieldConstraints.Constraint.ConstraintExpression
+        )
+        assert (
+            constraints.constraintStrength(
+                QgsFieldConstraints.Constraint.ConstraintExpression
+            )
+            == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
+        )
+        assert constraints.constraintDescription() == "Random constraint message"
+
+    def test_set_field_widget_hidden(self, sample_field, sample_field_def):
+        """Test setting widget for a hidden field."""
+
+        sample_field_def.update(
+            {
+                "widget_type": "Hidden",
+                "widget_config": {},
+            }
+        )
+
+        set_field_widget(sample_field, sample_field_def)
+
+        widget_setup = sample_field.editorWidgetSetup()
+
+        assert widget_setup.type() == "Hidden"
+        assert widget_setup.config() == {}
+
+    def test_set_field_widget_color(self, sample_field, sample_field_def):
+        """Test setting widget for a color field."""
+
+        sample_field_def.update(
+            {
+                "widget_type": "Color",
+                "widget_config": {},
+            }
+        )
+
+        set_field_widget(sample_field, sample_field_def)
+
+        widget_setup = sample_field.editorWidgetSetup()
+
+        assert widget_setup.type() == "Color"
+        assert widget_setup.config() == {}
+
+    def test_set_field_widget_text(self, sample_field, sample_field_def):
+        """Test setting widget for a text field."""
+
+        sample_field_def.update(
+            {
+                "widget_type": "TextEdit",
+                "widget_config": {
+                    "is_multiline": True,
+                    "use_html": True,
+                },
+            }
+        )
+
+        set_field_widget(sample_field, sample_field_def)
+
+        widget_setup = sample_field.editorWidgetSetup()
+
+        assert widget_setup.type() == "TextEdit"
+        assert widget_setup.config().get("IsMultiline") is True
+        assert widget_setup.config().get("UseHtml") is True
