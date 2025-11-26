@@ -314,6 +314,7 @@ class ProjectCreator:
     ) -> None:
         fields = layer.fields()
 
+        # For geopackage layers, hide the 'fid' field by default
         if layer_def["datasource_format"] == VectorLayerDataprovider.GPKG:
             field_idx = fields.indexOf("fid")
 

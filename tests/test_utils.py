@@ -448,3 +448,148 @@ class TestUtils:
         assert widget_setup.type() == "TextEdit"
         assert widget_setup.config().get("IsMultiline") is True
         assert widget_setup.config().get("UseHtml") is True
+
+    def test_set_field_widget_range(self, sample_field, sample_field_def):
+        """Test setting widget for a range field."""
+
+        sample_field_def.update(
+            {
+                "widget_type": "Range",
+                "widget_config": {
+                    "min": 10,
+                    "max": 20,
+                    "step": 2,
+                    "precision": 3,
+                    "suffix": " m",
+                    "style": "slider",
+                    "allow_null": False,
+                },
+            }
+        )
+
+        set_field_widget(sample_field, sample_field_def)
+
+        widget_setup = sample_field.editorWidgetSetup()
+
+        assert widget_setup.type() == "Range"
+        assert widget_setup.config().get("Min") == 10
+        assert widget_setup.config().get("Max") == 20
+        assert widget_setup.config().get("Step") == 2
+        assert widget_setup.config().get("Precision") == 3
+        assert widget_setup.config().get("Suffix") == " m"
+        assert widget_setup.config().get("Style") == "slider"
+        assert widget_setup.config().get("AllowNull") is False
+
+    def test_set_field_widget_checkbox(self, sample_field, sample_field_def):
+        """Test setting widget for a checkbox field."""
+
+        sample_field_def.update(
+            {
+                "widget_type": "CheckBox",
+                "widget_config": {
+                    "allow_null": True,
+                    "checked_state": "Hello",
+                    "unchecked_state": "Bye",
+                    "text_display_method": 1,
+                },
+            }
+        )
+
+        set_field_widget(sample_field, sample_field_def)
+
+        widget_setup = sample_field.editorWidgetSetup()
+
+        assert widget_setup.type() == "CheckBox"
+        assert widget_setup.config().get("AllowNullState") is True
+        assert widget_setup.config().get("CheckedState") == "Hello"
+        assert widget_setup.config().get("UncheckedState") == "Bye"
+        assert widget_setup.config().get("TextDisplayMethod") == 1
+
+    def test_set_field_widget_datetime(self, sample_field, sample_field_def):
+        """Test setting widget for a range field."""
+
+        sample_field_def.update(
+            {
+                "widget_type": "DateTime",
+                "widget_config": {
+                    "allow_null": False,
+                    "calendar_popup": True,
+                    "display_format": "yyyy-MM-dd TTT HH:mm:ss",
+                    "field_format": "yyyy-MM-dd TTT HH:mm:ss",
+                    "field_format_overwrite": True,
+                    "field_iso_format": True,
+                },
+            }
+        )
+
+        set_field_widget(sample_field, sample_field_def)
+
+        widget_setup = sample_field.editorWidgetSetup()
+
+        assert widget_setup.type() == "DateTime"
+        assert widget_setup.config().get("allow_null") is False
+        assert widget_setup.config().get("calendar_popup") is True
+        assert widget_setup.config().get("display_format") == "yyyy-MM-dd TTT HH:mm:ss"
+        assert widget_setup.config().get("field_format") == "yyyy-MM-dd TTT HH:mm:ss"
+        assert widget_setup.config().get("field_format_overwrite") is True
+        assert widget_setup.config().get("field_iso_format") is True
+
+    def test_set_field_widget_externalresource(self, sample_field, sample_field_def):
+        """Test setting widget for a externalresource field."""
+
+        sample_field_def.update(
+            {
+                "widget_type": "ExternalResource",
+                "widget_config": {
+                    "is_document_viewer_enabled": True,
+                    "document_viewer_height": 100,
+                    "document_viewer_width": 100,
+                    "use_file_widget": True,
+                    "show_file_widget_button": True,
+                    "file_widget_filter": "*.png",
+                    "use_relative_storage": True,
+                    "storage_auth_config_id": "abc",
+                    "storage_mode": 0,
+                    "storage_type": None,
+                },
+            }
+        )
+
+        set_field_widget(sample_field, sample_field_def)
+
+        widget_setup = sample_field.editorWidgetSetup()
+
+        assert widget_setup.type() == "ExternalResource"
+        assert widget_setup.config().get("DocumentViewer") is True
+        assert widget_setup.config().get("DocumentViewerHeight") == 100
+        assert widget_setup.config().get("DocumentViewerWidth") == 100
+        assert widget_setup.config().get("FileWidget") is True
+        assert widget_setup.config().get("FileWidgetButton") is True
+        assert widget_setup.config().get("FileWidgetFilter") == "*.png"
+        assert widget_setup.config().get("RelativeStorage") is True
+        assert widget_setup.config().get("StorageAuthConfigId") == "abc"
+        assert widget_setup.config().get("StorageMode") == 0
+        assert widget_setup.config().get("StorageType") is None
+
+    def test_set_field_widget_valuemap(self, sample_field, sample_field_def):
+        """Test setting widget for a valuemap field."""
+
+        sample_field_def.update(
+            {
+                "widget_type": "ValueMap",
+                "widget_config": {
+                    "map": {
+                        "Hello": "World",
+                    }
+                },
+            }
+        )
+
+        set_field_widget(sample_field, sample_field_def)
+
+        widget_setup = sample_field.editorWidgetSetup()
+
+        assert widget_setup.type() == "ValueMap"
+        assert widget_setup.config().get("map") == {
+            "Hello": "World",
+        }
