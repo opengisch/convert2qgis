@@ -1,9 +1,9 @@
 [project]
-name = "poetry-demo"
+name = "json2qgis"
 version = "0.1.0"
 description = ""
 authors = [
-    {name = "Ivan Ivanov",email = "ivan.ivanov@suricactus.com"}
+    {name = "Ivan Ivanov",email = "ivan@opengis.ch"}
 ]
 readme = "README.md"
 requires-python = ">=3.10,<4.0"
@@ -16,7 +16,7 @@ dependencies = [
 [tool.poetry]
 packages = [
     {include = "json2qgis", from = "src"},
-    { include = "qgis", from = "/usr/lib/python3/dist-packages" },
+    {include = "qgis", from = "/usr/lib/python3/dist-packages" },
 ]
 
 [build-system]
