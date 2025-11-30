@@ -7,9 +7,11 @@ from qgis.core import (
     QgsField,
     QgsDefaultValue,
     QgsEditorWidgetSetup,
+    QgsMapLayer,
+    QgsFields,
 )
 
-from json2qgis.types import FieldDef
+from json2qgis.types import FieldDef, LayerDef
 
 
 def normalize_name(name: str) -> str:
@@ -58,6 +60,7 @@ def get_field_type(type_name: str) -> QMetaType.Type:
         "integer": QMetaType.Type.Int,
         "real": QMetaType.Type.Double,
         "string": QMetaType.Type.QString,
+        "boolean": QMetaType.Type.Bool,
         "date": QMetaType.Type.QDate,
         "datetime": QMetaType.Type.QDateTime,
     }
@@ -66,6 +69,32 @@ def get_field_type(type_name: str) -> QMetaType.Type:
         raise NotImplementedError(f"Unsupported field type: {type_name}")
 
     return type_map[type_name]
+
+
+def get_layer_flags(
+    flags: QgsMapLayer.LayerFlags, layer_def: LayerDef
+) -> QgsMapLayer.LayerFlags:
+    if layer_def.get("is_identifiable", False):
+        flags |= QgsMapLayer.LayerFlag.Identifiable
+    else:
+        flags &= ~QgsMapLayer.LayerFlag.Identifiable  # type: ignore
+
+    if layer_def.get("is_removable", False):
+        flags |= QgsMapLayer.LayerFlag.Removable
+    else:
+        flags &= ~QgsMapLayer.LayerFlag.Removable  # type: ignore
+
+    if layer_def.get("is_searchable", False):
+        flags |= QgsMapLayer.LayerFlag.Searchable
+    else:
+        flags &= ~QgsMapLayer.LayerFlag.Searchable  # type: ignore
+
+    if layer_def.get("is_private", False):
+        flags |= QgsMapLayer.LayerFlag.Private
+    else:
+        flags &= ~QgsMapLayer.LayerFlag.Private  # type: ignore
+
+    return flags
 
 
 def create_field(field_def: FieldDef) -> QgsField:
@@ -81,6 +110,16 @@ def create_field(field_def: FieldDef) -> QgsField:
     )
 
     return field
+
+
+def create_fields(layer_def: LayerDef) -> QgsFields:
+    fields = QgsFields()
+
+    for field_def in layer_def["fields"]:
+        field = create_field(field_def)
+        fields.append(field)
+
+    return fields
 
 
 def set_field_default_value(field: QgsField, field_def: FieldDef) -> None:

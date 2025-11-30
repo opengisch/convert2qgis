@@ -2,19 +2,19 @@ import logging
 import json
 from pathlib import Path
 import click
-from enum import StrEnum
-from typing import IO, Any, Callable, Literal, TypedDict, cast
+from typing import IO, Any, Callable, cast
 import fastjsonschema
 
 
-from .types import FieldDef
+from json2qgis.types import LayerDef, LayerType, ProjectDef, VectorLayerDataprovider
 from .utils import (
     normalize_name,
     get_attribute_form_container_type,
-    create_field,
+    create_fields,
     set_field_constraints,
     set_field_default_value,
     set_field_widget,
+    get_layer_flags,
 )
 
 
@@ -22,7 +22,6 @@ from qgis.PyQt.QtGui import QColor
 from qgis.core import (
     Qgis,
     QgsProject,
-    QgsFields,
     QgsVectorLayer,
     QgsMapLayer,
     QgsCoordinateReferenceSystem,
@@ -53,74 +52,6 @@ class MissingParentError(Qgis2JsonError): ...
 
 
 class UnknownVectorLayerDataproviderError(Qgis2JsonError): ...
-
-
-CrsDef = str
-
-
-class LayerType(StrEnum):
-    VECTOR = "vector"
-    RASTER = "raster"
-    MESH = "mesh"
-    VECTOR_TILE = "vector_tile"
-    POINT_CLOUD = "point_cloud"
-
-
-class LayerTreeItemDef(TypedDict):
-    id: str
-    type: Literal["group", "layer"]
-    name: str
-    parent: str
-    layer_id: str | None
-    is_checked: bool
-
-
-class VectorLayerDataprovider(StrEnum):
-    GPKG = "gpkg"
-
-
-class FormConfigItemDef(TypedDict):
-    id: str
-    type: Literal["field", "group_box", "tab", "row"]
-    name: str
-    parent_id: str | None
-    visibility_expression: str
-    background_color: str
-    is_collapsed: bool
-    column_count: int
-
-
-class FormConfigDef(TypedDict):
-    items: list[FormConfigItemDef]
-
-
-class LayerDef(TypedDict):
-    layer_id: str
-    name: str
-    geometry_type: Literal["Point", "LineString", "Polygon"]
-    type: LayerType
-    crs: CrsDef
-    datasource_format: str
-    fields: list[FieldDef]
-    form_config: FormConfigDef
-
-    is_read_only: bool
-    is_identifiable: bool
-    is_private: bool
-    is_searchable: bool
-    is_removable: bool
-
-
-class LayerTreeDef(TypedDict):
-    children: list[LayerTreeItemDef]
-
-
-class ProjectDef(TypedDict):
-    version: str
-    title: str
-    author: str
-    layers: list[LayerDef]
-    layer_tree: LayerTreeDef
 
 
 def get_schema() -> Callable[[dict[str, Any]], None]:
@@ -244,27 +175,9 @@ class ProjectCreator:
 
         layer.setCrs(crs)
         layer.setId(layer_def["layer_id"])
-
-        self._set_layer_flags(layer, layer_def)
+        layer.setFlags(get_layer_flags(layer.flags(), layer_def))
 
         self._project.addMapLayer(layer, False)
-
-    def _set_layer_flags(self, layer: QgsMapLayer, layer_def: LayerDef) -> None:
-        flags = layer.flags()
-
-        if layer_def.get("is_identifiable", False):
-            flags |= QgsMapLayer.LayerFlag.Identifiable
-
-        if layer_def.get("is_removable", False):
-            flags |= QgsMapLayer.LayerFlag.Removable
-
-        if layer_def.get("is_searchable", False):
-            flags |= QgsMapLayer.LayerFlag.Searchable
-
-        if layer_def.get("is_private", False):
-            flags |= QgsMapLayer.LayerFlag.Private
-
-        layer.setFlags(flags)
 
     def _create_vector_layer(self, layer_def: LayerDef) -> QgsVectorLayer:
         geometry_type = layer_def["geometry_type"]
@@ -302,14 +215,14 @@ class ProjectCreator:
 
         new_layer = QgsVectorLayer(new_file, layer_def["name"], layer_provider_lib)
 
-        self._set_field_configurations(new_layer, layer_def)
+        self._set_layer_field_configurations(new_layer, layer_def)
         self._set_layer_edit_form(new_layer, layer_def)
 
         new_layer.setReadOnly(layer_def.get("is_read_only", False))
 
         return new_layer
 
-    def _set_field_configurations(
+    def _set_layer_field_configurations(
         self, layer: QgsVectorLayer, layer_def: LayerDef
     ) -> None:
         fields = layer.fields()
@@ -437,16 +350,13 @@ class ProjectCreator:
 
     def _set_fields(self, layer: QgsVectorLayer, layer_def: LayerDef) -> None:
         layer_data_provider = layer.dataProvider()
-        fields = QgsFields()
 
         if layer_data_provider is None:
             raise UnknownVectorLayerDataproviderError(
                 f"Failed to get data provider for layer: {layer_def['name']}"
             )
 
-        for field_def in layer_def["fields"]:
-            field = create_field(field_def)
-            fields.append(field)
+        fields = create_fields(layer_def)
 
         layer_data_provider.addAttributes(fields)
         layer.updateFields()

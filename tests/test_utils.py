@@ -4,19 +4,35 @@ from json2qgis.utils import (
     normalize_name,
     get_constraint_strength,
     get_attribute_form_container_type,
+    get_layer_flags,
     create_field,
+    create_fields,
     set_field_default_value,
     set_field_constraints,
     set_field_widget,
 )
 
 from qgis.PyQt.QtCore import QMetaType
-from qgis.core import QgsFieldConstraints, Qgis, QgsField
+from qgis.core import QgsFieldConstraints, Qgis, QgsField, QgsMapLayer
 
 
 @pytest.fixture
 def sample_field():
     return QgsField("sample_field", QMetaType.Type.QString, len=255)
+
+
+@pytest.fixture
+def sample_layer_def():
+    return {
+        "id": "sample_layer",
+        "name": "Sample Layer",
+        "type": "vector",
+        "data_provider": "gpkg",
+        "is_identifiable": False,
+        "is_removable": False,
+        "is_searchable": False,
+        "is_private": False,
+    }
 
 
 @pytest.fixture
@@ -593,3 +609,168 @@ class TestUtils:
         assert widget_setup.config().get("map") == {
             "Hello": "World",
         }
+
+    def test_get_layer_flags_to_false(self, sample_layer_def):
+        """Test getting layer flags from LayerDef."""
+
+        sample_layer_def.update(
+            {
+                "is_identifiable": False,
+                "is_removable": False,
+                "is_searchable": False,
+                "is_private": False,
+            }
+        )
+
+        flags = QgsMapLayer.LayerFlags()
+
+        flags = get_layer_flags(flags, sample_layer_def)  # type: ignore
+
+        assert not flags & QgsMapLayer.LayerFlag.Identifiable  # type: ignore
+        assert not flags & QgsMapLayer.LayerFlag.Removable  # type: ignore
+        assert not flags & QgsMapLayer.LayerFlag.Searchable  # type: ignore
+        assert not flags & QgsMapLayer.LayerFlag.Private  # type: ignore
+
+    def test_get_layer_flags_to_true(self, sample_layer_def):
+        """Test getting layer flags from LayerDef."""
+
+        sample_layer_def.update(
+            {
+                "is_identifiable": True,
+                "is_removable": True,
+                "is_searchable": True,
+                "is_private": True,
+            }
+        )
+
+        flags = QgsMapLayer.LayerFlags()
+
+        flags = get_layer_flags(flags, sample_layer_def)  # type: ignore
+
+        assert flags & QgsMapLayer.LayerFlag.Identifiable  # type: ignore
+        assert flags & QgsMapLayer.LayerFlag.Removable  # type: ignore
+        assert flags & QgsMapLayer.LayerFlag.Searchable  # type: ignore
+        assert flags & QgsMapLayer.LayerFlag.Private  # type: ignore
+
+    def test_set_layer_field_configurations(self, sample_layer_def, sample_field_def):
+        """Test setting layer field configurations."""
+
+        integer_field = {
+            **sample_field_def,
+            "id": "field_integer",
+            "name": "Field integer",
+            "type": "integer",
+            "length": 0,
+            "precision": 0,
+            "comment": "This is field integer",
+        }
+        real_field = {
+            **sample_field_def,
+            "id": "field_real",
+            "name": "Field real",
+            "type": "real",
+            "length": 0,
+            "precision": 0,
+            "comment": "This is field real",
+        }
+        bool_field = {
+            **sample_field_def,
+            "id": "field_bool",
+            "name": "Field bool",
+            "type": "boolean",
+            "length": 0,
+            "precision": 0,
+            "comment": "This is field bool",
+        }
+        string_field = {
+            **sample_field_def,
+            "id": "field_string",
+            "name": "Field string",
+            "type": "string",
+            "length": 0,
+            "precision": 0,
+            "comment": "This is field string",
+        }
+        date_field = {
+            **sample_field_def,
+            "id": "field_date",
+            "name": "Field date",
+            "type": "date",
+            "length": 0,
+            "precision": 0,
+            "comment": "This is field date",
+        }
+        datetime_field = {
+            **sample_field_def,
+            "id": "field_datetime",
+            "name": "Field datetime",
+            "type": "datetime",
+            "length": 0,
+            "precision": 0,
+            "comment": "This is field datetime",
+        }
+
+        sample_layer_def.update(
+            {
+                "fields": [
+                    integer_field,
+                    real_field,
+                    bool_field,
+                    string_field,
+                    date_field,
+                    datetime_field,
+                ]
+            }
+        )
+
+        fields = create_fields(sample_layer_def)
+
+        assert fields.count() == 6
+
+        field_string = fields.field(0)
+
+        assert field_string.name() == "Field integer"
+        assert field_string.type() == QMetaType.Type.Int
+        assert field_string.length() == 0
+        assert field_string.precision() == 0
+        assert field_string.comment() == "This is field integer"
+
+        field_real = fields.field(1)
+
+        assert field_real.name() == "Field real"
+        assert field_real.type() == QMetaType.Type.Double
+        assert field_real.length() == 0
+        assert field_real.precision() == 0
+        assert field_real.comment() == "This is field real"
+
+        field_bool = fields.field(2)
+
+        assert field_bool.name() == "Field bool"
+        assert field_bool.type() == QMetaType.Type.Bool
+        assert field_bool.length() == 0
+        assert field_bool.precision() == 0
+        assert field_bool.comment() == "This is field bool"
+
+        field_string = fields.field(3)
+
+        assert field_string.name() == "Field string"
+        assert field_string.type() == QMetaType.Type.QString
+        assert field_string.length() == 0
+        assert field_string.precision() == 0
+        assert field_string.comment() == "This is field string"
+
+        field_date = fields.field(4)
+
+        assert field_date.name() == "Field date"
+        assert field_date.type() == QMetaType.Type.QDate
+        assert field_date.length() == 0
+        assert field_date.precision() == 0
+        assert field_date.comment() == "This is field date"
+
+        field_datetime = fields.field(5)
+
+        assert field_datetime.name() == "Field datetime"
+        assert field_datetime.type() == QMetaType.Type.QDateTime
+        assert field_datetime.length() == 0
+        assert field_datetime.precision() == 0
+        assert field_datetime.comment() == "This is field datetime"
