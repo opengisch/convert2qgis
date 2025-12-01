@@ -22,20 +22,6 @@ def sample_field():
 
 
 @pytest.fixture
-def sample_layer_def():
-    return {
-        "id": "sample_layer",
-        "name": "Sample Layer",
-        "type": "vector",
-        "data_provider": "gpkg",
-        "is_identifiable": False,
-        "is_removable": False,
-        "is_searchable": False,
-        "is_private": False,
-    }
-
-
-@pytest.fixture
 def sample_field_def():
     return {
         "id": "sample_field",
@@ -56,6 +42,83 @@ def sample_field_def():
         "alias": "Sample Field Alias",
         "widget_type": "text",
         "widget_config": {},
+    }
+
+
+@pytest.fixture
+def sample_layer_def(sample_field_def):
+    integer_field = {
+        **sample_field_def,
+        "id": "field_integer",
+        "name": "Field integer",
+        "type": "integer",
+        "length": 0,
+        "precision": 0,
+        "comment": "This is field integer",
+    }
+    real_field = {
+        **sample_field_def,
+        "id": "field_real",
+        "name": "Field real",
+        "type": "real",
+        "length": 0,
+        "precision": 0,
+        "comment": "This is field real",
+    }
+    bool_field = {
+        **sample_field_def,
+        "id": "field_bool",
+        "name": "Field bool",
+        "type": "boolean",
+        "length": 0,
+        "precision": 0,
+        "comment": "This is field bool",
+    }
+    string_field = {
+        **sample_field_def,
+        "id": "field_string",
+        "name": "Field string",
+        "type": "string",
+        "length": 0,
+        "precision": 0,
+        "comment": "This is field string",
+    }
+    date_field = {
+        **sample_field_def,
+        "id": "field_date",
+        "name": "Field date",
+        "type": "date",
+        "length": 0,
+        "precision": 0,
+        "comment": "This is field date",
+    }
+    datetime_field = {
+        **sample_field_def,
+        "id": "field_datetime",
+        "name": "Field datetime",
+        "type": "datetime",
+        "length": 0,
+        "precision": 0,
+        "comment": "This is field datetime",
+    }
+
+    return {
+        "id": "sample_layer",
+        "name": "Sample Layer",
+        "type": "vector",
+        "data_provider": "gpkg",
+        "is_identifiable": False,
+        "is_removable": False,
+        "is_searchable": False,
+        "is_private": False,
+        "fields": [
+            integer_field,
+            real_field,
+            bool_field,
+            string_field,
+            date_field,
+            datetime_field,
+        ],
     }
 
 
@@ -652,76 +715,8 @@ class TestUtils:
         assert flags & QgsMapLayer.LayerFlag.Searchable  # type: ignore
         assert flags & QgsMapLayer.LayerFlag.Private  # type: ignore
 
-    def test_set_layer_field_configurations(self, sample_layer_def, sample_field_def):
+    def test_set_layer_field_configurations(self, sample_layer_def):
         """Test setting layer field configurations."""
-
-        integer_field = {
-            **sample_field_def,
-            "id": "field_integer",
-            "name": "Field integer",
-            "type": "integer",
-            "length": 0,
-            "precision": 0,
-            "comment": "This is field integer",
-        }
-        real_field = {
-            **sample_field_def,
-            "id": "field_real",
-            "name": "Field real",
-            "type": "real",
-            "length": 0,
-            "precision": 0,
-            "comment": "This is field real",
-        }
-        bool_field = {
-            **sample_field_def,
-            "id": "field_bool",
-            "name": "Field bool",
-            "type": "boolean",
-            "length": 0,
-            "precision": 0,
-            "comment": "This is field bool",
-        }
-        string_field = {
-            **sample_field_def,
-            "id": "field_string",
-            "name": "Field string",
-            "type": "string",
-            "length": 0,
-            "precision": 0,
-            "comment": "This is field string",
-        }
-        date_field = {
-            **sample_field_def,
-            "id": "field_date",
-            "name": "Field date",
-            "type": "date",
-            "length": 0,
-            "precision": 0,
-            "comment": "This is field date",
-        }
-        datetime_field = {
-            **sample_field_def,
-            "id": "field_datetime",
-            "name": "Field datetime",
-            "type": "datetime",
-            "length": 0,
-            "precision": 0,
-            "comment": "This is field datetime",
-        }
-
-        sample_layer_def.update(
-            {
-                "fields": [
-                    integer_field,
-                    real_field,
-                    bool_field,
-                    string_field,
-                    date_field,
-                    datetime_field,
-                ]
-            }
-        )
 
         fields = create_fields(sample_layer_def)
 
