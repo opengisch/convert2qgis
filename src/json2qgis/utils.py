@@ -1,3 +1,4 @@
+import logging
 from unidecode import unidecode
 
 from qgis.PyQt.QtCore import QMetaType
@@ -15,10 +16,14 @@ from qgis.core import (
     QgsAttributeEditorContainer,
     QgsExpression,
     QgsOptionalExpression,
+    QgsVectorLayer,
 )
 
-from json2qgis.types import FieldDef, LayerDef
+from json2qgis.types import FieldDef, LayerDef, VectorLayerDataprovider
 from json2qgis.errors import MissingParentError
+
+
+logger = logging.getLogger(__name__)
 
 
 def normalize_name(name: str) -> str:
@@ -195,6 +200,65 @@ def create_fields(layer_def: LayerDef) -> QgsFields:
         fields.append(field)
 
     return fields
+
+
+def set_layer_fields(layer: QgsVectorLayer, layer_def: LayerDef) -> None:
+    fields = layer.fields()
+
+    # For geopackage layers, hide the 'fid' field by default
+    if layer_def["datasource_format"] == VectorLayerDataprovider.GPKG:
+        field_idx = fields.indexOf("fid")
+
+        assert field_idx != -1
+
+        widget_setup = QgsEditorWidgetSetup("Hidden", {})
+        layer.setEditorWidgetSetup(field_idx, widget_setup)
+
+    for field_def in layer_def.get("fields", []):
+        field_name = field_def["name"]
+        field_idx = fields.indexOf(field_name)
+
+        if field_idx == -1:
+            logger.warning(
+                f"Field '{field_name}' not found in layer '{layer_def['name']}'. Skipping field configuration."
+            )
+
+            continue
+
+        field = fields[field_def["name"]]
+
+        if field_def.get("alias"):
+            field.setAlias(field_def["alias"])
+
+        set_field_constraints(field, field_def)
+        set_field_default_value(field, field_def)
+        set_field_widget(field, field_def)
+
+        layer.setFieldAlias(field_idx, field.alias())
+        layer.setDefaultValueDefinition(field_idx, field.defaultValueDefinition())
+        layer.setEditorWidgetSetup(field_idx, field.editorWidgetSetup())
+
+        constraints = field.constraints()
+        for constraint_type in (
+            QgsFieldConstraints.Constraint.ConstraintNotNull,
+            QgsFieldConstraints.Constraint.ConstraintUnique,
+            QgsFieldConstraints.Constraint.ConstraintExpression,
+        ):
+            if not (constraints.constraints() & constraint_type):  # type: ignore
+                continue
+
+            layer.setFieldConstraint(
+                field_idx,
+                constraint_type,
+                constraints.constraintStrength(constraint_type),
+            )
+
+            if constraint_type == QgsFieldConstraints.Constraint.ConstraintExpression:
+                layer.setConstraintExpression(
+                    field_idx,
+                    constraints.constraintExpression(),
+                    constraints.constraintDescription(),
+                )
 
 
 def set_field_default_value(field: QgsField, field_def: FieldDef) -> None:

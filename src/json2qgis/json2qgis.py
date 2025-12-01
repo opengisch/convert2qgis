@@ -1,8 +1,7 @@
 import logging
 import json
 from pathlib import Path
-import click
-from typing import IO, Any, Callable, cast
+from typing import Any, Callable, cast
 import fastjsonschema
 
 
@@ -16,11 +15,9 @@ from json2qgis.errors import (
 from json2qgis.utils import (
     normalize_name,
     create_fields,
-    set_field_constraints,
-    set_field_default_value,
-    set_field_widget,
     get_layer_flags,
     get_layer_edit_form,
+    set_layer_fields,
 )
 
 
@@ -30,8 +27,6 @@ from qgis.core import (
     QgsMapLayer,
     QgsCoordinateReferenceSystem,
     QgsVectorFileWriter,
-    QgsFieldConstraints,
-    QgsEditorWidgetSetup,
     QgsLayerTreeGroup,
     QgsLayerTreeLayer,
 )
@@ -64,10 +59,10 @@ class ProjectCreator:
         self._project = project
         self.definition = definition
 
-    def build(self) -> None:
-        self._create_project()
+    def build(self, destination: str) -> None:
+        self._create_project(destination)
 
-    def _create_project(self) -> None:
+    def _create_project(self, output_destination: str) -> None:
         for layer in self.definition["layers"]:
             self._create_layer(layer)
 
@@ -79,7 +74,7 @@ class ProjectCreator:
         self._project.setTitle(self.definition.get("title", ""))
         self._project.setMetadata(metadata)
 
-        self._project.write("project.qgs")
+        self._project.write(output_destination)
 
     def _create_layer_tree(self) -> None:
         tree_root = self._project.layerTreeRoot()
@@ -200,7 +195,7 @@ class ProjectCreator:
 
         new_layer = QgsVectorLayer(new_file, layer_def["name"], layer_provider_lib)
 
-        self._set_layer_fields(new_layer, layer_def)
+        set_layer_fields(new_layer, layer_def)
 
         new_layer.setEditFormConfig(
             get_layer_edit_form(
@@ -214,67 +209,6 @@ class ProjectCreator:
         )
 
         return new_layer
-
-    def _set_layer_fields(self, layer: QgsVectorLayer, layer_def: LayerDef) -> None:
-        fields = layer.fields()
-
-        # For geopackage layers, hide the 'fid' field by default
-        if layer_def["datasource_format"] == VectorLayerDataprovider.GPKG:
-            field_idx = fields.indexOf("fid")
-
-            assert field_idx != -1
-
-            widget_setup = QgsEditorWidgetSetup("Hidden", {})
-            layer.setEditorWidgetSetup(field_idx, widget_setup)
-
-        for field_def in layer_def.get("fields", []):
-            field_name = field_def["name"]
-            field_idx = fields.indexOf(field_name)
-
-            if field_idx == -1:
-                logger.warning(
-                    f"Field '{field_name}' not found in layer '{layer_def['name']}'. Skipping field configuration."
-                )
-
-                continue
-
-            field = fields[field_def["name"]]
-
-            if field_def.get("alias"):
-                field.setAlias(field_def["alias"])
-
-            set_field_constraints(field, field_def)
-            set_field_default_value(field, field_def)
-            set_field_widget(field, field_def)
-
-            layer.setFieldAlias(field_idx, field.alias())
-            layer.setDefaultValueDefinition(field_idx, field.defaultValueDefinition())
-            layer.setEditorWidgetSetup(field_idx, field.editorWidgetSetup())
-
-            constraints = field.constraints()
-            for constraint_type in (
-                QgsFieldConstraints.Constraint.ConstraintNotNull,
-                QgsFieldConstraints.Constraint.ConstraintUnique,
-                QgsFieldConstraints.Constraint.ConstraintExpression,
-            ):
-                if not (constraints.constraints() & constraint_type):  # type: ignore
-                    continue
-
-                layer.setFieldConstraint(
-                    field_idx,
-                    constraint_type,
-                    constraints.constraintStrength(constraint_type),
-                )
-
-                if (
-                    constraint_type
-                    == QgsFieldConstraints.Constraint.ConstraintExpression
-                ):
-                    layer.setConstraintExpression(
-                        field_idx,
-                        constraints.constraintExpression(),
-                        constraints.constraintDescription(),
-                    )
 
     def _set_fields(self, layer: QgsVectorLayer, layer_def: LayerDef) -> None:
         layer_data_provider = layer.dataProvider()
@@ -304,21 +238,3 @@ class ProjectCreator:
     def _create_point_cloud_layer(self, layer: LayerDef) -> QgsMapLayer:
         # Implementation for creating a point cloud layer
         raise NotImplementedError("Point cloud layer creation not implemented yet.")
-
-
-@click.command()
-@click.option(
-    "--json",
-    "json_file",
-    type=click.File("r"),
-    help="Path to the JSON project definition file",
-)
-def main(json_file: IO) -> None:
-    project_def = json.load(json_file)
-
-    creator = ProjectCreator(project_def)
-    creator.build()
-
-
-if __name__ == "__main__":
-    main()

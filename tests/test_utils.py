@@ -11,6 +11,7 @@ from json2qgis.utils import (
     set_field_default_value,
     set_field_constraints,
     set_field_widget,
+    set_layer_fields,
 )
 
 from qgis.PyQt.QtCore import QMetaType
@@ -21,6 +22,7 @@ from qgis.core import (
     QgsMapLayer,
     QgsAttributeEditorContainer,
     QgsAttributeEditorField,
+    QgsVectorLayer,
 )
 
 
@@ -48,7 +50,7 @@ def sample_field_def():
         "default_value": None,
         "set_default_value_on_update": False,
         "alias": "Sample Field Alias",
-        "widget_type": "text",
+        "widget_type": "TextEdit",
         "widget_config": {},
     }
 
@@ -63,6 +65,21 @@ def sample_layer_def(sample_field_def):
         "length": 0,
         "precision": 0,
         "comment": "This is field integer",
+        "alias": "Field integer alias",
+        "widget_type": "Range",
+        "widget_config": {
+            "min": 10,
+            "max": 20,
+            "step": 2,
+            "precision": 0,
+            "suffix": " m",
+            "style": "spinbox",
+            "allow_null": True,
+        },
+        "is_not_null": True,
+        "is_not_null_strength": "hard",
+        "is_unique": True,
+        "is_unique_strength": "soft",
     }
     real_field = {
         **sample_field_def,
@@ -72,6 +89,23 @@ def sample_layer_def(sample_field_def):
         "length": 0,
         "precision": 0,
         "comment": "This is field real",
+        "alias": "Field real alias",
+        "default_value": "3.14",
+        "widget_type": "Range",
+        "widget_config": {
+            "min": 10.1,
+            "max": 20.1,
+            "step": 0.1,
+            "precision": 1,
+            "suffix": " cm",
+            "style": "dial",
+            "allow_null": False,
+        },
+        "is_not_null": True,
+        "is_not_null_strength": "hard",
+        "constraint_expression": "value > 0",
+        "constraint_expression_strength": "hard",
+        "constraint_expression_description": "Real must be > 0",
     }
     bool_field = {
         **sample_field_def,
@@ -81,6 +115,11 @@ def sample_layer_def(sample_field_def):
         "length": 0,
         "precision": 0,
         "comment": "This is field bool",
+        "alias": "Field bool alias",
+        "widget_type": "CheckBox",
+        "widget_config": {},
+        "is_not_null": True,
+        "is_not_null_strength": "hard",
     }
     string_field = {
         **sample_field_def,
@@ -90,6 +129,14 @@ def sample_layer_def(sample_field_def):
         "length": 0,
         "precision": 0,
         "comment": "This is field string",
+        "alias": "Field string alias",
+        "widget_type": "TextEdit",
+        "widget_config": {
+            "is_multiline": True,
+            "use_html": True,
+        },
+        "is_not_null": True,
+        "is_not_null_strength": "hard",
     }
     date_field = {
         **sample_field_def,
@@ -99,6 +146,18 @@ def sample_layer_def(sample_field_def):
         "length": 0,
         "precision": 0,
         "comment": "This is field date",
+        "alias": "Field date alias",
+        "widget_type": "DateTime",
+        "widget_config": {
+            "allow_null": True,
+            "calendar_popup": True,
+            "display_format": "yyyy-MM-dd",
+            "field_format": "yyyy-MM-dd",
+            "field_format_overwrite": True,
+            "field_iso_format": True,
+        },
+        "is_not_null": True,
+        "is_not_null_strength": "hard",
     }
     datetime_field = {
         **sample_field_def,
@@ -108,13 +167,25 @@ def sample_layer_def(sample_field_def):
         "length": 0,
         "precision": 0,
         "comment": "This is field datetime",
+        "alias": "Field datetime alias",
+        "widget_type": "DateTime",
+        "widget_config": {
+            "allow_null": True,
+            "calendar_popup": True,
+            "display_format": "yyyy-MM-dd HH:mm:ss",
+            "field_format": "yyyy-MM-dd HH:mm:ss",
+            "field_format_overwrite": True,
+            "field_iso_format": True,
+        },
+        "is_not_null": True,
+        "is_not_null_strength": "hard",
     }
 
     return {
         "id": "sample_layer",
         "name": "Sample Layer",
         "type": "vector",
-        "data_provider": "gpkg",
+        "datasource_format": "memory",
         "is_identifiable": False,
         "is_removable": False,
         "is_searchable": False,
@@ -886,3 +957,206 @@ class TestUtils:
 
         assert isinstance(tabs[0].children()[1], QgsAttributeEditorField)
         assert tabs[0].children()[1].name() == "uuid"
+
+    def test_set_layer_fields(self, sample_layer_def):
+        """Test setting layer fields from LayerDef."""
+
+        fields = create_fields(sample_layer_def)
+
+        layer = QgsVectorLayer("Point?crs=EPSG:4326", "test_layer", "memory")
+        data_provider = layer.dataProvider()
+
+        assert data_provider is not None
+
+        data_provider.addAttributes(fields.toList())
+        layer.updateFields()
+
+        assert layer.fields().count() == 6
+
+        set_layer_fields(layer, sample_layer_def)
+
+        fields = layer.fields()
+
+        assert fields.count() == 6
+
+        field_string = fields.field(0)
+        editor_widget = layer.editorWidgetSetup(0)
+        field_int_constraints = layer.fieldConstraintsAndStrength(0)
+
+        assert field_string.name() == "Field integer"
+        assert field_string.type() == QMetaType.Type.Int
+        assert field_string.length() == 0
+        assert field_string.precision() == 0
+        assert field_string.comment() == "This is field integer"
+        assert layer.attributeAlias(0) == "Field integer alias"
+        assert layer.defaultValueDefinition(0).isValid() is False
+        assert editor_widget.type() == "Range"
+        assert editor_widget.config().get("min") == 10
+        assert editor_widget.config().get("max") == 20
+        assert editor_widget.config().get("step") == 2
+        assert editor_widget.config().get("precision") == 0
+        assert editor_widget.config().get("suffix") == " m"
+        assert editor_widget.config().get("style") == "spinbox"
+        assert editor_widget.config().get("allow_null") is True
+        assert (
+            field_int_constraints[QgsFieldConstraints.Constraint.ConstraintNotNull]
+            == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
+        )
+        assert (
+            field_int_constraints[QgsFieldConstraints.Constraint.ConstraintUnique]
+            == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthSoft
+        )
+        assert (
+            QgsFieldConstraints.Constraint.ConstraintExpression
+            not in field_int_constraints
+        )
+
+        field_real = fields.field(1)
+        editor_widget = layer.editorWidgetSetup(1)
+        field_real_constraints = layer.fieldConstraintsAndStrength(1)
+
+        assert field_real.name() == "Field real"
+        assert field_real.type() == QMetaType.Type.Double
+        assert field_real.length() == 0
+        assert field_real.precision() == 0
+        assert field_real.comment() == "This is field real"
+        assert layer.attributeAlias(1) == "Field real alias"
+        assert layer.defaultValueDefinition(1).isValid() is True
+        assert layer.defaultValueDefinition(1).expression() == "3.14"
+        assert editor_widget.type() == "Range"
+        assert editor_widget.config().get("min") == 10.1
+        assert editor_widget.config().get("max") == 20.1
+        assert editor_widget.config().get("step") == 0.1
+        assert editor_widget.config().get("precision") == 1
+        assert editor_widget.config().get("suffix") == " cm"
+        assert editor_widget.config().get("style") == "dial"
+        assert editor_widget.config().get("allow_null") is False
+        assert (
+            field_real_constraints[QgsFieldConstraints.Constraint.ConstraintNotNull]
+            == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
+        )
+
+        assert (
+            QgsFieldConstraints.Constraint.ConstraintUnique
+            not in field_real_constraints
+        )
+        assert (
+            field_real_constraints[QgsFieldConstraints.Constraint.ConstraintExpression]
+            == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
+        )
+        assert layer.constraintExpression(1) == "value > 0"
+        assert layer.constraintDescription(1) == "Real must be > 0"
+
+        field_bool = fields.field(2)
+        editor_widget = layer.editorWidgetSetup(2)
+        field_bool_constraints = layer.fieldConstraintsAndStrength(2)
+
+        assert field_bool.name() == "Field bool"
+        assert field_bool.type() == QMetaType.Type.Bool
+        assert field_bool.length() == 0
+        assert field_bool.precision() == 0
+        assert field_bool.comment() == "This is field bool"
+        assert layer.attributeAlias(2) == "Field bool alias"
+        assert layer.defaultValueDefinition(2).isValid() is False
+        assert editor_widget.type() == "CheckBox"
+        assert (
+            field_bool_constraints[QgsFieldConstraints.Constraint.ConstraintNotNull]
+            == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
+        )
+        assert (
+            QgsFieldConstraints.Constraint.ConstraintUnique
+            not in field_bool_constraints
+        )
+        assert (
+            QgsFieldConstraints.Constraint.ConstraintExpression
+            not in field_bool_constraints
+        )
+
+        field_string = fields.field(3)
+        editor_widget = layer.editorWidgetSetup(3)
+        field_string_constraints = layer.fieldConstraintsAndStrength(3)
+
+        assert field_string.name() == "Field string"
+        assert field_string.type() == QMetaType.Type.QString
+        assert field_string.length() == 0
+        assert field_string.precision() == 0
+        assert field_string.comment() == "This is field string"
+        assert layer.attributeAlias(3) == "Field string alias"
+        assert layer.defaultValueDefinition(3).isValid() is False
+        assert editor_widget.type() == "TextEdit"
+        assert editor_widget.config().get("IsMultiline") is True
+        assert editor_widget.config().get("UseHtml") is True
+        assert (
+            field_string_constraints[QgsFieldConstraints.Constraint.ConstraintNotNull]
+            == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
+        )
+        assert (
+            QgsFieldConstraints.Constraint.ConstraintUnique
+            not in field_string_constraints
+        )
+        assert (
+            QgsFieldConstraints.Constraint.ConstraintExpression
+            not in field_string_constraints
+        )
+
+        field_date = fields.field(4)
+        editor_widget = layer.editorWidgetSetup(4)
+        field_date_constraints = layer.fieldConstraintsAndStrength(4)
+
+        assert field_date.name() == "Field date"
+        assert field_date.type() == QMetaType.Type.QDate
+        assert field_date.length() == 0
+        assert field_date.precision() == 0
+        assert field_date.comment() == "This is field date"
+        assert layer.attributeAlias(4) == "Field date alias"
+        assert layer.defaultValueDefinition(4).isValid() is False
+        assert editor_widget.type() == "DateTime"
+        assert editor_widget.config().get("allow_null") is True
+        assert editor_widget.config().get("calendar_popup") is True
+        assert editor_widget.config().get("display_format") == "yyyy-MM-dd"
+        assert editor_widget.config().get("field_format") == "yyyy-MM-dd"
+        assert editor_widget.config().get("field_format_overwrite") is True
+        assert editor_widget.config().get("field_iso_format") is True
+        assert (
+            field_date_constraints[QgsFieldConstraints.Constraint.ConstraintNotNull]
+            == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
+        )
+        assert (
+            QgsFieldConstraints.Constraint.ConstraintUnique
+            not in field_date_constraints
+        )
+        assert (
+            QgsFieldConstraints.Constraint.ConstraintExpression
+            not in field_date_constraints
+        )
+
+        field_datetime = fields.field(5)
+        editor_widget = layer.editorWidgetSetup(5)
+        field_datetime_constraints = layer.fieldConstraintsAndStrength(5)
+
+        assert field_datetime.name() == "Field datetime"
+        assert field_datetime.type() == QMetaType.Type.QDateTime
+        assert field_datetime.length() == 0
+        assert field_datetime.precision() == 0
+        assert field_datetime.comment() == "This is field datetime"
+        assert layer.attributeAlias(5) == "Field datetime alias"
+        assert layer.defaultValueDefinition(5).isValid() is False
+        assert editor_widget.type() == "DateTime"
+        assert editor_widget.config().get("allow_null") is True
+        assert editor_widget.config().get("calendar_popup") is True
+        assert editor_widget.config().get("display_format") == "yyyy-MM-dd HH:mm:ss"
+        assert editor_widget.config().get("field_format") == "yyyy-MM-dd HH:mm:ss"
+        assert editor_widget.config().get("field_format_overwrite") is True
+        assert editor_widget.config().get("field_iso_format") is True
+        assert (
+            field_datetime_constraints[QgsFieldConstraints.Constraint.ConstraintNotNull]
+            == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
+        )
+        assert (
+            QgsFieldConstraints.Constraint.ConstraintUnique
+            not in field_datetime_constraints
+        )
+        assert (
+            QgsFieldConstraints.Constraint.ConstraintExpression
+            not in field_datetime_constraints
+        )

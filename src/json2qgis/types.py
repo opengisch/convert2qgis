@@ -50,6 +50,7 @@ class LayerTreeItemDef(TypedDict):
 
 class VectorLayerDataprovider(StrEnum):
     GPKG = "gpkg"
+    MEMORY = "memory"
 
 
 class FormConfigItemDef(TypedDict):
