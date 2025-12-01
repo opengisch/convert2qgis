@@ -1,6 +1,7 @@
 from unidecode import unidecode
 
 from qgis.PyQt.QtCore import QMetaType
+from qgis.PyQt.QtGui import QColor
 from qgis.core import (
     Qgis,
     QgsFieldConstraints,
@@ -9,9 +10,15 @@ from qgis.core import (
     QgsEditorWidgetSetup,
     QgsMapLayer,
     QgsFields,
+    QgsEditFormConfig,
+    QgsAttributeEditorField,
+    QgsAttributeEditorContainer,
+    QgsExpression,
+    QgsOptionalExpression,
 )
 
 from json2qgis.types import FieldDef, LayerDef
+from json2qgis.errors import MissingParentError
 
 
 def normalize_name(name: str) -> str:
@@ -95,6 +102,74 @@ def get_layer_flags(
         flags &= ~QgsMapLayer.LayerFlag.Private  # type: ignore
 
     return flags
+
+
+def get_layer_edit_form(
+    fields: QgsFields,
+    layer_def: LayerDef,
+    form_config: QgsEditFormConfig | None = None,
+) -> QgsEditFormConfig:
+    if form_config is None:
+        form_config = QgsEditFormConfig()
+
+    form_config.setLayout(Qgis.AttributeFormLayout.DragAndDrop)
+    form_config.clearTabs()
+
+    containers_mapping: dict[str, QgsAttributeEditorContainer] = {}
+
+    for form_item_def in layer_def.get("form_config", {}).get("items", []):
+        item_type = form_item_def["type"]
+        item_name = form_item_def["name"]
+        item_parent_id = form_item_def.get("parent_id")
+
+        if item_parent_id:
+            parent = containers_mapping.get(item_parent_id)
+
+            if not parent:
+                raise MissingParentError(
+                    f"Parent with ID '{item_parent_id}' not found for form item '{item_name}'"
+                )
+        else:
+            parent = None
+
+        if item_type == "field":
+            container = QgsAttributeEditorField(
+                item_name, fields.indexOf(item_name), parent
+            )
+
+            if parent:
+                parent.addChildElement(container)
+
+            continue
+
+        container = QgsAttributeEditorContainer(item_name, parent)
+        container.setType(get_attribute_form_container_type(item_type))
+
+        if form_item_def.get("visibility_expression", ""):
+            container.setVisibilityExpression(
+                QgsOptionalExpression(
+                    QgsExpression(form_item_def.get("visibility_expression", ""))
+                )
+            )
+
+        if form_item_def.get("background_color", ""):
+            container.setBackgroundColor(
+                QColor(form_item_def.get("background_color", ""))
+            )
+
+        container.setCollapsed(form_item_def.get("is_collapsed", False))
+        container.setColumnCount(form_item_def.get("column_count", 1))
+
+        if parent:
+            parent.addChildElement(container)
+
+        containers_mapping[form_item_def["id"]] = container
+
+    for container in containers_mapping.values():
+        if container.parent() is None:
+            form_config.addTab(container)
+
+    return form_config
 
 
 def create_field(field_def: FieldDef) -> QgsField:

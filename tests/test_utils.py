@@ -1,6 +1,7 @@
 import pytest
 
 from json2qgis.utils import (
+    get_layer_edit_form,
     normalize_name,
     get_constraint_strength,
     get_attribute_form_container_type,
@@ -13,7 +14,14 @@ from json2qgis.utils import (
 )
 
 from qgis.PyQt.QtCore import QMetaType
-from qgis.core import QgsFieldConstraints, Qgis, QgsField, QgsMapLayer
+from qgis.core import (
+    QgsFieldConstraints,
+    Qgis,
+    QgsField,
+    QgsMapLayer,
+    QgsAttributeEditorContainer,
+    QgsAttributeEditorField,
+)
 
 
 @pytest.fixture
@@ -119,6 +127,73 @@ def sample_layer_def(sample_field_def):
             date_field,
             datetime_field,
         ],
+        "form_config": {
+            "items": [
+                {
+                    "column_count": 3,
+                    "id": "main_tab",
+                    "name": "Main",
+                    "type": "tab",
+                },
+                {
+                    "background_color": "",
+                    "column_count": 2,
+                    "id": "basic_info_group",
+                    "is_collapsed": True,
+                    "name": "Basic Info",
+                    "parent_id": "main_tab",
+                    "type": "group_box",
+                    "visibility_expression": "1 > 0",
+                },
+                {
+                    "id": "caffdaed-fbec-4bf1-a21e-ba84360184e9",
+                    "name": "uuid",
+                    "parent_id": "main_tab",
+                    "type": "field",
+                },
+                {
+                    "id": "61c6b488-9726-4f1b-b6a7-ca3b7c61293b",
+                    "name": "name",
+                    "parent_id": "basic_info_group",
+                    "type": "field",
+                },
+                {
+                    "id": "79002a29-036a-4b1c-baef-49ab49f88a7c",
+                    "name": "elevation",
+                    "parent_id": "basic_info_group",
+                    "type": "field",
+                },
+                {
+                    "id": "c9c7aadc-ff12-4cb0-92a7-f13e0705705a",
+                    "name": "variant_type",
+                    "parent_id": "basic_info_group",
+                    "type": "field",
+                },
+                {
+                    "id": "c5855c64-ef0d-4330-af90-a357a1848016",
+                    "name": "created_at",
+                    "parent_id": "basic_info_group",
+                    "type": "field",
+                },
+                {
+                    "id": "45416464-85cd-43f1-bfa9-b96c15cc76a0",
+                    "name": "updated_at",
+                    "parent_id": "basic_info_group",
+                    "type": "field",
+                },
+                {
+                    "id": "attachment_tab",
+                    "name": "Attachment",
+                    "type": "tab",
+                },
+                {
+                    "id": "5b93e54f-0f40-4524-aee2-78c6810d7d8a",
+                    "name": "attachment",
+                    "parent_id": "attachment_tab",
+                    "type": "field",
+                },
+            ]
+        },
     }
 
 
@@ -769,3 +844,45 @@ class TestUtils:
         assert field_datetime.length() == 0
         assert field_datetime.precision() == 0
         assert field_datetime.comment() == "This is field datetime"
+
+    def test_get_layer_edit_form(self, sample_layer_def):
+        """Test getting layer edit form configuration."""
+
+        fields = create_fields(sample_layer_def)
+        form_config = get_layer_edit_form(fields, sample_layer_def)
+
+        assert form_config.layout() == Qgis.AttributeFormLayout.DragAndDrop
+        assert len(form_config.tabs()) == 2
+
+        tabs = form_config.tabs()
+
+        assert tabs[0].name() == "Main"
+        assert tabs[1].name() == "Attachment"
+
+        assert isinstance(tabs[0], QgsAttributeEditorContainer)
+        assert len(tabs[0].children()) == 2
+        assert isinstance(tabs[1], QgsAttributeEditorContainer)
+        assert len(tabs[1].children()) == 1
+
+        basic_info_group = tabs[0].children()[0]
+
+        assert isinstance(basic_info_group, QgsAttributeEditorContainer)
+        assert basic_info_group.name() == "Basic Info"
+        assert basic_info_group.type() == Qgis.AttributeEditorContainerType.GroupBox
+        assert basic_info_group.columnCount() == 2
+        assert basic_info_group.visibilityExpression().data().expression() == "1 > 0"
+        assert len(basic_info_group.children()) == 5
+
+        assert isinstance(basic_info_group.children()[0], QgsAttributeEditorField)
+        assert basic_info_group.children()[0].name() == "name"
+        assert isinstance(basic_info_group.children()[1], QgsAttributeEditorField)
+        assert basic_info_group.children()[1].name() == "elevation"
+        assert isinstance(basic_info_group.children()[2], QgsAttributeEditorField)
+        assert basic_info_group.children()[2].name() == "variant_type"
+        assert isinstance(basic_info_group.children()[3], QgsAttributeEditorField)
+        assert basic_info_group.children()[3].name() == "created_at"
+        assert isinstance(basic_info_group.children()[4], QgsAttributeEditorField)
+        assert basic_info_group.children()[4].name() == "updated_at"
+
+        assert isinstance(tabs[0].children()[1], QgsAttributeEditorField)
+        assert tabs[0].children()[1].name() == "uuid"

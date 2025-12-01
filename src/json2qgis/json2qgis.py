@@ -7,20 +7,24 @@ import fastjsonschema
 
 
 from json2qgis.types import LayerDef, LayerType, ProjectDef, VectorLayerDataprovider
-from .utils import (
+from json2qgis.errors import (
+    Qgis2JsonError,
+    UnknownCrsSystem,
+    MissingParentError,
+    UnknownVectorLayerDataproviderError,
+)
+from json2qgis.utils import (
     normalize_name,
-    get_attribute_form_container_type,
     create_fields,
     set_field_constraints,
     set_field_default_value,
     set_field_widget,
     get_layer_flags,
+    get_layer_edit_form,
 )
 
 
-from qgis.PyQt.QtGui import QColor
 from qgis.core import (
-    Qgis,
     QgsProject,
     QgsVectorLayer,
     QgsMapLayer,
@@ -28,30 +32,11 @@ from qgis.core import (
     QgsVectorFileWriter,
     QgsFieldConstraints,
     QgsEditorWidgetSetup,
-    QgsAttributeEditorField,
-    QgsAttributeEditorContainer,
-    QgsExpression,
-    QgsOptionalExpression,
     QgsLayerTreeGroup,
     QgsLayerTreeLayer,
 )
 
 logger = logging.getLogger(__name__)
-
-
-class Qgis2JsonError(Exception): ...
-
-
-class UnknownQgisTypeError(Qgis2JsonError): ...
-
-
-class UnknownCrsSystem(Qgis2JsonError): ...
-
-
-class MissingParentError(Qgis2JsonError): ...
-
-
-class UnknownVectorLayerDataproviderError(Qgis2JsonError): ...
 
 
 def get_schema() -> Callable[[dict[str, Any]], None]:
@@ -215,16 +200,22 @@ class ProjectCreator:
 
         new_layer = QgsVectorLayer(new_file, layer_def["name"], layer_provider_lib)
 
-        self._set_layer_field_configurations(new_layer, layer_def)
-        self._set_layer_edit_form(new_layer, layer_def)
+        self._set_layer_fields(new_layer, layer_def)
 
-        new_layer.setReadOnly(layer_def.get("is_read_only", False))
+        new_layer.setEditFormConfig(
+            get_layer_edit_form(
+                new_layer.fields(),
+                layer_def,
+                new_layer.editFormConfig(),
+            ),
+        )
+        new_layer.setReadOnly(
+            layer_def.get("is_read_only", False),
+        )
 
         return new_layer
 
-    def _set_layer_field_configurations(
-        self, layer: QgsVectorLayer, layer_def: LayerDef
-    ) -> None:
+    def _set_layer_fields(self, layer: QgsVectorLayer, layer_def: LayerDef) -> None:
         fields = layer.fields()
 
         # For geopackage layers, hide the 'fid' field by default
@@ -284,69 +275,6 @@ class ProjectCreator:
                         constraints.constraintExpression(),
                         constraints.constraintDescription(),
                     )
-
-    def _set_layer_edit_form(self, layer: QgsVectorLayer, layer_def: LayerDef) -> None:
-        fields = layer.fields()
-
-        form_config = layer.editFormConfig()
-        form_config.setLayout(Qgis.AttributeFormLayout.DragAndDrop)
-        form_config.clearTabs()
-
-        containers_mapping: dict[str, QgsAttributeEditorContainer] = {}
-
-        for form_item_def in layer_def.get("form_config", {}).get("items", []):
-            item_type = form_item_def["type"]
-            item_name = form_item_def["name"]
-            item_parent_id = form_item_def.get("parent_id")
-
-            if item_parent_id:
-                parent = containers_mapping.get(item_parent_id)
-
-                if not parent:
-                    raise MissingParentError(
-                        f"Parent with ID '{item_parent_id}' not found for form item '{item_name}'"
-                    )
-            else:
-                parent = None
-
-            if item_type == "field":
-                container = QgsAttributeEditorField(
-                    item_name, fields.indexOf(item_name), parent
-                )
-
-                if parent:
-                    parent.addChildElement(container)
-
-                continue
-
-            container = QgsAttributeEditorContainer(item_name, parent)
-            container.setType(get_attribute_form_container_type(item_type))
-
-            if form_item_def.get("visibility_expression", ""):
-                container.setVisibilityExpression(
-                    QgsOptionalExpression(
-                        QgsExpression(form_item_def.get("visibility_expression", ""))
-                    )
-                )
-
-            if form_item_def.get("background_color", ""):
-                container.setBackgroundColor(
-                    QColor(form_item_def.get("background_color", ""))
-                )
-
-            container.setCollapsed(form_item_def.get("is_collapsed", False))
-            container.setColumnCount(form_item_def.get("column_count", 1))
-
-            if parent:
-                parent.addChildElement(container)
-
-            containers_mapping[form_item_def["id"]] = container
-
-        for container in containers_mapping.values():
-            if container.parent() is None:
-                form_config.addTab(container)
-
-        layer.setEditFormConfig(form_config)
 
     def _set_fields(self, layer: QgsVectorLayer, layer_def: LayerDef) -> None:
         layer_data_provider = layer.dataProvider()
