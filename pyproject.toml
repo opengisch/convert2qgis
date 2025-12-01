@@ -13,19 +13,17 @@ dependencies = [
     "fastjsonschema (>=2.21.2,<3.0.0)",
 ]
 
-[tool.poetry]
-packages = [
-    {include = "json2qgis", from = "src"},
-    {include = "qgis", from = "/usr/lib/python3/dist-packages" },
-]
+[tool.pyright]
+
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv_build>=0.9.13,<0.10.0"]
+build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
     "pytest (>=9.0.1,<10.0.0)",
     "ruff (>=0.14.6,<0.15.0)",
-    "pre-commit (>=4.5.0,<5.0.0)"
+    "pre-commit (>=4.5.0,<5.0.0)",
+    "debugpy (>=1.8.17,<2.0.0)",
 ]
