@@ -13,6 +13,7 @@ from json2qgis.errors import (
     UnknownVectorLayerDataproviderError,
 )
 from json2qgis.utils import (
+    create_relation,
     normalize_name,
     create_fields,
     get_layer_flags,
@@ -222,6 +223,15 @@ class ProjectCreator:
 
         layer_data_provider.addAttributes(fields)
         layer.updateFields()
+
+    def _set_relation(self):
+        relation_manager = self._project.relationManager()
+
+        assert relation_manager is not None
+
+        for relation_def in self.definition.get("relations", []):
+            relation = create_relation(relation_def)
+            relation_manager.addRelation(relation)
 
     def _create_raster_layer(self, layer: LayerDef) -> QgsMapLayer:
         # Implementation for creating a raster layer

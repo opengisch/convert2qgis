@@ -219,6 +219,12 @@
         "title": {
           "type": "string"
         },
+        "relations": {
+          "items": {
+            "$ref": "#/definitions/Relation"
+          },
+          "type": "array"
+        },
         "version": {
           "type": "string"
         }
@@ -335,23 +341,38 @@
     "Relation": {
       "additionalProperties": false,
       "properties": {
-        "from_field": {
-          "type": "string"
-        },
-        "from_layer": {
+        "id": {
           "type": "string"
         },
         "name": {
           "type": "string"
         },
-        "to_field": {
+        "from_layer": {
           "type": "string"
         },
         "to_layer": {
           "type": "string"
         },
-        "type": {
-          "type": "string"
+        "field_pairs": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "from_field": {
+                "type": "string"
+              },
+              "to_field": {
+                "type": "string"
+              }
+            },
+            "required": ["from_field", "to_field"],
+            "title": "FieldPair",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "strength": {
+          "type": "string",
+          "enum": ["association", "composition"]
         }
       },
       "required": [
@@ -364,11 +385,6 @@
       ],
       "title": "Relation",
       "type": "object"
-    },
-    "Type": {
-      "enum": ["tab", "group_box", "field"],
-      "title": "Type",
-      "type": "string"
     },
     "WidgetConfig": {
       "anyOf": [

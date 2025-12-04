@@ -20,9 +20,16 @@ from qgis.core import (
     QgsExpression,
     QgsOptionalExpression,
     QgsVectorLayer,
+    QgsRelation,
 )
 
-from json2qgis.types import FieldDef, LayerDef, VectorLayerDataprovider
+from json2qgis.types import (
+    FieldDef,
+    LayerDef,
+    RelationDef,
+    RelationStrength,
+    VectorLayerDataprovider,
+)
 from json2qgis.errors import MissingParentError
 
 
@@ -414,3 +421,32 @@ def set_field_widget(field: QgsField, field_def: FieldDef) -> None:
 
     widget_setup = QgsEditorWidgetSetup(widget_type, wc)
     field.setEditorWidgetSetup(widget_setup)
+
+
+def get_relation_strength(strength_name: RelationStrength) -> Qgis.RelationshipStrength:
+    strengths = {
+        "association": Qgis.RelationshipStrength.Association,
+        "composition": Qgis.RelationshipStrength.Composition,
+    }
+
+    if strength_name not in strengths:
+        raise NotImplementedError(f"Unknown relation strength: {strength_name}")
+
+    return strengths[strength_name]
+
+
+def create_relation(relation_def: RelationDef) -> QgsRelation:
+    relation = QgsRelation()
+    relation.setName(relation_def["name"])
+    relation.setId(relation_def["id"])
+    relation.setReferencingLayer(relation_def["from_layer_id"])
+    relation.setReferencedLayer(relation_def["to_layer_id"])
+    relation.setStrength(get_relation_strength(relation_def["strength"]))
+
+    for field_pair_config in relation_def["field_pairs"]:
+        relation.addFieldPair(
+            field_pair_config["from_field"],
+            field_pair_config["to_field"],
+        )
+
+    return relation

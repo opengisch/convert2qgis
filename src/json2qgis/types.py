@@ -2,8 +2,23 @@ from typing import TypedDict, Literal
 from enum import StrEnum
 
 
+RelationStrength = Literal["association", "composition"]
 ConstraintStrength = Literal["hard", "soft", "not_set"]
 CrsDef = str
+
+
+class RelationFieldPairDef(TypedDict):
+    from_field: str
+    to_field: str
+
+
+class RelationDef(TypedDict):
+    id: str
+    name: str
+    from_layer_id: str
+    to_layer_id: str
+    field_pairs: list[RelationFieldPairDef]
+    strength: RelationStrength
 
 
 class FieldDef(TypedDict):
