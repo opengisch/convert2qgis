@@ -23,6 +23,7 @@ from qgis.core import (
     QgsAttributeEditorContainer,
     QgsAttributeEditorField,
     QgsVectorLayer,
+    QgsAttributeEditorTextElement,
 )
 
 
@@ -262,6 +263,13 @@ def sample_layer_def(sample_field_def):
                     "name": "attachment",
                     "parent_id": "attachment_tab",
                     "type": "field",
+                },
+                {
+                    "id": "2f25c1e4-19f0-4760-9725-0896a8127915",
+                    "name": "Hello *World*",
+                    "parent_id": "attachment_tab",
+                    "type": "text",
+                    "is_markdown": True,
                 },
             ]
         },
@@ -933,7 +941,7 @@ class TestUtils:
         assert isinstance(tabs[0], QgsAttributeEditorContainer)
         assert len(tabs[0].children()) == 2
         assert isinstance(tabs[1], QgsAttributeEditorContainer)
-        assert len(tabs[1].children()) == 1
+        assert len(tabs[1].children()) == 2
 
         basic_info_group = tabs[0].children()[0]
 
@@ -957,6 +965,11 @@ class TestUtils:
 
         assert isinstance(tabs[0].children()[1], QgsAttributeEditorField)
         assert tabs[0].children()[1].name() == "uuid"
+
+        assert isinstance(tabs[1].children()[0], QgsAttributeEditorField)
+        assert tabs[1].children()[0].name() == "attachment"
+        assert isinstance(tabs[1].children()[1], QgsAttributeEditorTextElement)
+        assert tabs[1].children()[1].name() == "<p>Hello <em>World</em></p>"
 
     def test_set_layer_fields(self, sample_layer_def):
         """Test setting layer fields from LayerDef."""

@@ -1,6 +1,8 @@
 import logging
 from unidecode import unidecode
 
+import markdown
+
 from qgis.PyQt.QtCore import QMetaType
 from qgis.PyQt.QtGui import QColor
 from qgis.core import (
@@ -13,6 +15,7 @@ from qgis.core import (
     QgsFields,
     QgsEditFormConfig,
     QgsAttributeEditorField,
+    QgsAttributeEditorTextElement,
     QgsAttributeEditorContainer,
     QgsExpression,
     QgsOptionalExpression,
@@ -144,6 +147,20 @@ def get_layer_edit_form(
 
             if parent:
                 parent.addChildElement(container)
+
+            continue
+
+        elif item_type == "text":
+            if form_item_def["is_markdown"]:
+                item_name = markdown.markdown(item_name)
+
+            container = QgsAttributeEditorTextElement(item_name, parent)
+
+            if parent:
+                parent.addChildElement(container)
+
+            container.setText(item_name)
+            container.setShowLabel(False)
 
             continue
 

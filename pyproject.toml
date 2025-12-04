@@ -11,6 +11,7 @@ dependencies = [
     "click (>=8.3.1,<9.0.0)",
     "unidecode (>=1.4.0,<2.0.0)",
     "fastjsonschema (>=2.21.2,<3.0.0)",
+    "markdown>=3.10",
 ]
 
 [tool.pyright]

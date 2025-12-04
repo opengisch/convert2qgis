@@ -55,13 +55,14 @@ class VectorLayerDataprovider(StrEnum):
 
 class FormConfigItemDef(TypedDict):
     id: str
-    type: Literal["field", "group_box", "tab", "row"]
+    type: Literal["field", "group_box", "tab", "row", "text"]
     name: str
     parent_id: str | None
     visibility_expression: str
     background_color: str
     is_collapsed: bool
     column_count: int
+    is_markdown: bool
 
 
 class FormConfigDef(TypedDict):

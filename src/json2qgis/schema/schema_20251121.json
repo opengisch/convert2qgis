@@ -180,10 +180,15 @@
           "type": "string"
         },
         "type": {
-          "$ref": "#/definitions/Type"
+          "enum": ["tab", "group_box", "field", "text"],
+          "title": "Type",
+          "type": "string"
         },
         "visibility_expression": {
           "type": "string"
+        },
+        "is_markdown": {
+          "type": "boolean"
         }
       },
       "required": ["id", "name", "type"],
