@@ -9,7 +9,6 @@ from json2qgis.types import LayerDef, LayerType, ProjectDef, VectorLayerDataprov
 from json2qgis.errors import (
     Qgis2JsonError,
     UnknownCrsSystem,
-    MissingParentError,
     UnknownVectorLayerDataproviderError,
 )
 from json2qgis.utils import (
@@ -19,6 +18,7 @@ from json2qgis.utils import (
     get_layer_flags,
     get_layer_edit_form,
     set_layer_fields,
+    set_layer_tree,
 )
 
 
@@ -28,8 +28,6 @@ from qgis.core import (
     QgsMapLayer,
     QgsCoordinateReferenceSystem,
     QgsVectorFileWriter,
-    QgsLayerTreeGroup,
-    QgsLayerTreeLayer,
 )
 
 logger = logging.getLogger(__name__)
@@ -67,7 +65,7 @@ class ProjectCreator:
         for layer in self.definition["layers"]:
             self._create_layer(layer)
 
-        self._create_layer_tree()
+        set_layer_tree(self._project, self.definition)
 
         metadata = self._project.metadata()
         metadata.setAuthor(self.definition.get("author", ""))
@@ -76,62 +74,6 @@ class ProjectCreator:
         self._project.setMetadata(metadata)
 
         self._project.write(output_destination)
-
-    def _create_layer_tree(self) -> None:
-        tree_root = self._project.layerTreeRoot()
-
-        assert tree_root, "Failed to get layer tree root. Very unlikely error."
-
-        tree_root.clear()
-
-        layer_tree_items_mapping: dict[str, QgsLayerTreeGroup | QgsLayerTreeLayer] = {}
-
-        for layer_tree_def in self.definition.get("layer_tree", {}).get("children", []):
-            item_type = layer_tree_def["type"]
-            item_name = layer_tree_def["name"]
-            parent_name = layer_tree_def["parent"]
-            is_checked = layer_tree_def["is_checked"]
-
-            if parent_name:
-                parent = layer_tree_items_mapping[parent_name]
-
-                if not parent:
-                    raise MissingParentError(
-                        f"Parent group '{parent_name}' not found for layer tree item '{item_name}'"
-                    )
-
-                assert isinstance(parent, QgsLayerTreeGroup)
-            else:
-                parent = tree_root
-
-            if item_type == "group":
-                tree_item = QgsLayerTreeGroup(item_name, is_checked)
-
-                tree_item.setIsMutuallyExclusive(
-                    layer_tree_def.get("is_mutually_exclusive", False),
-                    layer_tree_def.get("mutually_exclusive_child_index", -1),
-                )
-            elif item_type == "layer":
-                layer = self._project.mapLayer(layer_tree_def["layer_id"])
-
-                if not layer:
-                    raise Qgis2JsonError(
-                        f"Layer '{item_name}' not found in project for layer tree item."
-                    )
-
-                tree_item = QgsLayerTreeLayer(layer)
-
-            else:
-                raise NotImplementedError(
-                    f"Unsupported layer tree item type: {item_type}"
-                )
-
-            tree_item.setItemVisibilityChecked(is_checked)
-
-            layer_tree_items_mapping[layer_tree_def["id"]] = tree_item
-
-            parent_children_count = len(parent.children())
-            parent.insertChildNode(parent_children_count, tree_item)
 
     def _create_layer(self, layer_def: LayerDef) -> None:
         layer_type = layer_def["type"]

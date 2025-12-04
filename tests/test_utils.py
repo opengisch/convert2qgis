@@ -12,6 +12,7 @@ from json2qgis.utils import (
     set_field_constraints,
     set_field_widget,
     set_layer_fields,
+    set_layer_tree,
 )
 
 from qgis.PyQt.QtCore import QMetaType
@@ -20,6 +21,7 @@ from qgis.core import (
     Qgis,
     QgsField,
     QgsMapLayer,
+    QgsProject,
     QgsAttributeEditorContainer,
     QgsAttributeEditorField,
     QgsVectorLayer,
@@ -277,8 +279,59 @@ def sample_layer_def(sample_field_def):
 
 
 @pytest.fixture
-def pissi(sample_field_def):
-    return sample_field_def["widget_type"]
+def sample_project_def(sample_layer_def):
+    return {
+        "version": "1.0.0",
+        "title": "Sample Project",
+        "author": "Test Author",
+        "layers": [sample_layer_def],
+        "layer_tree": {
+            "children": [
+                {
+                    "id": "my_group_parent",
+                    "is_checked": True,
+                    "layer_id": "",
+                    "name": "My group parent",
+                    "parent": "",
+                    "type": "group",
+                },
+                {
+                    "id": "my_group_child",
+                    "is_checked": True,
+                    "layer_id": "",
+                    "name": "My group child",
+                    "parent": "my_group_parent",
+                    "type": "group",
+                },
+                {
+                    "id": "my_child",
+                    "is_checked": True,
+                    "layer_id": "d942d84e-bcbf-430b-bf5d-9b39caeabf71",
+                    "name": "My test layer`",
+                    "parent": "my_group_child",
+                    "type": "layer",
+                },
+                {
+                    "id": "my_group_child_two",
+                    "is_checked": False,
+                    "is_mutually_exclusive": True,
+                    "layer_id": "",
+                    "name": "My test subgroup",
+                    "parent": "my_group_child",
+                    "type": "group",
+                },
+                {
+                    "id": "my_second_parent",
+                    "is_checked": True,
+                    "is_mutually_exclusive": True,
+                    "layer_id": "",
+                    "name": "My second parent",
+                    "parent": "",
+                    "type": "group",
+                },
+            ]
+        },
+    }
 
 
 class TestUtils:
@@ -1172,4 +1225,58 @@ class TestUtils:
         assert (
             QgsFieldConstraints.Constraint.ConstraintExpression
             not in field_datetime_constraints
+        )
+
+    def test_set_layer_tree(self, sample_project_def):
+        """Test setting layer tree from ProjectDef."""
+
+        project = QgsProject.instance()
+        test_layer = QgsVectorLayer("Point?crs=EPSG:4326", "My test layer", "memory")
+        test_layer.setId("d942d84e-bcbf-430b-bf5d-9b39caeabf71")
+
+        assert project is not None
+
+        project.addMapLayer(test_layer, False)
+
+        set_layer_tree(project, sample_project_def)
+
+        root = project.layerTreeRoot()
+
+        assert root is not None
+        assert len(root.children()) == 2
+
+        group_parent = root.findGroup("My group parent")
+
+        assert group_parent is not None
+        assert group_parent.isVisible() is True
+        assert group_parent.isMutuallyExclusive() is False
+        assert group_parent.name() == "My group parent"
+        assert group_parent == root.children()[0]
+        assert len(group_parent.children()) == 1
+
+        group_child = group_parent.findGroup("My group child")
+
+        assert group_child is not None
+        assert group_child.isVisible() is True
+        assert group_child.isMutuallyExclusive() is False
+        assert group_child.name() == "My group child"
+        assert group_child == group_parent.children()[0]
+        assert len(group_child.children()) == 2
+
+        subgroup_child_one = group_child.findGroup("My test subgroup")
+
+        assert subgroup_child_one is not None
+        assert subgroup_child_one.isVisible() is False
+        assert subgroup_child_one.isMutuallyExclusive() is True
+        assert subgroup_child_one.name() == "My test subgroup"
+        assert subgroup_child_one == group_child.children()[1]
+        assert len(subgroup_child_one.children()) == 0
+
+        test_layer = group_child.children()[0]
+
+        assert test_layer is not None
+        assert test_layer.isVisible() is True
+        assert test_layer.name() == "My test layer"
+        assert test_layer == group_child.findLayer(
+            "d942d84e-bcbf-430b-bf5d-9b39caeabf71"
         )
