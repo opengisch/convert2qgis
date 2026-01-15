@@ -1,12 +1,15 @@
 {
   "_relations": [
     {
-      "from_field": "",
       "from_layer": "",
       "name": "",
-      "to_field": "",
       "to_layer": "",
-      "type": ""
+      "field_pairs": [
+        {
+          "from_field": "",
+          "to_field": ""
+        }
+      ]
     }
   ],
   "author": "Ivan Ivanov @suricactus",

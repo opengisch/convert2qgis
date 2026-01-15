@@ -376,12 +376,9 @@
         }
       },
       "required": [
-        "from_field",
         "from_layer",
         "name",
-        "to_field",
-        "to_layer",
-        "type"
+        "to_layer"
       ],
       "title": "Relation",
       "type": "object"
