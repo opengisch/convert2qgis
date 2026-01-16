@@ -21,6 +21,17 @@ class RelationDef(TypedDict):
     strength: RelationStrength
 
 
+class PolymorphicRelationDef(TypedDict):
+    id: str
+    name: str
+    from_layer_id: str
+    to_layer_field: str
+    to_layer_expression: str
+    to_layer_ids: str
+    field_pairs: list[RelationFieldPairDef]
+    strength: RelationStrength
+
+
 class FieldDef(TypedDict):
     id: str
     name: str

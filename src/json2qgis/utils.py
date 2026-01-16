@@ -21,6 +21,7 @@ from qgis.core import (
     QgsOptionalExpression,
     QgsVectorLayer,
     QgsRelation,
+    QgsPolymorphicRelation,
     QgsLayerTreeLayer,
     QgsProject,
     QgsLayerTreeGroup,
@@ -31,6 +32,7 @@ from json2qgis.types import (
     LayerDef,
     ProjectDef,
     RelationDef,
+    PolymorphicRelationDef,
     RelationStrength,
     VectorLayerDataprovider,
 )
@@ -502,10 +504,32 @@ def create_relation(relation_def: RelationDef) -> QgsRelation:
     relation.setReferencedLayer(relation_def["to_layer_id"])
     relation.setStrength(get_relation_strength(relation_def["strength"]))
 
-    for field_pair_config in relation_def["field_pairs"]:
+    for field_pair_def in relation_def["field_pairs"]:
         relation.addFieldPair(
-            field_pair_config["from_field"],
-            field_pair_config["to_field"],
+            field_pair_def["from_field"],
+            field_pair_def["to_field"],
+        )
+
+    return relation
+
+
+def create_polymorphic_relation(
+    relation_def: PolymorphicRelationDef,
+) -> QgsPolymorphicRelation:
+    relation = QgsPolymorphicRelation()
+
+    relation.setName(relation_def["name"])
+    relation.setId(relation_def["id"])
+    relation.setReferencingLayer(relation_def["from_layer_id"])
+    relation.setReferencedLayerField(relation_def["to_layer_field"])
+    relation.setReferencedLayerExpression(relation_def["to_layer_expression"])
+    relation.setReferencedLayerIds(relation_def["to_layer_ids"])
+    relation.setRelationStrength(get_relation_strength(relation_def["strength"]))
+
+    for field_pair_def in relation_def["field_pairs"]:
+        relation.addFieldPair(
+            field_pair_def["from_field"],
+            field_pair_def["to_field"],
         )
 
     return relation

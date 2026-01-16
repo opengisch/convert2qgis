@@ -8,6 +8,8 @@ from json2qgis.utils import (
     get_layer_flags,
     create_field,
     create_fields,
+    create_relation,
+    create_polymorphic_relation,
     set_field_default_value,
     set_field_constraints,
     set_field_widget,
@@ -332,6 +334,51 @@ def sample_project_def(sample_layer_def):
             ]
         },
     }
+
+
+@pytest.fixture
+def sample_relation_def():
+    return {
+        "id": "f0eb51d8-77df-4b2f-8f54-826464742ee5",
+        "name": "relation",
+        "from_layer_id": "layer_a",
+        "to_layer_id": "layer_b",
+        "field_pairs": [
+            {
+                "from_field": "layer_a_field",
+                "to_field": "layer_b_field",
+            }
+        ],
+        "strength": "composition",
+    }
+
+
+@pytest.fixture
+def sample_polymorphic_relation_def():
+    return {
+        "id": "a1b2c3d4-e5f6-7890-abcd-ef0123456789",
+        "name": "polymorphic_relation",
+        "from_layer_id": "documents",
+        "to_layer_field": "layer_id",
+        "to_layer_ids": ["birds", "mammals"],
+        "to_layer_expression": "@layer_id",
+        "strength": "composition",
+        "field_pairs": [
+            {
+                "from_field": "uuid",
+                "to_field": "document_uuid",
+            },
+        ],
+    }
+
+
+@pytest.fixture
+def project() -> QgsProject:
+    project = QgsProject.instance()
+
+    assert project
+
+    return project
 
 
 class TestUtils:
@@ -1280,3 +1327,83 @@ class TestUtils:
         assert test_layer == group_child.findLayer(
             "d942d84e-bcbf-430b-bf5d-9b39caeabf71"
         )
+
+    def test_create_relation(self, project, sample_relation_def):
+        """Test creating relation."""
+
+        referencing_layer = QgsVectorLayer(
+            "Point?field=layer_a_field:integer&crs=EPSG:4326",
+            "layer_a",
+            "memory",
+        )
+        referencing_layer.setId("layer_a")
+        referenced_layer = QgsVectorLayer(
+            "Point?field=layer_b_field:integer&crs=EPSG:4326",
+            "layer_b",
+            "memory",
+        )
+        referenced_layer.setId("layer_b")
+
+        project.addMapLayers([referencing_layer, referenced_layer])
+
+        rel = create_relation(sample_relation_def)
+        rel_manager = project.relationManager()
+
+        assert rel_manager is not None
+
+        rel_manager.addRelation(rel)
+
+        assert rel.name() == "relation"
+        assert rel.referencingLayer() == referencing_layer
+        assert rel.referencedLayer() == referenced_layer
+        assert rel.fieldPairs() == {"layer_a_field": "layer_b_field"}
+        assert rel.strength() == Qgis.RelationshipStrength.Composition
+        assert rel.isValid()
+
+    def test_create_polymorphic_relation(
+        self, project: QgsProject, sample_polymorphic_relation_def
+    ):
+        """Test creating polymorphic relation."""
+
+        referencing_layer = QgsVectorLayer(
+            "Point?field=layer_id:string&field=uuid:string&crs=EPSG:4326",
+            "documents",
+            "memory",
+        )
+        referencing_layer.setId("documents")
+        referenced_layer_birds = QgsVectorLayer(
+            "Point?field=document_uuid:string&crs=EPSG:4326",
+            "birds",
+            "memory",
+        )
+        referenced_layer_birds.setId("birds")
+        referenced_layer_mammals = QgsVectorLayer(
+            "Point?field=document_uuid:string&crs=EPSG:4326",
+            "mammals",
+            "memory",
+        )
+        referenced_layer_mammals.setId("mammals")
+
+        project.addMapLayers(
+            [
+                referencing_layer,
+                referenced_layer_birds,
+                referenced_layer_mammals,
+            ]
+        )
+
+        rel = create_polymorphic_relation(sample_polymorphic_relation_def)
+        rel_manager = project.relationManager()
+
+        assert rel_manager is not None
+
+        rel_manager.addPolymorphicRelation(rel)
+
+        assert rel.name() == "polymorphic_relation"
+        assert rel.referencingLayer() == referencing_layer
+        assert rel.referencedLayerField() == "layer_id"
+        assert rel.referencedLayerIds() == ["birds", "mammals"]
+        assert rel.referencedLayerExpression() == "@layer_id"
+        assert rel.fieldPairs() == {"uuid": "document_uuid"}
+        assert rel.strength() == Qgis.RelationshipStrength.Composition
+        assert rel.isValid()

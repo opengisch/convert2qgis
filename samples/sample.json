@@ -1,13 +1,30 @@
 {
-  "_relations": [
+  "relations": [
     {
-      "from_layer": "",
-      "name": "",
-      "to_layer": "",
+      "id": "939da598-1f7b-4ac4-9eab-a5f5060d0ce2",
+      "name": "relation_1",
+      "from_layer": "books",
+      "to_layer": "authors",
       "field_pairs": [
         {
-          "from_field": "",
-          "to_field": ""
+          "from_field": "author_id",
+          "to_field": "id"
+        }
+      ]
+    }
+  ],
+  "polymorphic_relations": [
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef0123456789",
+      "name": "polymorphic_relation",
+      "from_layer_id": "documents",
+      "to_layer_field": "uuid",
+      "to_layer_ids": ["birds", "mammals", "reptiles"],
+      "to_layer_expression": "@layer_id",
+      "field_pairs": [
+        {
+          "from_field": "uuid",
+          "to_field": "document_uuid"
         }
       ]
     }

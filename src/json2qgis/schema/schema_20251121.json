@@ -198,9 +198,15 @@
     "Json2qgisSchema": {
       "additionalProperties": false,
       "properties": {
-        "_relations": {
+        "relations": {
           "items": {
             "$ref": "#/definitions/Relation"
+          },
+          "type": "array"
+        },
+        "polymorphic_relations": {
+          "items": {
+            "$ref": "#/definitions/PolymorphicRelation"
           },
           "type": "array"
         },
@@ -219,18 +225,13 @@
         "title": {
           "type": "string"
         },
-        "relations": {
-          "items": {
-            "$ref": "#/definitions/Relation"
-          },
-          "type": "array"
-        },
         "version": {
           "type": "string"
         }
       },
       "required": [
-        "_relations",
+        "relations",
+        "polymorphic_relations",
         "author",
         "layer_tree",
         "layers",
@@ -375,10 +376,66 @@
           "enum": ["association", "composition"]
         }
       },
+      "required": ["id", "name", "from_layer", "to_layer"],
+      "title": "Relation",
+      "type": "object"
+    },
+    "PolymorphicRelation": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "from_layer_id": {
+          "type": "string"
+        },
+        "to_layer_field": {
+          "type": "string"
+        },
+        "to_layer_expression": {
+          "type": "string"
+        },
+        "to_layer_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "to_field": {
+          "type": "string"
+        },
+        "field_pairs": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "from_field": {
+                "type": "string"
+              },
+              "to_field": {
+                "type": "string"
+              }
+            },
+            "required": ["from_field", "to_field"],
+            "title": "FieldPair",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "strength": {
+          "type": "string",
+          "enum": ["association", "composition"]
+        }
+      },
       "required": [
-        "from_layer",
+        "id",
         "name",
-        "to_layer"
+        "from_layer_id",
+        "to_layer_field",
+        "to_layer_expression",
+        "to_layer_ids"
       ],
       "title": "Relation",
       "type": "object"
