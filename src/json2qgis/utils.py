@@ -138,7 +138,7 @@ def get_layer_edit_form(
 
     containers_mapping: dict[str, QgsAttributeEditorContainer] = {}
 
-    for form_item_def in layer_def.get("form_config", {}).get("items", []):
+    for form_item_def in layer_def["form_config"]:
         item_type = form_item_def["type"]
         item_name = form_item_def["name"]
         item_parent_id = form_item_def.get("parent_id")
@@ -198,7 +198,7 @@ def get_layer_edit_form(
         if parent:
             parent.addChildElement(container)
 
-        containers_mapping[form_item_def["id"]] = container
+        containers_mapping[form_item_def["item_id"]] = container
 
     for container in containers_mapping.values():
         if container.parent() is None:

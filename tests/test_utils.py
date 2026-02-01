@@ -203,80 +203,78 @@ def sample_layer_def(sample_field_def):
             date_field,
             datetime_field,
         ],
-        "form_config": {
-            "items": [
-                {
-                    "column_count": 3,
-                    "id": "main_tab",
-                    "name": "Main",
-                    "type": "tab",
-                },
-                {
-                    "background_color": "",
-                    "column_count": 2,
-                    "id": "basic_info_group",
-                    "is_collapsed": True,
-                    "name": "Basic Info",
-                    "parent_id": "main_tab",
-                    "type": "group_box",
-                    "visibility_expression": "1 > 0",
-                },
-                {
-                    "id": "caffdaed-fbec-4bf1-a21e-ba84360184e9",
-                    "name": "uuid",
-                    "parent_id": "main_tab",
-                    "type": "field",
-                },
-                {
-                    "id": "61c6b488-9726-4f1b-b6a7-ca3b7c61293b",
-                    "name": "name",
-                    "parent_id": "basic_info_group",
-                    "type": "field",
-                },
-                {
-                    "id": "79002a29-036a-4b1c-baef-49ab49f88a7c",
-                    "name": "elevation",
-                    "parent_id": "basic_info_group",
-                    "type": "field",
-                },
-                {
-                    "id": "c9c7aadc-ff12-4cb0-92a7-f13e0705705a",
-                    "name": "variant_type",
-                    "parent_id": "basic_info_group",
-                    "type": "field",
-                },
-                {
-                    "id": "c5855c64-ef0d-4330-af90-a357a1848016",
-                    "name": "created_at",
-                    "parent_id": "basic_info_group",
-                    "type": "field",
-                },
-                {
-                    "id": "45416464-85cd-43f1-bfa9-b96c15cc76a0",
-                    "name": "updated_at",
-                    "parent_id": "basic_info_group",
-                    "type": "field",
-                },
-                {
-                    "id": "attachment_tab",
-                    "name": "Attachment",
-                    "type": "tab",
-                },
-                {
-                    "id": "5b93e54f-0f40-4524-aee2-78c6810d7d8a",
-                    "name": "attachment",
-                    "parent_id": "attachment_tab",
-                    "type": "field",
-                },
-                {
-                    "id": "2f25c1e4-19f0-4760-9725-0896a8127915",
-                    "name": "Hello *World*",
-                    "parent_id": "attachment_tab",
-                    "type": "text",
-                    "is_markdown": True,
-                },
-            ]
-        },
+        "form_config": [
+            {
+                "column_count": 3,
+                "id": "main_tab",
+                "name": "Main",
+                "type": "tab",
+            },
+            {
+                "background_color": "",
+                "column_count": 2,
+                "id": "basic_info_group",
+                "is_collapsed": True,
+                "name": "Basic Info",
+                "parent_id": "main_tab",
+                "type": "group_box",
+                "visibility_expression": "1 > 0",
+            },
+            {
+                "id": "caffdaed-fbec-4bf1-a21e-ba84360184e9",
+                "name": "uuid",
+                "parent_id": "main_tab",
+                "type": "field",
+            },
+            {
+                "id": "61c6b488-9726-4f1b-b6a7-ca3b7c61293b",
+                "name": "name",
+                "parent_id": "basic_info_group",
+                "type": "field",
+            },
+            {
+                "id": "79002a29-036a-4b1c-baef-49ab49f88a7c",
+                "name": "elevation",
+                "parent_id": "basic_info_group",
+                "type": "field",
+            },
+            {
+                "id": "c9c7aadc-ff12-4cb0-92a7-f13e0705705a",
+                "name": "variant_type",
+                "parent_id": "basic_info_group",
+                "type": "field",
+            },
+            {
+                "id": "c5855c64-ef0d-4330-af90-a357a1848016",
+                "name": "created_at",
+                "parent_id": "basic_info_group",
+                "type": "field",
+            },
+            {
+                "id": "45416464-85cd-43f1-bfa9-b96c15cc76a0",
+                "name": "updated_at",
+                "parent_id": "basic_info_group",
+                "type": "field",
+            },
+            {
+                "id": "attachment_tab",
+                "name": "Attachment",
+                "type": "tab",
+            },
+            {
+                "id": "5b93e54f-0f40-4524-aee2-78c6810d7d8a",
+                "name": "attachment",
+                "parent_id": "attachment_tab",
+                "type": "field",
+            },
+            {
+                "id": "2f25c1e4-19f0-4760-9725-0896a8127915",
+                "name": "Hello *World*",
+                "parent_id": "attachment_tab",
+                "type": "text",
+                "is_markdown": True,
+            },
+        ],
     }
 
 

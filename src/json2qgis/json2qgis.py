@@ -5,7 +5,7 @@ from typing import Any, Callable, cast
 import fastjsonschema
 
 
-from json2qgis.types import LayerDef, LayerType, ProjectDef, VectorLayerDataprovider
+from json2qgis.types import LayerDef, ProjectDef, VectorLayerDataprovider
 from json2qgis.errors import (
     Qgis2JsonError,
     UnknownCrsSystem,
@@ -76,17 +76,17 @@ class ProjectCreator:
         self._project.write(output_destination)
 
     def _create_layer(self, layer_def: LayerDef) -> None:
-        layer_type = layer_def["type"]
-        if layer_type == LayerType.VECTOR:
+        layer_type = layer_def["layer_type"]
+        if layer_type == "vector":
             layer = self._create_vector_layer(layer_def)
-        elif layer_type == LayerType.RASTER:
+        elif layer_type == "raster":
             layer = self._create_raster_layer(layer_def)
         # Additional layer types can be handled here
-        elif layer_type == LayerType.MESH:
+        elif layer_type == "mesh":
             layer = self._create_mesh_layer(layer_def)
-        elif layer_type == LayerType.VECTOR_TILE:
+        elif layer_type == "vector_tile":
             layer = self._create_vector_tile_layer(layer_def)
-        elif layer_type == LayerType.POINT_CLOUD:
+        elif layer_type == "point_cloud":
             layer = self._create_point_cloud_layer(layer_def)
         else:
             raise NotImplementedError(f"Unsupported layer type: {layer_type}")
