@@ -140,7 +140,7 @@ def get_layer_edit_form(
 
     for form_item_def in layer_def["form_config"]:
         item_type = form_item_def["type"]
-        item_name = form_item_def["name"]
+        item_label = form_item_def["label"]
         item_parent_id = form_item_def.get("parent_id")
 
         if item_parent_id:
@@ -148,14 +148,14 @@ def get_layer_edit_form(
 
             if not parent:
                 raise MissingParentError(
-                    f"Parent with ID '{item_parent_id}' not found for form item '{item_name}'"
+                    f"Parent with ID '{item_parent_id}' not found for form item '{item_label}'"
                 )
         else:
             parent = None
 
         if item_type == "field":
             container = QgsAttributeEditorField(
-                item_name, fields.indexOf(item_name), parent
+                item_label, fields.indexOf(item_label), parent
             )
 
             if parent:
@@ -165,19 +165,19 @@ def get_layer_edit_form(
 
         elif item_type == "text":
             if form_item_def["is_markdown"]:
-                item_name = markdown.markdown(item_name)
+                item_label = markdown.markdown(item_label)
 
-            container = QgsAttributeEditorTextElement(item_name, parent)
+            container = QgsAttributeEditorTextElement(item_label, parent)
 
             if parent:
                 parent.addChildElement(container)
 
-            container.setText(item_name)
+            container.setText(item_label)
             container.setShowLabel(False)
 
             continue
 
-        container = QgsAttributeEditorContainer(item_name, parent)
+        container = QgsAttributeEditorContainer(item_label, parent)
         container.setType(get_attribute_form_container_type(item_type))
 
         if form_item_def.get("visibility_expression", ""):
@@ -498,8 +498,8 @@ def get_relation_strength(strength_name: RelationStrength) -> Qgis.RelationshipS
 
 def create_relation(relation_def: RelationDef) -> QgsRelation:
     relation = QgsRelation()
+    relation.setId(relation_def["relation_id"])
     relation.setName(relation_def["name"])
-    relation.setId(relation_def["id"])
     relation.setReferencingLayer(relation_def["from_layer_id"])
     relation.setReferencedLayer(relation_def["to_layer_id"])
     relation.setStrength(get_relation_strength(relation_def["strength"]))
@@ -518,8 +518,8 @@ def create_polymorphic_relation(
 ) -> QgsPolymorphicRelation:
     relation = QgsPolymorphicRelation()
 
+    relation.setId(relation_def["relation_id"])
     relation.setName(relation_def["name"])
-    relation.setId(relation_def["id"])
     relation.setReferencingLayer(relation_def["from_layer_id"])
     relation.setReferencedLayerField(relation_def["to_layer_field"])
     relation.setReferencedLayerExpression(relation_def["to_layer_expression"])

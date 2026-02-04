@@ -206,14 +206,14 @@ def sample_layer_def(sample_field_def):
         "form_config": [
             {
                 "column_count": 3,
-                "id": "main_tab",
+                "item_id": "main_tab",
                 "name": "Main",
                 "type": "tab",
             },
             {
                 "background_color": "",
                 "column_count": 2,
-                "id": "basic_info_group",
+                "item_id": "basic_info_group",
                 "is_collapsed": True,
                 "name": "Basic Info",
                 "parent_id": "main_tab",
@@ -221,54 +221,54 @@ def sample_layer_def(sample_field_def):
                 "visibility_expression": "1 > 0",
             },
             {
-                "id": "caffdaed-fbec-4bf1-a21e-ba84360184e9",
+                "item_id": "caffdaed-fbec-4bf1-a21e-ba84360184e9",
                 "name": "uuid",
                 "parent_id": "main_tab",
                 "type": "field",
             },
             {
-                "id": "61c6b488-9726-4f1b-b6a7-ca3b7c61293b",
+                "item_id": "61c6b488-9726-4f1b-b6a7-ca3b7c61293b",
                 "name": "name",
                 "parent_id": "basic_info_group",
                 "type": "field",
             },
             {
-                "id": "79002a29-036a-4b1c-baef-49ab49f88a7c",
+                "item_id": "79002a29-036a-4b1c-baef-49ab49f88a7c",
                 "name": "elevation",
                 "parent_id": "basic_info_group",
                 "type": "field",
             },
             {
-                "id": "c9c7aadc-ff12-4cb0-92a7-f13e0705705a",
+                "item_id": "c9c7aadc-ff12-4cb0-92a7-f13e0705705a",
                 "name": "variant_type",
                 "parent_id": "basic_info_group",
                 "type": "field",
             },
             {
-                "id": "c5855c64-ef0d-4330-af90-a357a1848016",
+                "item_id": "c5855c64-ef0d-4330-af90-a357a1848016",
                 "name": "created_at",
                 "parent_id": "basic_info_group",
                 "type": "field",
             },
             {
-                "id": "45416464-85cd-43f1-bfa9-b96c15cc76a0",
+                "item_id": "45416464-85cd-43f1-bfa9-b96c15cc76a0",
                 "name": "updated_at",
                 "parent_id": "basic_info_group",
                 "type": "field",
             },
             {
-                "id": "attachment_tab",
+                "item_id": "attachment_tab",
                 "name": "Attachment",
                 "type": "tab",
             },
             {
-                "id": "5b93e54f-0f40-4524-aee2-78c6810d7d8a",
+                "item_id": "5b93e54f-0f40-4524-aee2-78c6810d7d8a",
                 "name": "attachment",
                 "parent_id": "attachment_tab",
                 "type": "field",
             },
             {
-                "id": "2f25c1e4-19f0-4760-9725-0896a8127915",
+                "item_id": "2f25c1e4-19f0-4760-9725-0896a8127915",
                 "name": "Hello *World*",
                 "parent_id": "attachment_tab",
                 "type": "text",
@@ -337,7 +337,7 @@ def sample_project_def(sample_layer_def):
 @pytest.fixture
 def sample_relation_def():
     return {
-        "id": "f0eb51d8-77df-4b2f-8f54-826464742ee5",
+        "relation_id": "f0eb51d8-77df-4b2f-8f54-826464742ee5",
         "name": "relation",
         "from_layer_id": "layer_a",
         "to_layer_id": "layer_b",
@@ -354,7 +354,7 @@ def sample_relation_def():
 @pytest.fixture
 def sample_polymorphic_relation_def():
     return {
-        "id": "a1b2c3d4-e5f6-7890-abcd-ef0123456789",
+        "relation_id": "a1b2c3d4-e5f6-7890-abcd-ef0123456789",
         "name": "polymorphic_relation",
         "from_layer_id": "documents",
         "to_layer_field": "layer_id",

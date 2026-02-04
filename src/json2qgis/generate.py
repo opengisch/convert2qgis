@@ -1,6 +1,6 @@
 from typing import cast
 import uuid
-from json2qgis.types import FieldDef, LayerDef, FormItemDef
+from json2qgis.types import FieldDef, LayerDef, FormItemDef, RelationDef
 
 
 def generate_field_def(**kwargs) -> FieldDef:
@@ -57,8 +57,8 @@ def generate_form_item_def(**kwargs) -> FormItemDef:
         FormItemDef,
         {
             "item_id": str(uuid.uuid4()),
-            "field_id": None,
-            "name": "",
+            "field_name": None,
+            "label": "",
             "type": "group_box",
             "parent_id": None,
             "visibility_expression": "",
@@ -66,6 +66,21 @@ def generate_form_item_def(**kwargs) -> FormItemDef:
             "is_collapsed": False,
             "column_count": 1,
             "is_markdown": False,
+            **kwargs,
+        },
+    )
+
+
+def generate_relation_def(**kwargs) -> RelationDef:
+    return cast(
+        RelationDef,
+        {
+            "relation_id": str(uuid.uuid4()),
+            "name": "",
+            "from_layer_id": "",
+            "to_layer_id": "",
+            "strength": "association",
+            "field_pairs": [],
             **kwargs,
         },
     )

@@ -18,7 +18,7 @@ class RelationFieldPairDef(TypedDict):
 
 
 class RelationDef(TypedDict):
-    id: str
+    relation_id: str
     name: str
     from_layer_id: str
     to_layer_id: str
@@ -27,7 +27,7 @@ class RelationDef(TypedDict):
 
 
 class PolymorphicRelationDef(TypedDict):
-    id: str
+    relation_id: str
     name: str
     from_layer_id: str
     to_layer_field: str
@@ -106,8 +106,8 @@ class VectorLayerDataprovider(StrEnum):
 class WeakFormItemDef(TypedDict, total=False):
     item_id: str
     type: FormItemTypes
-    # TODO rename to `label`
-    name: str
+    field_name: str
+    label: str
     parent_id: str | None
     visibility_expression: str
     background_color: str
@@ -121,8 +121,8 @@ class WeakFormItemDef(TypedDict, total=False):
 class FormItemDef(TypedDict):
     item_id: str
     type: FormItemTypes
-    # TODO rename to `label`
-    name: str
+    field_name: str
+    label: str
     parent_id: str | None
     visibility_expression: str
     background_color: str
