@@ -5,7 +5,7 @@ from typing import Any, Callable, cast
 import fastjsonschema
 
 
-from json2qgis.types import LayerDef, ProjectDef, VectorLayerDataprovider
+from json2qgis.type_defs import LayerDef, ProjectDef, VectorLayerDataprovider
 from json2qgis.errors import (
     Qgis2JsonError,
     UnknownCrsSystem,

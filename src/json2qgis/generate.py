@@ -1,6 +1,6 @@
 from typing import cast
 import uuid
-from json2qgis.types import FieldDef, LayerDef, FormItemDef, RelationDef
+from json2qgis.type_defs import FieldDef, LayerDef, FormItemDef, RelationDef
 
 
 def generate_field_def(**kwargs) -> FieldDef:

@@ -27,7 +27,7 @@ from qgis.core import (
     QgsLayerTreeGroup,
 )
 
-from json2qgis.types import (
+from json2qgis.type_defs import (
     FieldDef,
     LayerDef,
     ProjectDef,
@@ -140,7 +140,8 @@ def get_layer_edit_form(
 
     for form_item_def in layer_def["form_config"]:
         item_type = form_item_def["type"]
-        item_label = form_item_def["label"]
+        # TODO @suricactus: ensure we should use `dict().get()`` here
+        item_label = form_item_def.get("label", "")
         item_parent_id = form_item_def.get("parent_id")
 
         if item_parent_id:
@@ -155,7 +156,9 @@ def get_layer_edit_form(
 
         if item_type == "field":
             container = QgsAttributeEditorField(
-                item_label, fields.indexOf(item_label), parent
+                form_item_def["field_name"],
+                fields.indexOf(form_item_def["field_name"]),
+                parent,
             )
 
             if parent:
