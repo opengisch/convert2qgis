@@ -425,6 +425,8 @@ def set_field_widget(field: QgsField, field_def: FieldDef) -> None:
                 "map": wc.get("map", {}),
             }
         )
+    elif widget_type == "ValueRelation":
+        wc.update(wc)
     else:
         raise NotImplementedError(f"Unsupported widget type: {widget_type}")
 
