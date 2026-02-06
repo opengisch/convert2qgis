@@ -25,6 +25,8 @@ from qgis.core import (
     QgsLayerTreeLayer,
     QgsProject,
     QgsLayerTreeGroup,
+    QgsProperty,
+    QgsPropertyCollection,
 )
 
 from json2qgis.type_defs import (
@@ -206,6 +208,18 @@ def get_layer_edit_form(
     for container in containers_mapping.values():
         if container.parent() is None:
             form_config.addTab(container)
+
+    for field_def in layer_def.get("fields", []):
+        field_idx = fields.indexOf(field_def["name"])
+
+        assert field_idx != -1
+
+        if field_def.get("alias_expression"):
+            prop = QgsProperty()
+            prop.setExpressionString(field_def["alias_expression"])
+            props = QgsPropertyCollection()
+            props.setProperty(QgsEditFormConfig.DataDefinedProperty.Alias, prop)
+            form_config.setDataDefinedFieldProperties(field_def["name"], props)
 
     return form_config
 
