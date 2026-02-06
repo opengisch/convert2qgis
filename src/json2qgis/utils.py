@@ -157,14 +157,42 @@ def get_layer_edit_form(
             parent = None
 
         if item_type == "field":
-            container = QgsAttributeEditorField(
-                form_item_def["field_name"],
-                fields.indexOf(form_item_def["field_name"]),
-                parent,
-            )
+            field_idx = fields.indexOf(form_item_def["field_name"])
 
-            if parent:
-                parent.addChildElement(container)
+            assert field_idx != -1
+
+            if form_item_def.get("visibility_expression", ""):
+                parent_container = QgsAttributeEditorContainer("", parent)
+                parent_container.setVisibilityExpression(
+                    QgsOptionalExpression(
+                        QgsExpression(form_item_def["visibility_expression"])
+                    )
+                )
+                container = QgsAttributeEditorField(
+                    form_item_def["field_name"],
+                    fields.indexOf(form_item_def["field_name"]),
+                    parent_container,
+                )
+
+                parent_container.addChildElement(container)
+
+                if parent:
+                    parent.addChildElement(parent_container)
+            else:
+                container = QgsAttributeEditorField(
+                    form_item_def["field_name"],
+                    fields.indexOf(form_item_def["field_name"]),
+                    parent,
+                )
+
+                if parent:
+                    parent.addChildElement(container)
+
+            if form_item_def.get("is_read_only", False):
+                form_config.setReadOnly(field_idx, True)
+
+            if form_item_def.get("is_label_on_top", False):
+                form_config.setLabelOnTop(field_idx, True)
 
             continue
 
