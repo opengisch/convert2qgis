@@ -392,17 +392,7 @@ def set_field_widget(field: QgsField, field_def: FieldDef) -> None:
             }
         )
     elif widget_type == "Range":
-        wc.update(
-            {
-                "Min": wc.get("min", 0),
-                "Max": wc.get("max", 100),
-                "Step": wc.get("step", 1),
-                "Precision": wc.get("precision", 0),
-                "Suffix": wc.get("suffix", ""),
-                "Style": wc.get("style", "Slider"),
-                "AllowNull": wc.get("allow_null", False),
-            }
-        )
+        wc.update(wc)
     elif widget_type == "TextEdit":
         wc.update(
             {
