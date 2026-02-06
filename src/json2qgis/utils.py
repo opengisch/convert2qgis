@@ -263,6 +263,9 @@ def set_layer_fields(layer: QgsVectorLayer, layer_def: LayerDef) -> None:
         if field_def.get("alias"):
             field.setAlias(field_def["alias"])
 
+        if field_def.get("is_read_only", False):
+            field.setReadOnly(True)
+
         set_field_constraints(field, field_def)
         set_field_default_value(field, field_def)
         set_field_widget(field, field_def)
