@@ -90,10 +90,10 @@ class FieldDef(TypedDict):
 
 
 class LayerTreeItemDef(TypedDict):
-    id: str
+    item_id: str
     type: Literal["group", "layer"]
     name: str
-    parent: str
+    parent_id: str
     layer_id: str | None
     is_checked: bool
 
@@ -142,6 +142,7 @@ class WeakLayerDef(TypedDict, total=False):
     datasource_format: str
     fields: list[FieldDef]
     form_config: list[FormItemDef]
+    data: list[dict[str, Any]]
 
     is_read_only: bool
     is_identifiable: bool
@@ -159,6 +160,7 @@ class LayerDef(TypedDict):
     datasource_format: str
     fields: list[FieldDef]
     form_config: list[FormItemDef]
+    data: list[dict[str, Any]]
 
     is_read_only: bool
     is_identifiable: bool
@@ -167,16 +169,12 @@ class LayerDef(TypedDict):
     is_removable: bool
 
 
-class LayerTreeDef(TypedDict):
-    children: list[LayerTreeItemDef]
-
-
 class ProjectDef(TypedDict):
     version: str
     title: str
     author: str
     layers: list[LayerDef]
-    layer_tree: LayerTreeDef
+    layer_tree: list[LayerTreeItemDef]
 
     crs: CrsDef
 

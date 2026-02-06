@@ -443,10 +443,10 @@ def set_layer_tree(project: QgsProject, project_def: ProjectDef) -> None:
 
     layer_tree_items_mapping: dict[str, QgsLayerTreeGroup | QgsLayerTreeLayer] = {}
 
-    for layer_tree_def in project_def["layer_tree"].get("children", []):
+    for layer_tree_def in project_def["layer_tree"]:
         item_type = layer_tree_def["type"]
         item_name = layer_tree_def["name"]
-        parent_name = layer_tree_def["parent"]
+        parent_name = layer_tree_def["parent_id"]
         is_checked = layer_tree_def["is_checked"]
 
         if parent_name:
@@ -483,7 +483,7 @@ def set_layer_tree(project: QgsProject, project_def: ProjectDef) -> None:
 
         tree_item.setItemVisibilityChecked(is_checked)
 
-        layer_tree_items_mapping[layer_tree_def["id"]] = tree_item
+        layer_tree_items_mapping[layer_tree_def["item_id"]] = tree_item
 
         parent_children_count = len(parent.children())
         parent.insertChildNode(parent_children_count, tree_item)

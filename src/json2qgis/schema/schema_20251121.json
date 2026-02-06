@@ -5,7 +5,7 @@
     "LayerTreeItem": {
       "additionalProperties": false,
       "properties": {
-        "id": {
+        "layer_tree_id": {
           "type": "string"
         },
         "name": {
@@ -39,7 +39,13 @@
     "Field": {
       "additionalProperties": false,
       "properties": {
+        "field_id": {
+          "type": "string"
+        },
         "alias": {
+          "type": "string"
+        },
+        "alias_expression": {
           "type": "string"
         },
         "comment": {
@@ -105,8 +111,9 @@
             "Range",
             "DateTime",
             "ExternalResource",
-            "Checkbox",
-            "ValueMap"
+            "CheckBox",
+            "ValueMap",
+            "ValueRelation"
           ],
           "type": "string"
         }
@@ -132,7 +139,6 @@
       "required": [
         "alias",
         "comment",
-        "default_value",
         "length",
         "name",
         "precision",
@@ -145,53 +151,70 @@
       "type": "object"
     },
     "FormConfig": {
-      "additionalProperties": false,
-      "properties": {
-        "items": {
-          "items": {
-            "$ref": "#/definitions/Item"
-          },
-          "type": "array"
-        }
+      "items": {
+        "$ref": "#/definitions/FormItem"
       },
-      "required": ["items"],
-      "title": "FormConfig",
-      "type": "object"
+      "type": "array"
     },
-    "Item": {
-      "additionalProperties": false,
-      "properties": {
-        "background_color": {
-          "type": "string"
+    "FormItem": {
+      "oneOf": [
+        {
+          "properties": {
+            "item_id": {
+              "type": "string"
+            },
+            "parent_id": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "const": "field"
+            },
+            "visibility_expression": {
+              "type": "string"
+            },
+            "field_name": {
+              "type": "string"
+            },
+            "is_label_on_top": {
+              "type": "boolean"
+            }
+          },
+          "type": "object",
+          "required": ["parent_id", "type", "field_name"]
         },
-        "column_count": {
-          "type": "integer"
-        },
-        "id": {
-          "type": "string"
-        },
-        "is_collapsed": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "parent_id": {
-          "type": "string"
-        },
-        "type": {
-          "enum": ["tab", "group_box", "field", "text"],
-          "title": "Type",
-          "type": "string"
-        },
-        "visibility_expression": {
-          "type": "string"
-        },
-        "is_markdown": {
-          "type": "boolean"
+        {
+          "properties": {
+            "item_id": {
+              "type": "string"
+            },
+            "parent_id": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["tab", "group_box", "text"]
+            },
+            "visibility_expression": {
+              "type": "string"
+            },
+            "background_color": {
+              "type": "string"
+            },
+            "column_count": {
+              "type": "integer"
+            },
+            "is_collapsed": {
+              "type": "boolean"
+            },
+            "is_markdown": {
+              "type": "boolean"
+            }
+          },
+          "type": "object",
+          "required": ["item_id", "parent_id", "type", "label"]
         }
-      },
-      "required": ["id", "name", "type"],
+      ],
       "title": "Item",
       "type": "object"
     },
@@ -210,9 +233,6 @@
           },
           "type": "array"
         },
-        "author": {
-          "type": "string"
-        },
         "layer_tree": {
           "$ref": "#/definitions/LayerTree"
         },
@@ -222,8 +242,8 @@
           },
           "type": "array"
         },
-        "title": {
-          "type": "string"
+        "project": {
+          "$ref": "#/definitions/Project"
         },
         "version": {
           "type": "string"
@@ -232,10 +252,8 @@
       "required": [
         "relations",
         "polymorphic_relations",
-        "author",
         "layer_tree",
         "layers",
-        "title",
         "version"
       ],
       "title": "Empty",
@@ -244,15 +262,15 @@
     "Layer": {
       "additionalProperties": false,
       "properties": {
-        "_foreign_keys": {
+        "foreign_keys": {
           "items": {},
           "type": "array"
         },
-        "_indexes": {
+        "indices": {
           "items": {},
           "type": "array"
         },
-        "_primary_key": {
+        "primary_key": {
           "type": "string"
         },
         "is_read_only": {
@@ -295,49 +313,75 @@
             "MultiPoint",
             "MultiLineString",
             "MultiPolygon",
-            "None"
+            "NoGeometry"
           ],
           "type": "string"
         },
         "name": {
           "type": "string"
         },
-        "type": {
+        "layer_type": {
           "enum": ["vector", "raster", "mesh", "vector_tile", "point_cloud"],
           "type": "string"
         },
         "layer_id": {
           "type": "string"
+        },
+        "custom_properties": {
+          "$ref": "#/definitions/CustomProperties"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
         }
       },
       "required": [
-        "_foreign_keys",
-        "_indexes",
-        "_primary_key",
+        "foreign_keys",
+        "indices",
+        "primary_key",
         "crs",
         "datasource_format",
         "fields",
         "form_config",
         "geometry_type",
         "name",
-        "type"
+        "layer_type"
       ],
       "title": "Layer",
       "type": "object"
     },
-    "LayerTree": {
+    "Project": {
       "additionalProperties": false,
       "properties": {
-        "children": {
-          "items": {
-            "$ref": "#/definitions/LayerTreeItem"
-          },
-          "type": "array"
+        "custom_properties": {
+          "$ref": "#/definitions/CustomProperties"
+        },
+        "title": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
         }
       },
-      "required": ["children"],
-      "title": "LayerTree",
+      "required": ["title"],
+      "title": "Project",
       "type": "object"
+    },
+    "CustomProperties": {
+      "additionalProperties": {
+        "type": ["string", "number", "boolean"]
+      },
+      "type": "object"
+    },
+    "LayerTree": {
+      "children": {
+        "items": {
+          "$ref": "#/definitions/LayerTreeItem"
+        },
+        "type": "array"
+      }
     },
     "Relation": {
       "additionalProperties": false,

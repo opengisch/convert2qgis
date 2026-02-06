@@ -1,5 +1,6 @@
 import logging
 import json
+import os
 from pathlib import Path
 from typing import Any, Callable, cast
 import fastjsonschema
@@ -23,11 +24,13 @@ from json2qgis.utils import (
 
 
 from qgis.core import (
+    QgsFeature,
     QgsProject,
     QgsVectorLayer,
     QgsMapLayer,
     QgsCoordinateReferenceSystem,
     QgsVectorFileWriter,
+    Qgis,
 )
 
 logger = logging.getLogger(__name__)
@@ -59,9 +62,14 @@ class ProjectCreator:
         self.definition = definition
 
     def build(self, destination: str) -> None:
-        self._create_project(destination)
+        self._output_destination = Path(destination)
 
-    def _create_project(self, output_destination: str) -> None:
+        # TODO: ugly hack as hell, otherwise the QgsVectorFileWriter fails to write
+        os.chdir(self._output_destination.parent)
+
+        self._create_project()
+
+    def _create_project(self) -> None:
         for layer in self.definition["layers"]:
             self._create_layer(layer)
 
@@ -73,7 +81,8 @@ class ProjectCreator:
         self._project.setTitle(self.definition.get("title", ""))
         self._project.setMetadata(metadata)
 
-        self._project.write(output_destination)
+        if not self._project.write(self._output_destination.name):
+            logger.error(f"Failed to write project to {self._output_destination}")
 
     def _create_layer(self, layer_def: LayerDef) -> None:
         layer_type = layer_def["layer_type"]
@@ -102,9 +111,22 @@ class ProjectCreator:
 
         self._project.addMapLayer(layer, False)
 
+    def _get_geometry_type(self, geometry_type: str) -> str:
+        geometry_type_set = {"Point", "LineString", "Polygon", "NoGeometry"}
+
+        if geometry_type not in geometry_type_set:
+            raise NotImplementedError(f"Unsupported geometry type: {geometry_type}")
+
+        return geometry_type
+
     def _create_vector_layer(self, layer_def: LayerDef) -> QgsVectorLayer:
-        geometry_type = layer_def["geometry_type"]
-        layer = QgsVectorLayer(geometry_type, layer_def["name"], "memory")
+        geometry_type = self._get_geometry_type(layer_def["geometry_type"])
+        source = f"{geometry_type}?crs={layer_def['crs']}"
+
+        layer = QgsVectorLayer(source, layer_def["name"], "memory")
+
+        if not layer.isValid():
+            raise Qgis2JsonError(f"Vector layer invalid: {layer_def['name']}")
 
         self._set_fields(layer, layer_def)
 
@@ -124,6 +146,7 @@ class ProjectCreator:
 
         file_name = normalized_name + "." + driver_name.value.lower()
 
+        # TODO @suricactus: consider switching to `QgsVectorFileWriter.create()`
         write_result, error_message, new_file, _new_layer = (
             QgsVectorFileWriter.writeAsVectorFormatV3(
                 layer,
@@ -134,7 +157,9 @@ class ProjectCreator:
         )
 
         if write_result != QgsVectorFileWriter.WriterError.NoError:
-            raise Qgis2JsonError(f"Error writing vector layer: {error_message}")
+            raise Qgis2JsonError(
+                f"Error writing vector layer: {write_result} {error_message}"
+            )
 
         new_layer = QgsVectorLayer(new_file, layer_def["name"], layer_provider_lib)
 
@@ -147,6 +172,10 @@ class ProjectCreator:
                 new_layer.editFormConfig(),
             ),
         )
+
+        if layer_def.get("data"):
+            self._add_vector_layer_data(new_layer, layer_def)
+
         new_layer.setReadOnly(
             layer_def.get("is_read_only", False),
         )
@@ -165,6 +194,35 @@ class ProjectCreator:
 
         layer_data_provider.addAttributes(fields)
         layer.updateFields()
+
+    def _add_vector_layer_data(
+        self, layer: QgsVectorLayer, layer_def: LayerDef
+    ) -> None:
+        layer.startEditing()
+        layer_data_provider = layer.dataProvider()
+
+        if not bool(layer_data_provider) or not layer_data_provider.isValid():
+            raise UnknownVectorLayerDataproviderError(
+                f"Failed to get data provider for layer 1: {layer_def['name']}"
+            )
+
+        if layer.geometryType() != Qgis.GeometryType.Null:
+            raise NotImplementedError(
+                f"Cannot edit geometry layer: {layer_def['name']} has geometry {layer.geometryType()}"
+            )
+
+        features = []
+        for feature_def in layer_def.get("data", []):
+            feature = QgsFeature(layer.fields())
+
+            for field_name, value in feature_def.items():
+                feature.setAttribute(field_name, value)
+
+            features.append(feature)
+
+        layer_data_provider.addFeatures(features)
+        layer.updateExtents()
+        layer.commitChanges()
 
     def _set_relation(self):
         relation_manager = self._project.relationManager()
