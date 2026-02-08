@@ -79,10 +79,29 @@ class ProjectCreator:
         self._create_project()
 
     def _create_project(self) -> None:
-        for layer in self.definition["layers"]:
-            self._create_layer(layer)
+        for layer_def in self.definition["layers"]:
+            self._create_layer(layer_def)
 
         set_layer_tree(self._project, self.definition)
+
+        self._set_relations()
+
+        for layer_def in self.definition["layers"]:
+            if layer_def["layer_type"] != "vector":
+                continue
+
+            layer = self._project.mapLayer(layer_def["layer_id"])
+
+            assert layer
+            assert isinstance(layer, QgsVectorLayer)
+
+            layer.setEditFormConfig(
+                get_layer_edit_form(
+                    layer.fields(),
+                    layer_def,
+                    layer.editFormConfig(),
+                ),
+            )
 
         metadata = self._project.metadata()
         metadata.setAuthor(self.definition.get("author", ""))
@@ -175,14 +194,6 @@ class ProjectCreator:
 
         set_layer_fields(new_layer, layer_def)
 
-        new_layer.setEditFormConfig(
-            get_layer_edit_form(
-                new_layer.fields(),
-                layer_def,
-                new_layer.editFormConfig(),
-            ),
-        )
-
         if layer_def.get("data"):
             self._add_vector_layer_data(new_layer, layer_def)
 
@@ -234,7 +245,7 @@ class ProjectCreator:
         layer.updateExtents()
         layer.commitChanges()
 
-    def _set_relation(self):
+    def _set_relations(self):
         relation_manager = self._project.relationManager()
 
         assert relation_manager is not None

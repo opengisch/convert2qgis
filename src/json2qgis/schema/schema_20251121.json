@@ -168,7 +168,7 @@
             },
             "type": {
               "type": "string",
-              "const": "field"
+              "enum": ["field", "relation"]
             },
             "visibility_expression": {
               "type": "string"

@@ -17,6 +17,7 @@ from qgis.core import (
     QgsAttributeEditorField,
     QgsAttributeEditorTextElement,
     QgsAttributeEditorContainer,
+    QgsAttributeEditorRelation,
     QgsExpression,
     QgsOptionalExpression,
     QgsVectorLayer,
@@ -193,6 +194,36 @@ def get_layer_edit_form(
 
             if form_item_def.get("is_label_on_top", False):
                 form_config.setLabelOnTop(field_idx, True)
+
+            continue
+
+        elif item_type == "relation":
+            if form_item_def.get("visibility_expression", ""):
+                parent_container = QgsAttributeEditorContainer("", parent)
+                parent_container.setVisibilityExpression(
+                    QgsOptionalExpression(
+                        QgsExpression(form_item_def["visibility_expression"])
+                    )
+                )
+                container = QgsAttributeEditorRelation(
+                    form_item_def["field_name"],
+                    form_item_def["item_id"],
+                    parent_container,
+                )
+
+                parent_container.addChildElement(container)
+
+                if parent:
+                    parent.addChildElement(parent_container)
+            else:
+                container = QgsAttributeEditorRelation(
+                    form_item_def["field_name"],
+                    form_item_def["item_id"],
+                    parent,
+                )
+
+                if parent:
+                    parent.addChildElement(container)
 
             continue
 
