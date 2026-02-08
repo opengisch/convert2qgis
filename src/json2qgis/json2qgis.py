@@ -65,11 +65,16 @@ class ProjectCreator:
         self._project = project
         self.definition = definition
 
-    def build(self, destination: str) -> None:
-        self._output_destination = Path(destination)
+    def build(self, output_dir: str) -> None:
+        self._output_dir = Path(output_dir)
 
-        # TODO: ugly hack as hell, otherwise the QgsVectorFileWriter fails to write
-        os.chdir(self._output_destination.parent)
+        self._output_dir.mkdir(parents=True, exist_ok=True)
+
+        if self._output_dir.is_file():
+            raise Qgis2JsonError(f"Output directory is a file: {self._output_dir}")
+
+        # TODO: ugly hack as hell, otherwise the `QgsVectorFileWriter` writes wrong paths
+        os.chdir(self._output_dir)
 
         self._create_project()
 
@@ -85,8 +90,9 @@ class ProjectCreator:
         self._project.setTitle(self.definition.get("title", ""))
         self._project.setMetadata(metadata)
 
-        if not self._project.write(self._output_destination.name):
-            logger.error(f"Failed to write project to {self._output_destination}")
+        project_filename = "project.qgs"
+        if not self._project.write(str(project_filename)):
+            logger.error(f"Failed to write project to {project_filename}")
 
     def _create_layer(self, layer_def: LayerDef) -> None:
         layer_type = layer_def["layer_type"]
