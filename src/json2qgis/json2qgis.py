@@ -53,7 +53,11 @@ class ProjectCreator:
     _project: QgsProject
 
     def __init__(self, definition: ProjectDef) -> None:
-        schema_validator(cast(dict[str, Any], definition))
+        try:
+            schema_validator(cast(dict[str, Any], definition))
+        except fastjsonschema.JsonSchemaException as e:
+            raise Qgis2JsonError(f'{e} with data "{getattr(e, "value", None)}"')
+
         project = QgsProject().instance()
 
         assert project, "Failed to get `QgsProject` instance. Very unlikely error."
