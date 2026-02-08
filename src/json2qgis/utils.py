@@ -154,7 +154,7 @@ def get_layer_edit_form(
                     f"Parent with ID '{item_parent_id}' not found for form item '{item_label}'"
                 )
         else:
-            parent = None
+            parent = form_config.invisibleRootContainer()
 
         if item_type == "field":
             field_idx = fields.indexOf(form_item_def["field_name"])

@@ -164,7 +164,7 @@
               "type": "string"
             },
             "parent_id": {
-              "type": "string"
+              "type": ["string", "null"]
             },
             "type": {
               "type": "string",
@@ -188,8 +188,11 @@
             "item_id": {
               "type": "string"
             },
-            "parent_id": {
+            "label": {
               "type": "string"
+            },
+            "parent_id": {
+              "type": ["string", "null"]
             },
             "type": {
               "type": "string",
