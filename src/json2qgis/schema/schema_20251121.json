@@ -97,7 +97,7 @@
           "type": "boolean"
         },
         "type": {
-          "enum": ["string", "integer", "real", "boolean", "datetime"],
+          "enum": ["string", "integer", "real", "boolean", "datetime", "date"],
           "type": "string"
         },
         "widget_config": {
