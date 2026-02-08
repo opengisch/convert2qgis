@@ -143,6 +143,8 @@ class WeakLayerDef(TypedDict, total=False):
     fields: list[FieldDef]
     form_config: list[FormItemDef]
     data: list[dict[str, Any]]
+    primary_key: str
+    indices: list[str]
 
     is_read_only: bool
     is_identifiable: bool
@@ -161,6 +163,8 @@ class LayerDef(TypedDict):
     fields: list[FieldDef]
     form_config: list[FormItemDef]
     data: list[dict[str, Any]]
+    primary_key: str
+    indices: list[str]
 
     is_read_only: bool
     is_identifiable: bool
