@@ -386,16 +386,16 @@
     "Relation": {
       "additionalProperties": false,
       "properties": {
-        "id": {
+        "relation_id": {
           "type": "string"
         },
         "name": {
           "type": "string"
         },
-        "from_layer": {
+        "from_layer_id": {
           "type": "string"
         },
-        "to_layer": {
+        "to_layer_id": {
           "type": "string"
         },
         "field_pairs": {
@@ -420,7 +420,7 @@
           "enum": ["association", "composition"]
         }
       },
-      "required": ["id", "name", "from_layer", "to_layer"],
+      "required": ["relation_id", "name", "from_layer_id", "to_layer_id"],
       "title": "Relation",
       "type": "object"
     },
