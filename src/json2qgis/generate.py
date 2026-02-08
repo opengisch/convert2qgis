@@ -69,6 +69,7 @@ def generate_form_item_def(**kwargs) -> FormItemDef:
             "is_collapsed": False,
             "column_count": 1,
             "is_markdown": False,
+            "is_label_on_top": True,
             **kwargs,
         },
     )
