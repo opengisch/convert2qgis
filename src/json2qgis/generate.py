@@ -63,7 +63,7 @@ def generate_form_item_def(**kwargs) -> FormItemDef:
             "field_name": None,
             "label": "",
             "type": "group_box",
-            "parent_id": "",
+            "parent_id": None,
             "visibility_expression": "",
             "background_color": "",
             "is_collapsed": False,
