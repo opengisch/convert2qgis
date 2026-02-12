@@ -285,52 +285,50 @@ def sample_project_def(sample_layer_def):
         "title": "Sample Project",
         "author": "Test Author",
         "layers": [sample_layer_def],
-        "layer_tree": {
-            "children": [
-                {
-                    "id": "my_group_parent",
-                    "is_checked": True,
-                    "layer_id": "",
-                    "name": "My group parent",
-                    "parent": "",
-                    "type": "group",
-                },
-                {
-                    "id": "my_group_child",
-                    "is_checked": True,
-                    "layer_id": "",
-                    "name": "My group child",
-                    "parent": "my_group_parent",
-                    "type": "group",
-                },
-                {
-                    "id": "my_child",
-                    "is_checked": True,
-                    "layer_id": "d942d84e-bcbf-430b-bf5d-9b39caeabf71",
-                    "name": "My test layer`",
-                    "parent": "my_group_child",
-                    "type": "layer",
-                },
-                {
-                    "id": "my_group_child_two",
-                    "is_checked": False,
-                    "is_mutually_exclusive": True,
-                    "layer_id": "",
-                    "name": "My test subgroup",
-                    "parent": "my_group_child",
-                    "type": "group",
-                },
-                {
-                    "id": "my_second_parent",
-                    "is_checked": True,
-                    "is_mutually_exclusive": True,
-                    "layer_id": "",
-                    "name": "My second parent",
-                    "parent": "",
-                    "type": "group",
-                },
-            ]
-        },
+        "layer_tree": [
+            {
+                "id": "my_group_parent",
+                "is_checked": True,
+                "layer_id": "",
+                "name": "My group parent",
+                "parent": "",
+                "type": "group",
+            },
+            {
+                "id": "my_group_child",
+                "is_checked": True,
+                "layer_id": "",
+                "name": "My group child",
+                "parent": "my_group_parent",
+                "type": "group",
+            },
+            {
+                "id": "my_child",
+                "is_checked": True,
+                "layer_id": "d942d84e-bcbf-430b-bf5d-9b39caeabf71",
+                "name": "My test layer`",
+                "parent": "my_group_child",
+                "type": "layer",
+            },
+            {
+                "id": "my_group_child_two",
+                "is_checked": False,
+                "is_mutually_exclusive": True,
+                "layer_id": "",
+                "name": "My test subgroup",
+                "parent": "my_group_child",
+                "type": "group",
+            },
+            {
+                "id": "my_second_parent",
+                "is_checked": True,
+                "is_mutually_exclusive": True,
+                "layer_id": "",
+                "name": "My second parent",
+                "parent": "",
+                "type": "group",
+            },
+        ],
     }
 
 
@@ -787,13 +785,13 @@ class TestUtils:
             {
                 "widget_type": "Range",
                 "widget_config": {
-                    "min": 10,
-                    "max": 20,
-                    "step": 2,
-                    "precision": 3,
-                    "suffix": " m",
-                    "style": "slider",
-                    "allow_null": False,
+                    "Min": 10,
+                    "Max": 20,
+                    "Step": 2,
+                    "Precision": 3,
+                    "Suffix": " m",
+                    "Style": "slider",
+                    "AllowNull": False,
                 },
             }
         )

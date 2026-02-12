@@ -379,12 +379,10 @@
       "type": "object"
     },
     "LayerTree": {
-      "children": {
-        "items": {
-          "$ref": "#/definitions/LayerTreeItem"
-        },
-        "type": "array"
-      }
+      "items": {
+        "$ref": "#/definitions/LayerTreeItem"
+      },
+      "type": "array"
     },
     "Relation": {
       "additionalProperties": false,

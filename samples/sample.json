@@ -30,52 +30,50 @@
     }
   ],
   "author": "Ivan Ivanov @suricactus",
-  "layer_tree": {
-    "children": [
-      {
-        "id": "my_group_parent",
-        "is_checked": true,
-        "layer_id": "",
-        "name": "My group parent",
-        "parent": "",
-        "type": "group"
-      },
-      {
-        "id": "my_group_child",
-        "is_checked": true,
-        "layer_id": "",
-        "name": "My group child",
-        "parent": "my_group_parent",
-        "type": "group"
-      },
-      {
-        "id": "my_child",
-        "is_checked": true,
-        "layer_id": "d942d84e-bcbf-430b-bf5d-9b39caeabf71",
-        "name": "My test layer",
-        "parent": "my_group_child",
-        "type": "layer"
-      },
-      {
-        "id": "my_group_child_two",
-        "is_checked": false,
-        "is_mutually_exclusive": true,
-        "layer_id": "",
-        "name": "My test subgroup",
-        "parent": "my_group_child",
-        "type": "group"
-      },
-      {
-        "id": "my_second_parent",
-        "is_checked": true,
-        "is_mutually_exclusive": true,
-        "layer_id": "",
-        "name": "My second parent",
-        "parent": "",
-        "type": "group"
-      }
-    ]
-  },
+  "layer_tree": [
+    {
+      "id": "my_group_parent",
+      "is_checked": true,
+      "layer_id": "",
+      "name": "My group parent",
+      "parent": "",
+      "type": "group"
+    },
+    {
+      "id": "my_group_child",
+      "is_checked": true,
+      "layer_id": "",
+      "name": "My group child",
+      "parent": "my_group_parent",
+      "type": "group"
+    },
+    {
+      "id": "my_child",
+      "is_checked": true,
+      "layer_id": "d942d84e-bcbf-430b-bf5d-9b39caeabf71",
+      "name": "My test layer",
+      "parent": "my_group_child",
+      "type": "layer"
+    },
+    {
+      "id": "my_group_child_two",
+      "is_checked": false,
+      "is_mutually_exclusive": true,
+      "layer_id": "",
+      "name": "My test subgroup",
+      "parent": "my_group_child",
+      "type": "group"
+    },
+    {
+      "id": "my_second_parent",
+      "is_checked": true,
+      "is_mutually_exclusive": true,
+      "layer_id": "",
+      "name": "My second parent",
+      "parent": "",
+      "type": "group"
+    }
+  ],
   "layers": [
     {
       "is_read_only": false,
