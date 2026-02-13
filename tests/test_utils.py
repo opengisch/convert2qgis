@@ -1,33 +1,32 @@
 import pytest
+from qgis.core import (
+    Qgis,
+    QgsAttributeEditorContainer,
+    QgsAttributeEditorField,
+    QgsField,
+    QgsFieldConstraints,
+    QgsMapLayer,
+    QgsProject,
+    QgsVectorLayer,
+)
+from qgis.PyQt.QtCore import QMetaType
 
 from json2qgis.utils import (
-    get_layer_edit_form,
-    normalize_name,
-    get_constraint_strength,
-    get_attribute_form_container_type,
-    get_layer_flags,
+    check_output,
     create_field,
     create_fields,
-    create_relation,
     create_polymorphic_relation,
-    set_field_default_value,
+    create_relation,
+    get_attribute_form_container_type,
+    get_constraint_strength,
+    get_layer_edit_form,
+    get_layer_flags,
+    normalize_name,
     set_field_constraints,
+    set_field_default_value,
     set_field_widget,
     set_layer_fields,
     set_layer_tree,
-    check_output,
-)
-
-from qgis.PyQt.QtCore import QMetaType
-from qgis.core import (
-    QgsFieldConstraints,
-    Qgis,
-    QgsField,
-    QgsMapLayer,
-    QgsProject,
-    QgsAttributeEditorContainer,
-    QgsAttributeEditorField,
-    QgsVectorLayer,
 )
 
 

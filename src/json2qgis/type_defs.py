@@ -1,8 +1,6 @@
 from enum import StrEnum
-
-from typing import Any, Literal, TypedDict
 from pathlib import Path
-
+from typing import Any, Literal, TypedDict
 
 RelationStrength = Literal["association", "composition"]
 ConstraintStrength = Literal["hard", "soft", "not_set"]

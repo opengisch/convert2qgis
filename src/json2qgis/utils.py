@@ -1,55 +1,51 @@
-import json
 import functools
+import json
 import logging
-from typing import Any
-from unidecode import unidecode
-from pathlib import Path
 from collections.abc import Callable
+from pathlib import Path
+from typing import Any
 
 import fastjsonschema
-from fastjsonschema.ref_resolver import resolve_path
-
-
 import markdown
-
-from qgis.PyQt.QtCore import QMetaType
-from qgis.PyQt.QtGui import QColor
+from fastjsonschema.ref_resolver import resolve_path
 from qgis.core import (
     Qgis,
-    QgsFieldConstraints,
-    QgsField,
-    QgsDefaultValue,
-    QgsEditorWidgetSetup,
-    QgsMapLayer,
-    QgsFields,
-    QgsEditFormConfig,
-    QgsAttributeEditorField,
-    QgsAttributeEditorTextElement,
     QgsAttributeEditorContainer,
+    QgsAttributeEditorField,
     QgsAttributeEditorRelation,
+    QgsAttributeEditorTextElement,
+    QgsDefaultValue,
+    QgsEditFormConfig,
+    QgsEditorWidgetSetup,
     QgsExpression,
-    QgsOptionalExpression,
-    QgsVectorLayer,
-    QgsRelation,
-    QgsPolymorphicRelation,
-    QgsLayerTreeLayer,
-    QgsProject,
+    QgsField,
+    QgsFieldConstraints,
+    QgsFields,
     QgsLayerTreeGroup,
+    QgsLayerTreeLayer,
+    QgsMapLayer,
+    QgsOptionalExpression,
+    QgsPolymorphicRelation,
+    QgsProject,
     QgsProperty,
     QgsPropertyCollection,
+    QgsRelation,
+    QgsVectorLayer,
 )
+from qgis.PyQt.QtCore import QMetaType
+from qgis.PyQt.QtGui import QColor
+from unidecode import unidecode
 
+from json2qgis.errors import MissingParentError, Qgis2JsonError
 from json2qgis.type_defs import (
     FieldDef,
     LayerDef,
+    PolymorphicRelationDef,
     ProjectDef,
     RelationDef,
-    PolymorphicRelationDef,
     RelationStrength,
     VectorLayerDataprovider,
 )
-from json2qgis.errors import MissingParentError, Qgis2JsonError
-
 
 logger = logging.getLogger(__name__)
 

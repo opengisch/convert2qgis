@@ -2,35 +2,33 @@ import logging
 import os
 from pathlib import Path
 from typing import Any, cast
+
 import fastjsonschema
+from qgis.core import (
+    Qgis,
+    QgsCoordinateReferenceSystem,
+    QgsFeature,
+    QgsMapLayer,
+    QgsProject,
+    QgsVectorFileWriter,
+    QgsVectorLayer,
+)
 
-
-from json2qgis.type_defs import LayerDef, ProjectDef, VectorLayerDataprovider
 from json2qgis.errors import (
     Qgis2JsonError,
     UnknownCrsSystem,
     UnknownVectorLayerDataproviderError,
 )
+from json2qgis.type_defs import LayerDef, ProjectDef, VectorLayerDataprovider
 from json2qgis.utils import (
-    get_schema_validator,
-    create_relation,
-    normalize_name,
     create_fields,
-    get_layer_flags,
+    create_relation,
     get_layer_edit_form,
+    get_layer_flags,
+    get_schema_validator,
+    normalize_name,
     set_layer_fields,
     set_layer_tree,
-)
-
-
-from qgis.core import (
-    QgsFeature,
-    QgsProject,
-    QgsVectorLayer,
-    QgsMapLayer,
-    QgsCoordinateReferenceSystem,
-    QgsVectorFileWriter,
-    Qgis,
 )
 
 logger = logging.getLogger(__name__)
