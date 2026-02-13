@@ -158,10 +158,16 @@
         {
           "properties": {
             "item_id": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1
+            },
+            "field_name": {
+              "type": "string",
+              "minLength": 1
             },
             "parent_id": {
-              "type": ["string", "null"]
+              "type": ["string", "null"],
+              "minLength": 1
             },
             "type": {
               "type": "string",
@@ -170,16 +176,19 @@
             "visibility_expression": {
               "type": "string"
             },
-            "field_name": {
-              "type": "string"
-            },
             "is_label_on_top": {
+              "type": "boolean"
+            },
+            "is_read_only": {
+              "type": "boolean"
+            },
+            "show_label": {
               "type": "boolean"
             }
           },
           "type": "object",
           "additionalProperties": false,
-          "required": ["parent_id", "type", "field_name"]
+          "required": ["item_id", "parent_id", "type", "field_name"]
         },
         {
           "properties": {
@@ -296,6 +305,9 @@
         },
         "datasource_format": {
           "enum": ["gpkg", "memory"],
+          "type": "string"
+        },
+        "display_expression": {
           "type": "string"
         },
         "fields": {

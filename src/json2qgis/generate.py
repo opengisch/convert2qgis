@@ -60,12 +60,10 @@ def generate_form_item_def(**kwargs) -> FormItemDef:
         return cast(
             FormItemDef,
             {
-                "item_id": str(uuid.uuid4()),
                 "field_name": None,
-                "label": "",
-                "type": "field",
+                "item_id": str(uuid.uuid4()),
                 "parent_id": None,
-                "visibility_expression": "",
+                "type": "field",
                 **kwargs,
             },
         )
@@ -75,14 +73,8 @@ def generate_form_item_def(**kwargs) -> FormItemDef:
         {
             "item_id": str(uuid.uuid4()),
             "label": "",
-            "type": "group_box",
             "parent_id": None,
-            "visibility_expression": "",
-            "background_color": "",
-            "is_collapsed": False,
-            "column_count": 1,
-            "is_markdown": False,
-            "is_label_on_top": True,
+            "type": "group_box",
             **kwargs,
         },
     )
