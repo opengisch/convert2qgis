@@ -65,6 +65,7 @@ def generate_form_item_def(**kwargs) -> FormItemDef:
                 "item_id": str(uuid.uuid4()),
                 "parent_id": None,
                 "type": "field",
+                "is_label_on_top": True,
                 **kwargs,
             },
         )
