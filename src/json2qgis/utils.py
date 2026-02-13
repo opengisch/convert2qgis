@@ -196,29 +196,22 @@ def get_layer_edit_form(
 
     containers_mapping: dict[str, QgsAttributeEditorContainer] = {}
 
-    print("WWW001")
-
     for form_item_def in layer_def["form_config"]:
         item_type = form_item_def["type"]
         # TODO @suricactus: ensure we should use `dict().get()`` here
         item_label = form_item_def.get("label", "")
         item_parent_id = form_item_def.get("parent_id")
 
-        print("WWW002", item_type, item_label, item_parent_id)
-
         parent = None
         if item_parent_id:
             parent = containers_mapping.get(item_parent_id)
-            print("WWW003", parent)
 
             if not parent:
-                print("WWW004")
                 raise MissingParentError(
                     f"Parent with ID '{item_parent_id}' not found for form item '{item_label}'"
                 )
         else:
             parent = form_config.invisibleRootContainer()
-            print("WWW003.1", parent)
 
         if item_type == "field":
             field_idx = fields.indexOf(form_item_def["field_name"])
@@ -298,9 +291,7 @@ def get_layer_edit_form(
 
             container = QgsAttributeEditorTextElement(item_label, parent)
 
-            print("WWW005", container)
             if parent:
-                print("WWW006", parent)
                 parent.addChildElement(container)
 
             container.setText(item_label)
