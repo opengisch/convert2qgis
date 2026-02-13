@@ -56,11 +56,24 @@ def generate_layer_def(**kwargs) -> LayerDef:
 
 
 def generate_form_item_def(**kwargs) -> FormItemDef:
+    if kwargs.get("type") == "field":
+        return cast(
+            FormItemDef,
+            {
+                "item_id": str(uuid.uuid4()),
+                "field_name": None,
+                "label": "",
+                "type": "field",
+                "parent_id": None,
+                "visibility_expression": "",
+                **kwargs,
+            },
+        )
+
     return cast(
         FormItemDef,
         {
             "item_id": str(uuid.uuid4()),
-            "field_name": None,
             "label": "",
             "type": "group_box",
             "parent_id": None,
