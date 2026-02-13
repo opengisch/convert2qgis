@@ -15,6 +15,7 @@ from json2qgis.utils import (
     set_field_widget,
     set_layer_fields,
     set_layer_tree,
+    check_output,
 )
 
 from qgis.PyQt.QtCore import QMetaType
@@ -27,7 +28,6 @@ from qgis.core import (
     QgsAttributeEditorContainer,
     QgsAttributeEditorField,
     QgsVectorLayer,
-    QgsAttributeEditorTextElement,
 )
 
 
@@ -37,9 +37,9 @@ def sample_field():
 
 
 @pytest.fixture
+@check_output("definitions/Field")
 def sample_field_def():
     return {
-        "id": "sample_field",
         "name": "Sample Field",
         "type": "string",
         "length": 0,
@@ -52,7 +52,7 @@ def sample_field_def():
         "constraint_expression_strength": "not_set",
         "is_unique": False,
         "is_unique_strength": "not_set",
-        "default_value": None,
+        "default_value": "",
         "set_default_value_on_update": False,
         "alias": "Sample Field Alias",
         "widget_type": "TextEdit",
@@ -61,10 +61,10 @@ def sample_field_def():
 
 
 @pytest.fixture
+@check_output("definitions/Layer")
 def sample_layer_def(sample_field_def):
     integer_field = {
         **sample_field_def,
-        "id": "field_integer",
         "name": "Field integer",
         "type": "integer",
         "length": 0,
@@ -88,7 +88,6 @@ def sample_layer_def(sample_field_def):
     }
     real_field = {
         **sample_field_def,
-        "id": "field_real",
         "name": "Field real",
         "type": "real",
         "length": 0,
@@ -114,7 +113,6 @@ def sample_layer_def(sample_field_def):
     }
     bool_field = {
         **sample_field_def,
-        "id": "field_bool",
         "name": "Field bool",
         "type": "boolean",
         "length": 0,
@@ -128,7 +126,6 @@ def sample_layer_def(sample_field_def):
     }
     string_field = {
         **sample_field_def,
-        "id": "field_string",
         "name": "Field string",
         "type": "string",
         "length": 0,
@@ -145,7 +142,6 @@ def sample_layer_def(sample_field_def):
     }
     date_field = {
         **sample_field_def,
-        "id": "field_date",
         "name": "Field date",
         "type": "date",
         "length": 0,
@@ -166,7 +162,6 @@ def sample_layer_def(sample_field_def):
     }
     datetime_field = {
         **sample_field_def,
-        "id": "field_datetime",
         "name": "Field datetime",
         "type": "datetime",
         "length": 0,
@@ -187,14 +182,19 @@ def sample_layer_def(sample_field_def):
     }
 
     return {
-        "id": "sample_layer",
+        "layer_id": "sample_layer",
         "name": "Sample Layer",
-        "type": "vector",
+        "layer_type": "vector",
         "datasource_format": "memory",
         "is_identifiable": False,
         "is_removable": False,
         "is_searchable": False,
         "is_private": False,
+        "crs": "EPSG:4326",
+        "geometry_type": "NoGeometry",
+        "foreign_keys": [],
+        "indices": [],
+        "primary_key": "",
         "fields": [
             integer_field,
             real_field,
@@ -207,6 +207,7 @@ def sample_layer_def(sample_field_def):
             {
                 "column_count": 3,
                 "item_id": "main_tab",
+                "parent_id": None,
                 "label": "Main",
                 "type": "tab",
             },
@@ -222,37 +223,31 @@ def sample_layer_def(sample_field_def):
             },
             {
                 "item_id": "caffdaed-fbec-4bf1-a21e-ba84360184e9",
-                "field_name": "uuid",
+                "field_name": "Field integer",
                 "parent_id": "main_tab",
                 "type": "field",
             },
             {
                 "item_id": "61c6b488-9726-4f1b-b6a7-ca3b7c61293b",
-                "field_name": "name",
+                "field_name": "Field real",
                 "parent_id": "basic_info_group",
                 "type": "field",
             },
             {
                 "item_id": "79002a29-036a-4b1c-baef-49ab49f88a7c",
-                "field_name": "elevation",
+                "field_name": "Field bool",
                 "parent_id": "basic_info_group",
                 "type": "field",
             },
             {
                 "item_id": "c9c7aadc-ff12-4cb0-92a7-f13e0705705a",
-                "field_name": "variant_type",
+                "field_name": "Field string",
                 "parent_id": "basic_info_group",
                 "type": "field",
             },
             {
                 "item_id": "c5855c64-ef0d-4330-af90-a357a1848016",
-                "field_name": "created_at",
-                "parent_id": "basic_info_group",
-                "type": "field",
-            },
-            {
-                "item_id": "45416464-85cd-43f1-bfa9-b96c15cc76a0",
-                "field_name": "updated_at",
+                "field_name": "Field datetime",
                 "parent_id": "basic_info_group",
                 "type": "field",
             },
@@ -260,10 +255,11 @@ def sample_layer_def(sample_field_def):
                 "item_id": "attachment_tab",
                 "label": "Attachment",
                 "type": "tab",
+                "parent_id": None,
             },
             {
                 "item_id": "5b93e54f-0f40-4524-aee2-78c6810d7d8a",
-                "field_name": "attachment",
+                "field_name": "Field string",
                 "parent_id": "attachment_tab",
                 "type": "field",
             },
@@ -279,60 +275,66 @@ def sample_layer_def(sample_field_def):
 
 
 @pytest.fixture
+@check_output("definitions/Json2qgisSchema")
 def sample_project_def(sample_layer_def):
     return {
         "version": "1.0.0",
-        "title": "Sample Project",
-        "author": "Test Author",
+        "project": {
+            "author": "Test Author",
+            "title": "Sample Project",
+        },
         "layers": [sample_layer_def],
         "layer_tree": [
             {
-                "id": "my_group_parent",
+                "item_id": "my_group_parent",
                 "is_checked": True,
                 "layer_id": "",
                 "name": "My group parent",
-                "parent": "",
+                "parent_id": "",
                 "type": "group",
             },
             {
-                "id": "my_group_child",
+                "item_id": "my_group_child",
                 "is_checked": True,
                 "layer_id": "",
                 "name": "My group child",
-                "parent": "my_group_parent",
+                "parent_id": "my_group_parent",
                 "type": "group",
             },
             {
-                "id": "my_child",
+                "item_id": "my_child",
                 "is_checked": True,
                 "layer_id": "d942d84e-bcbf-430b-bf5d-9b39caeabf71",
-                "name": "My test layer`",
-                "parent": "my_group_child",
+                "name": "My test layer",
+                "parent_id": "my_group_child",
                 "type": "layer",
             },
             {
-                "id": "my_group_child_two",
+                "item_id": "my_group_child_two",
                 "is_checked": False,
                 "is_mutually_exclusive": True,
                 "layer_id": "",
                 "name": "My test subgroup",
-                "parent": "my_group_child",
+                "parent_id": "my_group_child",
                 "type": "group",
             },
             {
-                "id": "my_second_parent",
+                "item_id": "my_second_parent",
                 "is_checked": True,
                 "is_mutually_exclusive": True,
                 "layer_id": "",
                 "name": "My second parent",
-                "parent": "",
+                "parent_id": "",
                 "type": "group",
             },
         ],
+        "relations": [],
+        "polymorphic_relations": [],
     }
 
 
 @pytest.fixture
+@check_output("definitions/Relation")
 def sample_relation_def():
     return {
         "relation_id": "f0eb51d8-77df-4b2f-8f54-826464742ee5",
@@ -350,6 +352,7 @@ def sample_relation_def():
 
 
 @pytest.fixture
+@check_output("definitions/PolymorphicRelation")
 def sample_polymorphic_relation_def():
     return {
         "relation_id": "a1b2c3d4-e5f6-7890-abcd-ef0123456789",
@@ -1031,6 +1034,7 @@ class TestUtils:
 
         tabs = form_config.tabs()
 
+        assert len(tabs) == 2
         assert tabs[0].name() == "Main"
         assert tabs[1].name() == "Attachment"
 
@@ -1046,25 +1050,25 @@ class TestUtils:
         assert basic_info_group.type() == Qgis.AttributeEditorContainerType.GroupBox
         assert basic_info_group.columnCount() == 2
         assert basic_info_group.visibilityExpression().data().expression() == "1 > 0"
-        assert len(basic_info_group.children()) == 5
+        assert len(basic_info_group.children()) == 4
 
         assert isinstance(basic_info_group.children()[0], QgsAttributeEditorField)
-        assert basic_info_group.children()[0].name() == "name"
+        assert basic_info_group.children()[0].name() == "Field real"
         assert isinstance(basic_info_group.children()[1], QgsAttributeEditorField)
-        assert basic_info_group.children()[1].name() == "elevation"
+        assert basic_info_group.children()[1].name() == "Field bool"
         assert isinstance(basic_info_group.children()[2], QgsAttributeEditorField)
-        assert basic_info_group.children()[2].name() == "variant_type"
+        assert basic_info_group.children()[2].name() == "Field string"
         assert isinstance(basic_info_group.children()[3], QgsAttributeEditorField)
-        assert basic_info_group.children()[3].name() == "created_at"
-        assert isinstance(basic_info_group.children()[4], QgsAttributeEditorField)
-        assert basic_info_group.children()[4].name() == "updated_at"
+        assert basic_info_group.children()[3].name() == "Field datetime"
 
         assert isinstance(tabs[0].children()[1], QgsAttributeEditorField)
-        assert tabs[0].children()[1].name() == "uuid"
+        assert tabs[0].children()[1].name() == "Field integer"
 
-        assert isinstance(tabs[1].children()[0], QgsAttributeEditorField)
-        assert tabs[1].children()[0].name() == "attachment"
-        assert isinstance(tabs[1].children()[1], QgsAttributeEditorTextElement)
+        assert isinstance(tabs[0].children()[0], QgsAttributeEditorContainer)
+        assert tabs[1].children()[0].name() == "Field string"
+        # NOTE in theory we should be able to check for `isinstance(tabs[1].children()[1].type(), QgsAttributeEditorTextElement)`,
+        # but unfortunately we get the abstract class `QgsAttributeEditorElement` as a type and we need to check the type value instead
+        assert tabs[1].children()[1].type() == Qgis.AttributeEditorType.TextElement
         assert tabs[1].children()[1].name() == "<p>Hello <em>World</em></p>"
 
     def test_set_layer_fields(self, sample_layer_def):

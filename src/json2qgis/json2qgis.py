@@ -1,8 +1,7 @@
 import logging
-import json
 import os
 from pathlib import Path
-from typing import Any, Callable, cast
+from typing import Any, cast
 import fastjsonschema
 
 
@@ -13,6 +12,7 @@ from json2qgis.errors import (
     UnknownVectorLayerDataproviderError,
 )
 from json2qgis.utils import (
+    get_schema_validator,
     create_relation,
     normalize_name,
     create_fields,
@@ -36,17 +36,7 @@ from qgis.core import (
 logger = logging.getLogger(__name__)
 
 
-def get_schema() -> Callable[[dict[str, Any]], None]:
-    schema_json = (
-        Path(__file__).parent.joinpath("./schema/schema_20251121.json").read_text()
-    )
-    schema = json.loads(schema_json)
-    schema_validator = fastjsonschema.compile(schema)
-
-    return schema_validator  # type: ignore
-
-
-schema_validator = get_schema()
+schema_validator = get_schema_validator()
 
 
 class ProjectCreator:

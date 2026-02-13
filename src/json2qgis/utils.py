@@ -1,5 +1,14 @@
+import json
+import functools
 import logging
+from typing import Any
 from unidecode import unidecode
+from pathlib import Path
+from collections.abc import Callable
+
+import fastjsonschema
+from fastjsonschema.ref_resolver import resolve_path
+
 
 import markdown
 
@@ -43,6 +52,52 @@ from json2qgis.errors import MissingParentError, Qgis2JsonError
 
 
 logger = logging.getLogger(__name__)
+
+
+_VALIDATORS_BY_PATH: dict[str, Callable[[dict[str, Any]], None]] = {}
+
+
+def get_schema_json() -> dict[str, Any]:
+    schema_json = (
+        Path(__file__).parent.joinpath("./schema/schema_20251121.json").read_text()
+    )
+    return json.loads(schema_json)
+
+
+def get_schema_validator() -> Callable[[dict[str, Any]], None]:
+    schema = get_schema_json()
+    return fastjsonschema.compile(schema)  # type: ignore
+
+
+def check_output(path: str):
+    schema = get_schema_json()
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            validate = _VALIDATORS_BY_PATH.get(path)
+            if validate is None:
+                schema_node = resolve_path(schema, path)
+                if isinstance(schema_node, dict):
+                    schema_node = {
+                        "definitions": schema.get("definitions", {}),
+                        **schema_node,
+                    }
+                validate = fastjsonschema.compile(schema_node)
+                _VALIDATORS_BY_PATH[path] = validate
+
+            output = func(*args, **kwargs)
+            try:
+                validate(output)
+            except Exception as e:
+                logger.error(f"Error during function '{func.__name__}' execution: {e}")
+                raise
+
+            return output
+
+        return wrapper
+
+    return decorator
 
 
 def normalize_name(name: str) -> str:
@@ -141,26 +196,36 @@ def get_layer_edit_form(
 
     containers_mapping: dict[str, QgsAttributeEditorContainer] = {}
 
+    print("WWW001")
+
     for form_item_def in layer_def["form_config"]:
         item_type = form_item_def["type"]
         # TODO @suricactus: ensure we should use `dict().get()`` here
         item_label = form_item_def.get("label", "")
         item_parent_id = form_item_def.get("parent_id")
 
+        print("WWW002", item_type, item_label, item_parent_id)
+
+        parent = None
         if item_parent_id:
             parent = containers_mapping.get(item_parent_id)
+            print("WWW003", parent)
 
             if not parent:
+                print("WWW004")
                 raise MissingParentError(
                     f"Parent with ID '{item_parent_id}' not found for form item '{item_label}'"
                 )
         else:
             parent = form_config.invisibleRootContainer()
+            print("WWW003.1", parent)
 
         if item_type == "field":
             field_idx = fields.indexOf(form_item_def["field_name"])
 
-            assert field_idx != -1
+            assert field_idx != -1, (
+                f"Could not find field {form_item_def['field_name']}"
+            )
 
             if form_item_def.get("visibility_expression", ""):
                 parent_container = QgsAttributeEditorContainer("", parent)
@@ -233,7 +298,9 @@ def get_layer_edit_form(
 
             container = QgsAttributeEditorTextElement(item_label, parent)
 
+            print("WWW005", container)
             if parent:
+                print("WWW006", parent)
                 parent.addChildElement(container)
 
             container.setText(item_label)

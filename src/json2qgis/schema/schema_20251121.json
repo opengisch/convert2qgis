@@ -5,7 +5,7 @@
     "LayerTreeItem": {
       "additionalProperties": false,
       "properties": {
-        "layer_tree_id": {
+        "item_id": {
           "type": "string"
         },
         "name": {
@@ -14,7 +14,7 @@
         "layer_id": {
           "type": "string"
         },
-        "parent": {
+        "parent_id": {
           "type": "string"
         },
         "type": {
@@ -32,7 +32,7 @@
           "min": -1
         }
       },
-      "required": ["name", "parent", "type"],
+      "required": ["item_id", "name", "parent_id", "type"],
       "title": "Child",
       "type": "object"
     },
@@ -83,9 +83,6 @@
           "type": "integer"
         },
         "name": {
-          "type": "string"
-        },
-        "parent": {
           "type": "string"
         },
         "precision": {
@@ -181,6 +178,7 @@
             }
           },
           "type": "object",
+          "additionalProperties": false,
           "required": ["parent_id", "type", "field_name"]
         },
         {
@@ -215,6 +213,7 @@
             }
           },
           "type": "object",
+          "additionalProperties": false,
           "required": ["item_id", "parent_id", "type", "label"]
         }
       ],
@@ -296,7 +295,7 @@
           "type": "string"
         },
         "datasource_format": {
-          "enum": ["gpkg"],
+          "enum": ["gpkg", "memory"],
           "type": "string"
         },
         "fields": {
@@ -428,7 +427,7 @@
     "PolymorphicRelation": {
       "additionalProperties": false,
       "properties": {
-        "id": {
+        "relation_id": {
           "type": "string"
         },
         "name": {
@@ -475,7 +474,7 @@
         }
       },
       "required": [
-        "id",
+        "relation_id",
         "name",
         "from_layer_id",
         "to_layer_field",
