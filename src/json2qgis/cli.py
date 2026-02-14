@@ -17,7 +17,7 @@ def main() -> None:
         "--output",
         "-o",
         type=str,
-        default="output/project.qgs",
+        required=True,
         help="Path to the output QGIS project file",
     )
 
@@ -26,4 +26,4 @@ def main() -> None:
     project_def = json.load(args.json_file)
 
     creator = ProjectCreator(project_def)
-    creator.build("output/project.qgs")
+    creator.build(args.output)
