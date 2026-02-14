@@ -7,6 +7,7 @@ ConstraintStrength = Literal["hard", "soft", "not_set"]
 CrsDef = str
 GeometryType = Literal["Point", "LineString", "Polygon", "NoGeometry"]
 FormItemTypes = Literal["field", "relation", "group_box", "tab", "row", "text"]
+FormItemGroupTypes = Literal["group_box", "tab"]
 LayerType = Literal["vector", "raster", "mesh", "vector_tile", "point_cloud"]
 
 
