@@ -430,7 +430,10 @@
           "type": "string"
         },
         "parent_id": {
-          "type": "string"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "type": {
           "enum": [
