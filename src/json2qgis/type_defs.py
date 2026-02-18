@@ -182,7 +182,8 @@ class ProjectDef(TypedDict):
     crs: CrsDef
 
 
-class ChoicesDef(TypedDict):
+# we might have more fields in the sheet than we actually use, so we want them in the ChoicesDef
+class ChoicesDef(TypedDict, total=False):
     name: str
     label: str
 
