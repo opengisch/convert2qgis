@@ -1,5 +1,5 @@
 import uuid
-from typing import cast
+from typing import Any, cast
 
 from json2qgis.type_defs import FieldDef, FormItemDef, LayerDef, RelationDef
 
@@ -26,6 +26,24 @@ def generate_field_def(**kwargs) -> FieldDef:
             "alias": "",
             "widget_type": "",
             "widget_config": {},
+            **kwargs,
+        },
+    )
+
+
+def generate_uuid_field_def(**kwargs: Any) -> FieldDef:
+    field_def = generate_field_def(
+        name="uuid",
+        type="string",
+        alias="UUID",
+        default_value="uuid(format:='WithoutBraces')",
+        widget_type="TextEdit",
+    )
+
+    return cast(
+        FieldDef,
+        {
+            **field_def,
             **kwargs,
         },
     )
