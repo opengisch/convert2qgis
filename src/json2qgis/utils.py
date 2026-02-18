@@ -217,12 +217,13 @@ def get_layer_edit_form(
             )
 
             if form_item_def.get("visibility_expression", ""):
-                parent_container = QgsAttributeEditorContainer("", parent)
+                parent_container = QgsAttributeEditorContainer("~CONDITIONAL~", parent)
                 parent_container.setVisibilityExpression(
                     QgsOptionalExpression(
                         QgsExpression(form_item_def["visibility_expression"])
                     )
                 )
+                parent_container.setShowLabel(False)
                 container = QgsAttributeEditorField(
                     form_item_def["field_name"],
                     fields.indexOf(form_item_def["field_name"]),
