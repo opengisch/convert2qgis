@@ -250,6 +250,8 @@ def get_layer_edit_form(
             if form_item_def.get("is_label_on_top", False):
                 form_config.setLabelOnTop(field_idx, True)
 
+            container.setShowLabel(form_item_def.get("show_label", True))
+
             continue
 
         elif item_type == "relation":
