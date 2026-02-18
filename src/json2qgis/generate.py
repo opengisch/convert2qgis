@@ -57,7 +57,7 @@ def generate_layer_def(**kwargs) -> LayerDef:
 
 
 def generate_form_item_def(**kwargs) -> FormItemDef:
-    if kwargs.get("type") == "field":
+    if kwargs.get("type") in ("field", "relation"):
         return cast(
             FormItemDef,
             {
