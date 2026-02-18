@@ -122,8 +122,13 @@ class ProjectCreator:
         except Exception as e:
             raise UnknownCrsSystem(f"Failed to create CRS: {e}")
 
+        if not crs.isValid():
+            raise UnknownCrsSystem(f"Invalid CRS: {layer_def['crs']}")
+
+        if not layer.setId(layer_def["layer_id"]):
+            raise Qgis2JsonError(f"Failed to set layer ID: {layer_def['layer_id']}")
+
         layer.setCrs(crs)
-        layer.setId(layer_def["layer_id"])
         layer.setFlags(get_layer_flags(layer.flags(), layer_def))
 
         self._project.addMapLayer(layer, False)
