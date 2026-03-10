@@ -172,14 +172,20 @@ class LayerDef(TypedDict):
     is_removable: bool
 
 
-class ProjectDef(TypedDict):
-    version: str
-    title: str
+class ProjectMetadataDef(TypedDict):
+    custom_properties: dict[str, Any]
+    crs: CrsDef
     author: str
+    title: str
+
+
+class ProjectDef(TypedDict):
+    project: ProjectMetadataDef
+    version: str
     layers: list[LayerDef]
     layer_tree: list[LayerTreeItemDef]
-
-    crs: CrsDef
+    relations: list[RelationDef]
+    polymorphic_relations: list[PolymorphicRelationDef]
 
 
 # we might have more fields in the sheet than we actually use, so we want them in the ChoicesDef

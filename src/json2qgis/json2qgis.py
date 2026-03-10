@@ -94,7 +94,7 @@ class ProjectCreator:
         metadata = self._project.metadata()
         metadata.setAuthor(self.definition.get("author", ""))
 
-        self._project.setTitle(self.definition.get("title", ""))
+        self._project.setTitle(self.definition["project"].get("title", ""))
         self._project.setMetadata(metadata)
 
         project_filename = "project.qgs"
