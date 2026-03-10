@@ -53,7 +53,7 @@ class ProjectCreator:
         self._project = project
         self.definition = definition
 
-    def build(self, output_dir: str) -> None:
+    def build(self, output_dir: str) -> str:
         self._output_dir = Path(output_dir)
 
         self._output_dir.mkdir(parents=True, exist_ok=True)
@@ -64,9 +64,9 @@ class ProjectCreator:
         # TODO: ugly hack as hell, otherwise the `QgsVectorFileWriter` writes wrong paths
         os.chdir(self._output_dir)
 
-        self._create_project()
+        return self._create_project()
 
-    def _create_project(self) -> None:
+    def _create_project(self) -> str:
         for layer_def in self.definition["layers"]:
             self._create_layer(layer_def)
 
@@ -100,6 +100,8 @@ class ProjectCreator:
         project_filename = "project.qgs"
         if not self._project.write(str(project_filename)):
             logger.error(f"Failed to write project to {project_filename}")
+
+        return project_filename
 
     def _create_layer(self, layer_def: LayerDef) -> None:
         layer_type = layer_def["layer_type"]
