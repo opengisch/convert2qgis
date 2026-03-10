@@ -529,6 +529,10 @@
         },
         "title": {
           "type": "string"
+        },
+        "crs": {
+          "type": "string",
+          "pattern": "EPSG:\\d+"
         }
       },
       "required": [
