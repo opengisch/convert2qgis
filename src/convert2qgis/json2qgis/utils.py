@@ -3,7 +3,7 @@ import json
 import logging
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import fastjsonschema
 import markdown
@@ -80,7 +80,10 @@ def check_output(path: str):
                         "definitions": schema.get("definitions", {}),
                         **schema_node,
                     }
-                validate = fastjsonschema.compile(schema_node)
+                validate = cast(
+                    Callable[[dict[str, Any]], None],
+                    fastjsonschema.compile(schema_node),
+                )
                 _VALIDATORS_BY_PATH[path] = validate
 
             output = func(*args, **kwargs)
