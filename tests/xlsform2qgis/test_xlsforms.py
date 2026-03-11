@@ -851,7 +851,7 @@ class TestConverter:
             name="zip_code",
             alias="Zip code",
             widget_type="TextEdit",
-            constraint_expression="regexp_match(\"zip_code\", '^\\d{5}(-\\d{4})?$')",
+            constraint_expression="regexp_match(\"zip_code\", '^\\\\d{5}(-\\\\d{4})?$')",
             constraint_expression_description="",
             constraint_expression_strength="hard",
         )

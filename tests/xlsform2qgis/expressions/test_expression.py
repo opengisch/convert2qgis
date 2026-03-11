@@ -222,7 +222,7 @@ def test_complex_expression_rendering(ctx: ExpressionContext) -> None:
     )
     assert (
         expr.to_qgis()
-        == """regexp_match(substr("field001", 1, strpos("field001", 'world')), '$\\{hello')"""
+        == """regexp_match(substr("field001", 1, strpos("field001", 'world')), '$\\\\{hello')"""
     )
 
 

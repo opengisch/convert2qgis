@@ -126,7 +126,10 @@ class Expression:
                     return "", 100
 
                 if node.type == LiteralType.STRING:
-                    return wrap_field(node.value, SINGLE_QUOTE), 100
+                    # we need to double escape the string, once for the QGIS expression and once for the Python string literal.
+                    # E.g. input: `hello\world`, qgis: `'hello\\\\world'`, python: `'hello\\\\\\\\world'`
+                    escaped_value = node.value.replace("\\", "\\\\")
+                    return wrap_field(escaped_value, SINGLE_QUOTE), 100
 
                 return node.raw_value, 100
 
