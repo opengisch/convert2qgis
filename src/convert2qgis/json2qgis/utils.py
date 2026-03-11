@@ -5,9 +5,6 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any, cast
 
-import fastjsonschema
-import markdown
-from fastjsonschema.ref_resolver import resolve_path
 from qgis.core import (
     Qgis,
     QgsAttributeEditorContainer,
@@ -48,6 +45,20 @@ from convert2qgis.json2qgis.type_defs import (
     VectorLayerDef,
 )
 
+try:
+    import fastjsonschema
+    from fastjsonschema.ref_resolver import resolve_path
+except ModuleNotFoundError:
+    fastjsonschema = None
+
+    resolve_path = None
+
+
+try:
+    import markdown
+except ModuleNotFoundError:
+    markdown = None  # type: ignore
+
 logger = logging.getLogger(__name__)
 
 
@@ -63,7 +74,11 @@ def get_schema_json() -> dict[str, Any]:
 
 def get_schema_validator() -> Callable[[dict[str, Any]], None]:
     schema = get_schema_json()
-    return fastjsonschema.compile(schema)  # type: ignore
+
+    if fastjsonschema:
+        return fastjsonschema.compile(schema)  # type: ignore
+    else:
+        return lambda data: None  # type: ignore
 
 
 def check_output(path: str):
@@ -72,6 +87,10 @@ def check_output(path: str):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
+            # If `fastjsonschema` is not available, skip validation and just execute the function
+            if resolve_path is None or fastjsonschema is None:
+                return func(*args, **kwargs)
+
             validate = _VALIDATORS_BY_PATH.get(path)
             if validate is None:
                 schema_node = resolve_path(schema, path)
@@ -290,7 +309,12 @@ def get_layer_edit_form(
 
         elif item_type == "text":
             if form_item_def["is_markdown"]:
-                item_label = markdown.markdown(item_label)
+                if markdown:
+                    item_label = markdown.markdown(item_label)
+                else:
+                    logger.warning(
+                        f"Markdown support is not available. Text item '{item_label}' will not be rendered as HTML, but as raw markdown."
+                    )
 
             container = QgsAttributeEditorTextElement(item_label, parent)
 

@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 from typing import Any, cast
 
-import fastjsonschema
 from qgis.core import (
     Qgis,
     QgsCoordinateReferenceSystem,
@@ -39,6 +38,11 @@ from convert2qgis.json2qgis.utils import (
     set_layer_tree,
 )
 
+try:
+    import fastjsonschema
+except ModuleNotFoundError:
+    fastjsonschema = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -49,10 +53,12 @@ class ProjectCreator:
     _project: QgsProject
 
     def __init__(self, definition: ProjectDef) -> None:
-        try:
-            schema_validator(cast(dict[str, Any], definition))
-        except fastjsonschema.JsonSchemaException as e:
-            raise Qgis2JsonError(f'{e} with data "{getattr(e, "value", None)}"')
+        # validate the project definition against the JSON schema if a schema validator is available
+        if fastjsonschema:
+            try:
+                schema_validator(cast(dict[str, Any], definition))
+            except fastjsonschema.JsonSchemaException as e:
+                raise Qgis2JsonError(f'{e} with data "{getattr(e, "value", None)}"')
 
         project = QgsProject().instance()
 
