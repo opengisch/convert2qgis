@@ -45,6 +45,7 @@ from json2qgis.type_defs import (
     RelationDef,
     RelationStrength,
     VectorLayerDataprovider,
+    VectorLayerDef,
 )
 
 logger = logging.getLogger(__name__)
@@ -181,7 +182,7 @@ def get_layer_flags(
 
 def get_layer_edit_form(
     fields: QgsFields,
-    layer_def: LayerDef,
+    layer_def: VectorLayerDef,
     form_config: QgsEditFormConfig | None = None,
 ) -> QgsEditFormConfig:
     if form_config is None:
@@ -355,7 +356,7 @@ def create_field(field_def: FieldDef) -> QgsField:
     return field
 
 
-def create_fields(layer_def: LayerDef) -> QgsFields:
+def create_fields(layer_def: VectorLayerDef) -> QgsFields:
     fields = QgsFields()
 
     for field_def in layer_def["fields"]:
@@ -365,7 +366,7 @@ def create_fields(layer_def: LayerDef) -> QgsFields:
     return fields
 
 
-def set_layer_fields(layer: QgsVectorLayer, layer_def: LayerDef) -> None:
+def set_layer_fields(layer: QgsVectorLayer, layer_def: VectorLayerDef) -> None:
     fields = layer.fields()
 
     # For geopackage layers, hide the 'fid' field by default

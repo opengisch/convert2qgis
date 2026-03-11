@@ -11,7 +11,7 @@ from qgis.core import (
 )
 from qgis.PyQt.QtCore import QMetaType
 
-from json2qgis.utils import (
+from convert2qgis.json2qgis.utils import (
     check_output,
     create_field,
     create_fields,
@@ -60,8 +60,8 @@ def sample_field_def():
 
 
 @pytest.fixture
-@check_output("definitions/Layer")
-def sample_layer_def(sample_field_def):
+@check_output("definitions/VectorLayer")
+def sample_vector_layer_def(sample_field_def):
     integer_field = {
         **sample_field_def,
         "name": "Field integer",
@@ -275,14 +275,14 @@ def sample_layer_def(sample_field_def):
 
 @pytest.fixture
 @check_output("definitions/Json2qgisSchema")
-def sample_project_def(sample_layer_def):
+def sample_project_def(sample_vector_layer_def):
     return {
         "version": "1.0.0",
         "project": {
             "author": "Test Author",
             "title": "Sample Project",
         },
-        "layers": [sample_layer_def],
+        "layers": [sample_vector_layer_def],
         "layer_tree": [
             {
                 "item_id": "my_group_parent",
@@ -925,10 +925,10 @@ class TestUtils:
             "Hello": "World",
         }
 
-    def test_get_layer_flags_to_false(self, sample_layer_def):
+    def test_get_layer_flags_to_false(self, sample_vector_layer_def):
         """Test getting layer flags from LayerDef."""
 
-        sample_layer_def.update(
+        sample_vector_layer_def.update(
             {
                 "is_identifiable": False,
                 "is_removable": False,
@@ -939,17 +939,17 @@ class TestUtils:
 
         flags = QgsMapLayer.LayerFlags()
 
-        flags = get_layer_flags(flags, sample_layer_def)  # type: ignore
+        flags = get_layer_flags(flags, sample_vector_layer_def)  # type: ignore
 
         assert not flags & QgsMapLayer.LayerFlag.Identifiable  # type: ignore
         assert not flags & QgsMapLayer.LayerFlag.Removable  # type: ignore
         assert not flags & QgsMapLayer.LayerFlag.Searchable  # type: ignore
         assert not flags & QgsMapLayer.LayerFlag.Private  # type: ignore
 
-    def test_get_layer_flags_to_true(self, sample_layer_def):
+    def test_get_layer_flags_to_true(self, sample_vector_layer_def):
         """Test getting layer flags from LayerDef."""
 
-        sample_layer_def.update(
+        sample_vector_layer_def.update(
             {
                 "is_identifiable": True,
                 "is_removable": True,
@@ -960,17 +960,17 @@ class TestUtils:
 
         flags = QgsMapLayer.LayerFlags()
 
-        flags = get_layer_flags(flags, sample_layer_def)  # type: ignore
+        flags = get_layer_flags(flags, sample_vector_layer_def)  # type: ignore
 
         assert flags & QgsMapLayer.LayerFlag.Identifiable  # type: ignore
         assert flags & QgsMapLayer.LayerFlag.Removable  # type: ignore
         assert flags & QgsMapLayer.LayerFlag.Searchable  # type: ignore
         assert flags & QgsMapLayer.LayerFlag.Private  # type: ignore
 
-    def test_set_layer_field_configurations(self, sample_layer_def):
+    def test_set_layer_field_configurations(self, sample_vector_layer_def):
         """Test setting layer field configurations."""
 
-        fields = create_fields(sample_layer_def)
+        fields = create_fields(sample_vector_layer_def)
 
         assert fields.count() == 6
 
@@ -1022,11 +1022,11 @@ class TestUtils:
         assert field_datetime.precision() == 0
         assert field_datetime.comment() == "This is field datetime"
 
-    def test_get_layer_edit_form(self, sample_layer_def):
+    def test_get_layer_edit_form(self, sample_vector_layer_def):
         """Test getting layer edit form configuration."""
 
-        fields = create_fields(sample_layer_def)
-        form_config = get_layer_edit_form(fields, sample_layer_def)
+        fields = create_fields(sample_vector_layer_def)
+        form_config = get_layer_edit_form(fields, sample_vector_layer_def)
 
         assert form_config.layout() == Qgis.AttributeFormLayout.DragAndDrop
         assert len(form_config.tabs()) == 2
@@ -1070,10 +1070,10 @@ class TestUtils:
         assert tabs[1].children()[1].type() == Qgis.AttributeEditorType.TextElement
         assert tabs[1].children()[1].name() == "<p>Hello <em>World</em></p>"
 
-    def test_set_layer_fields(self, sample_layer_def):
+    def test_set_layer_fields(self, sample_vector_layer_def):
         """Test setting layer fields from LayerDef."""
 
-        fields = create_fields(sample_layer_def)
+        fields = create_fields(sample_vector_layer_def)
 
         layer = QgsVectorLayer("Point?crs=EPSG:4326", "test_layer", "memory")
         data_provider = layer.dataProvider()
@@ -1085,7 +1085,7 @@ class TestUtils:
 
         assert layer.fields().count() == 6
 
-        set_layer_fields(layer, sample_layer_def)
+        set_layer_fields(layer, sample_vector_layer_def)
 
         fields = layer.fields()
 

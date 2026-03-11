@@ -152,12 +152,21 @@ class WeakLayerDef(TypedDict, total=False):
     is_removable: bool
 
 
-class LayerDef(TypedDict):
+class BaseLayerDef(TypedDict):
     layer_id: str
     name: str
-    geometry_type: GeometryType
     layer_type: LayerType
     crs: CrsDef
+
+    is_read_only: bool
+    is_identifiable: bool
+    is_private: bool
+    is_searchable: bool
+    is_removable: bool
+
+
+class VectorLayerDef(BaseLayerDef):
+    geometry_type: GeometryType
     datasource_format: str
     fields: list[FieldDef]
     form_config: list[FormItemDef]
@@ -165,11 +174,13 @@ class LayerDef(TypedDict):
     primary_key: str
     indices: list[str]
 
-    is_read_only: bool
-    is_identifiable: bool
-    is_private: bool
-    is_searchable: bool
-    is_removable: bool
+
+class RasterLayerDef(BaseLayerDef):
+    datasource: str
+    datasource_format: str
+
+
+LayerDef = VectorLayerDef | RasterLayerDef
 
 
 class ProjectMetadataDef(TypedDict):

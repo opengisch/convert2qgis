@@ -1,7 +1,14 @@
 import uuid
 from typing import Any, cast
 
-from json2qgis.type_defs import FieldDef, FormItemDef, LayerDef, RelationDef
+from json2qgis.type_defs import (
+    FieldDef,
+    FormItemDef,
+    LayerDef,
+    RasterLayerDef,
+    RelationDef,
+    VectorLayerDef,
+)
 
 
 def generate_field_def(**kwargs) -> FieldDef:
@@ -50,28 +57,48 @@ def generate_uuid_field_def(**kwargs: Any) -> FieldDef:
 
 
 def generate_layer_def(**kwargs) -> LayerDef:
-    return cast(
-        LayerDef,
-        {
-            "layer_id": str(uuid.uuid4()),
-            "name": "",
-            "primary_key": "",
-            "geometry_type": "NoGeometry",
-            "layer_type": "vector",
-            "crs": "EPSG:4326",
-            "datasource_format": "gpkg",
-            "fields": [],
-            "form_config": [],
-            "is_read_only": False,
-            "is_identifiable": False,
-            "is_private": False,
-            "is_searchable": False,
-            "is_removable": True,
-            "indices": [],
-            "foreign_keys": [],
-            **kwargs,
-        },
-    )
+    base_layer_def = {
+        "layer_id": str(uuid.uuid4()),
+        "crs": "EPSG:4326",
+        "name": "",
+    }
+    layer_type = kwargs.get("layer_type")
+
+    if layer_type == "vector":
+        return cast(
+            VectorLayerDef,
+            {
+                **base_layer_def,
+                "primary_key": "",
+                "geometry_type": "NoGeometry",
+                "layer_type": "vector",
+                "datasource_format": "gpkg",
+                "fields": [],
+                "form_config": [],
+                "is_read_only": False,
+                "is_identifiable": False,
+                "is_private": False,
+                "is_searchable": False,
+                "is_removable": True,
+                "indices": [],
+                "foreign_keys": [],
+                **kwargs,
+            },
+        )
+    elif layer_type == "raster":
+        return cast(
+            RasterLayerDef,
+            {
+                **base_layer_def,
+                "layer_type": "raster",
+                "datasource_format": "wms",
+                **kwargs,
+            },
+        )
+    else:
+        raise NotImplementedError(
+            f"Only vector and raster layers are supported for now, but `{layer_type}` given!"
+        )
 
 
 def generate_form_item_def(**kwargs) -> FormItemDef:
