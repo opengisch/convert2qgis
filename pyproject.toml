@@ -3,7 +3,9 @@ name = "convert2qgis"
 version = "0.1.0"
 description = ""
 authors = [
-    {name = "Ivan Ivanov",email = "ivan@opengis.ch"}
+    {name = "Mathieu Pelerin",email = "mathieu@opengis.ch"},
+    {name = "Ivan Ivanov",email = "ivan@opengis.ch"},
+    {name = "Rakan Farhouda",email = "rakan@opengis.ch"}
 ]
 readme = "README.md"
 requires-python = ">=3.10,<4.0"
@@ -24,6 +26,7 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "pytest (>=9.0.1,<10.0.0)",
+    "pytest-cov>=7.0.0",
     "ruff (>=0.14.6,<0.15.0)",
     "pre-commit (>=4.5.0,<5.0.0)",
     "debugpy (>=1.8.17,<2.0.0)",
@@ -31,3 +34,11 @@ dev = [
 
 [project.scripts]
 json2qgis = "convert2qgis.json2qgis.cli:main"
+xlsform2qgis = "convert2qgis.xlsform2qgis.converter:main_cli"
+
+
+[tool.coverage.report]
+exclude_also = [
+    'raise NotImplementedError',
+    'raise AssertionError',
+]
