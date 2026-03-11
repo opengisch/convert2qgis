@@ -22,6 +22,7 @@ from json2qgis.errors import (
 )
 from json2qgis.type_defs import (
     LayerDef,
+    PathOrStr,
     ProjectDef,
     RasterLayerDef,
     VectorLayerDataprovider,
@@ -60,7 +61,7 @@ class ProjectCreator:
         self._project = project
         self.definition = definition
 
-    def build(self, output_dir: str) -> Path:
+    def build(self, output_dir: PathOrStr) -> Path:
         self._output_dir = Path(output_dir)
 
         self._output_dir.mkdir(parents=True, exist_ok=True)
