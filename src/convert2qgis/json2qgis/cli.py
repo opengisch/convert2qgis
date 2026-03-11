@@ -1,7 +1,7 @@
 import argparse
 import json
 
-from json2qgis.json2qgis import ProjectCreator
+from convert2qgis.json2qgis.json2qgis import ProjectCreator
 
 
 def main() -> None:

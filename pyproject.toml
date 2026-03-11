@@ -1,5 +1,5 @@
 [project]
-name = "json2qgis"
+name = "convert2qgis"
 version = "0.1.0"
 description = ""
 authors = [
@@ -30,4 +30,4 @@ dev = [
 ]
 
 [project.scripts]
-json2qgis = "json2qgis.cli:main"
+json2qgis = "convert2qgis.json2qgis.cli:main"

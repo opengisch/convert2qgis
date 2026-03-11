@@ -1,7 +1,7 @@
 import uuid
 from typing import Any, cast
 
-from json2qgis.type_defs import (
+from convert2qgis.json2qgis.type_defs import (
     FieldDef,
     FormItemDef,
     LayerDef,

@@ -15,12 +15,12 @@ from qgis.core import (
     QgsVectorLayer,
 )
 
-from json2qgis.errors import (
+from convert2qgis.json2qgis.errors import (
     Qgis2JsonError,
     UnknownCrsSystem,
     UnknownVectorLayerDataproviderError,
 )
-from json2qgis.type_defs import (
+from convert2qgis.json2qgis.type_defs import (
     LayerDef,
     PathOrStr,
     ProjectDef,
@@ -28,7 +28,7 @@ from json2qgis.type_defs import (
     VectorLayerDataprovider,
     VectorLayerDef,
 )
-from json2qgis.utils import (
+from convert2qgis.json2qgis.utils import (
     create_fields,
     create_relation,
     get_layer_edit_form,

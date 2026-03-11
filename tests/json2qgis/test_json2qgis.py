@@ -368,7 +368,7 @@
 
 #     def test_qgis2json_error(self):
 #         """Test Qgis2JsonError exception."""
-#         from json2qgis.json2qgis import Qgis2JsonError
+#         from convert2qgis.json2qgis.json2qgis import Qgis2JsonError
 
 #         with pytest.raises(Qgis2JsonError):
 #             raise Qgis2JsonError("Test error")

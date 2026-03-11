@@ -36,8 +36,8 @@ from qgis.PyQt.QtCore import QMetaType
 from qgis.PyQt.QtGui import QColor
 from unidecode import unidecode
 
-from json2qgis.errors import MissingParentError, Qgis2JsonError
-from json2qgis.type_defs import (
+from convert2qgis.json2qgis.errors import MissingParentError, Qgis2JsonError
+from convert2qgis.json2qgis.type_defs import (
     FieldDef,
     LayerDef,
     PolymorphicRelationDef,
