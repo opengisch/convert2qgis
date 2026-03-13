@@ -107,7 +107,7 @@ class ProjectCreator:
                 ),
             )
 
-        project_title = self.definition["project"].get("title", "xlsoform_project")
+        project_title = self.definition["project"].get("title", "xlsform_project")
 
         metadata = self._project.metadata()
         metadata.setAuthor(self.definition.get("author", ""))
