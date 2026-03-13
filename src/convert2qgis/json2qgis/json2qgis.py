@@ -51,6 +51,7 @@ schema_validator = get_schema_validator()
 
 class ProjectCreator:
     _project: QgsProject
+    _output_dir: Path
 
     def __init__(self, definition: ProjectDef) -> None:
         # validate the project definition against the JSON schema if a schema validator is available
@@ -60,12 +61,9 @@ class ProjectCreator:
             except fastjsonschema.JsonSchemaException as e:
                 raise Qgis2JsonError(f'{e} with data "{getattr(e, "value", None)}"')
 
-        project = QgsProject().instance()
-
-        assert project, "Failed to get `QgsProject` instance. Very unlikely error."
-
-        self._project = project
+        self._project = QgsProject()
         self.definition = definition
+        self._output_dir = Path()
 
     def build(self, output_dir: PathOrStr) -> Path:
         self._output_dir = Path(output_dir)
