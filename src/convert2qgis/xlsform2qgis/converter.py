@@ -52,12 +52,6 @@ from convert2qgis.xlsform2qgis.type_defs import (
 )
 from convert2qgis.xlsform2qgis.widgets import WidgetContext, WidgetRegistry
 
-# try:
-#     import markdown  # type: ignore
-# except ImportError:
-#     pass
-
-
 logger = logging.getLogger(__package__)
 
 try:
