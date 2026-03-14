@@ -100,7 +100,7 @@ def stop_app():
         logger.info("Deleted QGIS app!")
 
 
-def set_survey_features(project: QgsProject, features, feedback) -> QgsRectangle | None:
+def set_survey_features(project: QgsProject, features) -> QgsRectangle | None:
     """Loads a given set of features into the survey layer of the project.
 
     Returns the extent of the added features converted to the project CRS,
@@ -110,7 +110,7 @@ def set_survey_features(project: QgsProject, features, feedback) -> QgsRectangle
     survey_layer = project.mapLayer("survey_layer")
 
     if not survey_layer:
-        feedback.pushWarning(
+        logger.warning(
             obj.tr(
                 "Failed to find the survey layer within the generated project to set geometries, skipping this step."
             )
@@ -118,7 +118,7 @@ def set_survey_features(project: QgsProject, features, feedback) -> QgsRectangle
         return None
 
     if not isinstance(survey_layer, QgsVectorLayer):
-        feedback.pushWarning(
+        logger.warning(
             obj.tr(
                 "The survey layer within the generated project is not a vector layer when trying to set geometries, skipping this step."
             )
@@ -126,7 +126,7 @@ def set_survey_features(project: QgsProject, features, feedback) -> QgsRectangle
         return None
 
     if not survey_layer.isValid():
-        feedback.pushWarning(
+        logger.warning(
             obj.tr(
                 "The survey layer within the generated project is invalid when trying to set geometries, skipping this step."
             )
@@ -134,7 +134,7 @@ def set_survey_features(project: QgsProject, features, feedback) -> QgsRectangle
         return None
 
     if survey_layer.wkbType() != features.wkbType():
-        feedback.pushWarning(
+        logger.warning(
             obj.tr(
                 "The provided features have a different geometry type than the survey layer within the generated project when trying to set geometries, skipping this step."
             )
@@ -142,7 +142,7 @@ def set_survey_features(project: QgsProject, features, feedback) -> QgsRectangle
         return None
 
     if not survey_layer.startEditing():
-        feedback.pushWarning(
+        logger.warning(
             obj.tr(
                 "Failed to start editing the survey layer within the generated project to set geometries, skipping this step."
             )
@@ -162,14 +162,14 @@ def set_survey_features(project: QgsProject, features, feedback) -> QgsRectangle
             if not survey_layer.addFeature(
                 output_features[0], QgsFeatureSink.Flag.FastInsert
             ):
-                feedback.pushWarning(
+                logger.warning(
                     obj.tr(
                         "Failed to add feature to the survey layer within the generated project, skipping this feature."
                     )
                 )
 
     if not survey_layer.commitChanges():
-        feedback.pushWarning(
+        logger.warning(
             obj.tr(
                 "Failed to commit changes to the survey layer within the generated project after setting geometries, skipping this step."
             )
@@ -186,7 +186,7 @@ def set_survey_features(project: QgsProject, features, feedback) -> QgsRectangle
     try:
         return transform.transformBoundingBox(survey_layer.extent())
     except QgsCsException as err:
-        feedback.pushWarning(
+        logger.warning(
             obj.tr("Failed to transform Survey layer extent to project CFS: {}").format(
                 err
             )
