@@ -6,6 +6,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, TypedDict, cast
 
+from qgis.core import QgsFeatureSource, QgsProject
+
 from convert2qgis.json2qgis.generate import (
     generate_field_def,
     generate_form_item_def,
@@ -43,6 +45,7 @@ from convert2qgis.xlsform2qgis.expressions.expression import (
     ParserType,
 )
 from convert2qgis.xlsform2qgis.expressions.parser import ParseError
+from convert2qgis.xlsform2qgis.qgis_utils import set_survey_features
 from convert2qgis.xlsform2qgis.sheet_parser import ParsedSheet, ParsedSheetRow
 from convert2qgis.xlsform2qgis.type_defs import (
     ConverterSettings,
@@ -184,9 +187,10 @@ def convert_xlsform_to_qgis_project(
     output_dir: PathOrStr,
     *,
     settings: ConverterSettings | None = None,
+    survey_features: QgsFeatureSource | None = None,
     skip_failed_expressions: bool = False,
     json_filename: PathOrStr | None = None,
-) -> Path:
+) -> QgsProject:
     project_json = convert_xlsform_to_json(
         xlsform_filename,
         settings=settings,
@@ -205,9 +209,12 @@ def convert_xlsform_to_qgis_project(
             json.dump(project_json, json_file, sort_keys=True, indent=2)
 
     creator = ProjectCreator(project_json)
-    project_filename = creator.build(output_dir)
+    project = creator.build(output_dir)
 
-    return project_filename
+    if survey_features is not None and survey_features.featuresCount() >= 1:
+        set_survey_features(project, survey_features)
+
+    return project
 
 
 class XlsformConverter:
@@ -1086,6 +1093,9 @@ class XlsformConverter:
         return choices_layers
 
     def get_project_extent(self, geometry_type: GeometryType, crs: str):
+        if self._project_extent:
+            return self._project_extent.strip()
+
         if geometry_type in "NoGeometry":
             return [-9.88, 33.41, 40.97, 61.11]
 

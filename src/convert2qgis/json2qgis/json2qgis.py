@@ -65,7 +65,7 @@ class ProjectCreator:
         self.definition = definition
         self._output_dir = Path()
 
-    def build(self, output_dir: PathOrStr) -> Path:
+    def build(self, output_dir: PathOrStr) -> QgsProject:
         self._output_dir = Path(output_dir)
 
         self._output_dir.mkdir(parents=True, exist_ok=True)
@@ -78,7 +78,7 @@ class ProjectCreator:
 
         return self._create_project()
 
-    def _create_project(self) -> Path:
+    def _create_project(self) -> QgsProject:
         for layer_def in self.definition["layers"]:
             self._create_layer(layer_def)
 
@@ -119,7 +119,7 @@ class ProjectCreator:
         if not self._project.write(str(project_filename)):
             logger.error(f"Failed to write project to {project_filename}")
 
-        return project_filename
+        return self._project
 
     def _create_layer(self, layer_def: LayerDef) -> None:
         layer_type = layer_def["layer_type"]
