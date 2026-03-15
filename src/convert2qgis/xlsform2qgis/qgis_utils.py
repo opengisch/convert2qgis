@@ -177,14 +177,56 @@ def set_survey_features(project: QgsProject, features) -> QgsRectangle | None:
 
         return None
 
-    transform = QgsCoordinateTransform(
+    return transform_bounding_box(
+        survey_layer.extent(),
         survey_layer.crs(),
         project.crs(),
-        project.transformContext(),
+        project,
+    )
+
+
+def transform_bounding_box(
+    extent: QgsRectangle,
+    source_authid: str | QgsCoordinateReferenceSystem,
+    dest_authid: str | QgsCoordinateReferenceSystem,
+    project: QgsProject,
+) -> QgsRectangle:
+    if isinstance(source_authid, str):
+        source_crs = QgsCoordinateReferenceSystem(source_authid)
+    elif isinstance(source_authid, QgsCoordinateReferenceSystem):
+        source_crs = source_authid
+    else:
+        raise TypeError(
+            "Expected source CRS to be either a EPSG code or QgsCoordinateReferenceSystem"
+        )
+
+    if isinstance(dest_authid, str):
+        dest_crs = QgsCoordinateReferenceSystem(dest_authid)
+    elif isinstance(dest_authid, QgsCoordinateReferenceSystem):
+        dest_crs = dest_authid
+    else:
+        raise TypeError(
+            "Expected dest CRS to be either a EPSG code or QgsCoordinateReferenceSystem"
+        )
+
+    if not source_crs.isValid():
+        logger.warning(f"Invalid source CRS: {source_authid}")
+
+        return QgsRectangle()
+
+    if not dest_crs.isValid():
+        logger.warning(f"Invalid destination CRS: {dest_authid}")
+
+        return QgsRectangle()
+
+    transform = QgsCoordinateTransform(
+        source_crs,
+        dest_crs,
+        project,
     )
 
     try:
-        return transform.transformBoundingBox(survey_layer.extent())
+        return transform.transformBoundingBox(extent)
     except QgsCsException as err:
         logger.warning(
             obj.tr("Failed to transform Survey layer extent to project CFS: {}").format(
