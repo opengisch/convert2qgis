@@ -1,6 +1,7 @@
 import functools
 import json
 import logging
+import unicodedata
 from collections.abc import Callable
 from importlib.resources import files
 from pathlib import Path
@@ -32,7 +33,6 @@ from qgis.core import (
 )
 from qgis.PyQt.QtCore import QMetaType
 from qgis.PyQt.QtGui import QColor
-from unidecode import unidecode
 
 from convert2qgis.json2qgis.errors import MissingParentError, Qgis2JsonError
 from convert2qgis.json2qgis.type_defs import (
@@ -54,6 +54,10 @@ except ModuleNotFoundError:
 
     resolve_path = None
 
+try:
+    import unidecode
+except ModuleNotFoundError:
+    unidecode = None  # type: ignore
 
 try:
     import markdown
@@ -120,11 +124,20 @@ def check_output(path: str):
     return decorator
 
 
+def strip_accents(text: str) -> str:
+    normalized = unicodedata.normalize("NFKD", text)
+    return "".join(c for c in normalized if not unicodedata.combining(c))
+
+
 def normalize_name(name: str) -> str:
     """
     Transliterates any string (including Cyrillic or non-ASCII characters) to ASCII.
     """
-    name = unidecode(name)
+    if unidecode:
+        name = unidecode.unidecode(name)
+    else:
+        name = strip_accents(name)
+
     name = name.lower()
     name = name.replace(" ", "_")
 
