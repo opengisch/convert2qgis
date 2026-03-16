@@ -282,7 +282,7 @@ class XlsformConverter:
         self._root_form_group_type = settings.get("root_form_group_type") or "tab"
         self._project_crs = settings.get("crs") or "EPSG:3867"
         self._project_author = settings.get("author") or ""
-        self._project_extent = settings.get("extent") or ""
+        self._project_extent = settings.get("extent", "").strip() or ""
         self._xlsform_settings = {
             **self._get_xlsform_settings(),
             **settings.get("xlsform_settings", {}),
@@ -695,6 +695,7 @@ class XlsformConverter:
                 "crs": self._project_crs,
                 "author": self._project_author,
                 "title": self._xlsform_settings["form_title"],
+                "extent": self.get_project_extent(),
             },
             "layers": self.layers,
             "layer_tree": self.layer_tree,
@@ -800,6 +801,7 @@ class XlsformConverter:
     def add_basemap_layer(self):
         layer_id = "basemap_layer"
         basemap_layer_def = generate_layer_def(
+            crs="EPSG:3857",
             layer_id=layer_id,
             datasource=self._project_basemap_url,
             name=self._project_basemap_name,
@@ -1092,15 +1094,11 @@ class XlsformConverter:
 
         return choices_layers
 
-    def get_project_extent(self, geometry_type: GeometryType, crs: str):
+    def get_project_extent(self) -> str:
         if self._project_extent:
-            return self._project_extent.strip()
+            return self._project_extent
 
-        if geometry_type in "NoGeometry":
-            return [-9.88, 33.41, 40.97, 61.11]
-
-        # TODO one may pass a source layer to prepopulate the geometries from, so we can compute the actual extent of those geometries
-        return [-9.88, 33.41, 40.97, 61.11]
+        return "-9.88, 33.41, 40.97, 61.11"
 
     def _get_field_settings_max_pixels(
         self, row, previous_max_pixels: int | None

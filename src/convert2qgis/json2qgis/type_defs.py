@@ -188,6 +188,7 @@ class ProjectMetadataDef(TypedDict):
     crs: CrsDef
     author: str
     title: str
+    extent: str
 
 
 class ProjectDef(TypedDict):

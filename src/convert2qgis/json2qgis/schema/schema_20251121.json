@@ -513,6 +513,9 @@
         "crs": {
           "type": "string",
           "pattern": "EPSG:\\d+"
+        },
+        "extent": {
+          "type": "string"
         }
       },
       "required": ["title"],
