@@ -2,6 +2,7 @@ import functools
 import json
 import logging
 from collections.abc import Callable
+from importlib.resources import files
 from pathlib import Path
 from typing import Any, cast
 
@@ -66,9 +67,9 @@ _VALIDATORS_BY_PATH: dict[str, Callable[[dict[str, Any]], None]] = {}
 
 
 def get_schema_json() -> dict[str, Any]:
-    schema_json = (
-        Path(__file__).parent.joinpath("./schema/schema_20251121.json").read_text()
-    )
+    data_path = files("convert2qgis.json2qgis").joinpath("schema/schema_20251121.json")
+    schema_json = data_path.read_text()
+
     return json.loads(schema_json)
 
 
