@@ -8,11 +8,16 @@ from qgis.core import (
     QgsCoordinateReferenceSystem,
     QgsFeature,
     QgsMapLayer,
+    QgsMapSettings,
+    QgsPointXY,
     QgsProject,
     QgsRasterLayer,
+    QgsRectangle,
     QgsVectorFileWriter,
     QgsVectorLayer,
 )
+from qgis.PyQt.QtCore import QSize
+from qgis.PyQt.QtXml import QDomDocument
 
 from convert2qgis.json2qgis.errors import (
     Qgis2JsonError,
@@ -53,6 +58,9 @@ class ProjectCreator:
     _project: QgsProject
     _output_dir: Path
 
+    _has_geometry: bool = False
+    """Whether any of the project vector layers has a geometry type."""
+
     def __init__(self, definition: ProjectDef) -> None:
         # validate the project definition against the JSON schema if a schema validator is available
         if fastjsonschema:
@@ -84,6 +92,8 @@ class ProjectCreator:
 
         set_layer_tree(self._project, self.definition)
 
+        self._project.setCrs(self._get_project_crs())
+
         self._set_relations()
 
         for layer_def in self.definition["layers"]:
@@ -110,22 +120,91 @@ class ProjectCreator:
         metadata = self._project.metadata()
         metadata.setAuthor(self.definition.get("author", ""))
 
+        if self._project.crs().authid() == "EPSG:3857":
+            display_settings = self._project.displaySettings()
+
+            assert display_settings
+
+            # Display coordinates in WGS84 to provide a more useful experience for the average person
+            display_settings.setCoordinateType(Qgis.CoordinateDisplayType.CustomCrs)
+            display_settings.setCoordinateCustomCrs(
+                QgsCoordinateReferenceSystem("EPSG:4326")
+            )
+
         self._project.setTitle(project_title)
         self._project.setMetadata(metadata)
+        self._project.writeProject.connect(self._process_project_write)
 
         project_filename = self._output_dir.joinpath(
-            f"{normalize_name(project_title)}.qgz"
+            f"{normalize_name(project_title)}.qgs"
         )
         if not self._project.write(str(project_filename)):
             logger.error(f"Failed to write project to {project_filename}")
 
         return self._project
 
+    def _get_project_crs(self) -> QgsCoordinateReferenceSystem:
+        crs = QgsCoordinateReferenceSystem(self.definition["project"]["crs"])
+        if not crs.isValid():
+            crs = QgsCoordinateReferenceSystem("EPSG:3857")
+
+        return crs
+
+    def _process_project_write(self, document: QDomDocument) -> None:
+        nl = document.elementsByTagName("qgis")
+
+        if nl.count() == 0:
+            logger.warning(
+                "Failed to find qgis node, skip saving project extent and CRS!"
+            )
+
+            return
+
+        qgis_node = nl.item(0)
+
+        map_canvas_node = document.createElement("mapcanvas")
+        map_canvas_node.setAttribute("name", "theMapCanvas")
+        qgis_node.appendChild(map_canvas_node)
+
+        map_settings = QgsMapSettings()
+        map_settings.setDestinationCrs(self._get_project_crs())
+        map_settings.setOutputSize(QSize(500, 500))
+
+        extent_coords = self.definition["project"]["extent"]
+        if extent_coords:
+            logger.info(f'Attempting to set project extent to "{extent_coords}"')
+
+            try:
+                p1_coords, p2_coords = extent_coords.split(",")
+                p1_x, p1_y = p1_coords.strip().split(" ")
+                p2_x, p2_y = p2_coords.strip().split(" ")
+                p1, p2 = (
+                    QgsPointXY(float(p1_x), float(p1_y)),
+                    QgsPointXY(float(p2_x), float(p2_y)),
+                )
+                extent = QgsRectangle(p1, p2)
+
+                if extent.isEmpty() or not extent.isFinite():
+                    raise Exception(f"Invalid WKT extent: {extent_coords}")
+
+                map_settings.setExtent(extent)
+            except Exception as err:
+                logger.warning(f'Failed to set WKT extent "{extent_coords}": {err}')
+
+        map_settings.writeXml(map_canvas_node, document)
+
     def _create_layer(self, layer_def: LayerDef) -> None:
         layer_type = layer_def["layer_type"]
         if layer_type == "vector":
             layer_def = cast(VectorLayerDef, layer_def)
             layer = self._create_vector_layer(layer_def)
+
+            if layer.geometryType() not in (
+                Qgis.GeometryType.Unknown,
+                Qgis.GeometryType.Null,
+            ):
+                self._has_geometry = True
+
         elif layer_type == "raster":
             layer_def = cast(RasterLayerDef, layer_def)
             layer = self._create_raster_layer(layer_def)
