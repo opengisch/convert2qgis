@@ -1,7 +1,13 @@
 import argparse
 import json
+import logging
 
 from convert2qgis.json2qgis.json2qgis import ProjectCreator
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s %(name)s: %(message)s",
+)
 
 
 def main() -> None:
