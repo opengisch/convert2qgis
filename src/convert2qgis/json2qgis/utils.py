@@ -1,13 +1,12 @@
 import functools
 import json
 import logging
+import unicodedata
 from collections.abc import Callable
+from importlib.resources import files
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
-import fastjsonschema
-import markdown
-from fastjsonschema.ref_resolver import resolve_path
 from qgis.core import (
     Qgis,
     QgsAttributeEditorContainer,
@@ -34,10 +33,9 @@ from qgis.core import (
 )
 from qgis.PyQt.QtCore import QMetaType
 from qgis.PyQt.QtGui import QColor
-from unidecode import unidecode
 
-from json2qgis.errors import MissingParentError, Qgis2JsonError
-from json2qgis.type_defs import (
+from convert2qgis.json2qgis.errors import MissingParentError, Qgis2JsonError
+from convert2qgis.json2qgis.type_defs import (
     FieldDef,
     LayerDef,
     PolymorphicRelationDef,
@@ -45,7 +43,26 @@ from json2qgis.type_defs import (
     RelationDef,
     RelationStrength,
     VectorLayerDataprovider,
+    VectorLayerDef,
 )
+
+try:
+    import fastjsonschema
+    from fastjsonschema.ref_resolver import resolve_path
+except ModuleNotFoundError:
+    fastjsonschema = None
+
+    resolve_path = None
+
+try:
+    import unidecode
+except ModuleNotFoundError:
+    unidecode = None  # type: ignore
+
+try:
+    import markdown
+except ModuleNotFoundError:
+    markdown = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -54,15 +71,19 @@ _VALIDATORS_BY_PATH: dict[str, Callable[[dict[str, Any]], None]] = {}
 
 
 def get_schema_json() -> dict[str, Any]:
-    schema_json = (
-        Path(__file__).parent.joinpath("./schema/schema_20251121.json").read_text()
-    )
+    data_path = files("convert2qgis.json2qgis").joinpath("schema/schema_20251121.json")
+    schema_json = data_path.read_text()
+
     return json.loads(schema_json)
 
 
 def get_schema_validator() -> Callable[[dict[str, Any]], None]:
     schema = get_schema_json()
-    return fastjsonschema.compile(schema)  # type: ignore
+
+    if fastjsonschema:
+        return fastjsonschema.compile(schema)  # type: ignore
+    else:
+        return lambda data: None  # type: ignore
 
 
 def check_output(path: str):
@@ -71,6 +92,10 @@ def check_output(path: str):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
+            # If `fastjsonschema` is not available, skip validation and just execute the function
+            if resolve_path is None or fastjsonschema is None:
+                return func(*args, **kwargs)
+
             validate = _VALIDATORS_BY_PATH.get(path)
             if validate is None:
                 schema_node = resolve_path(schema, path)
@@ -79,7 +104,10 @@ def check_output(path: str):
                         "definitions": schema.get("definitions", {}),
                         **schema_node,
                     }
-                validate = fastjsonschema.compile(schema_node)
+                validate = cast(
+                    Callable[[dict[str, Any]], None],
+                    fastjsonschema.compile(schema_node),
+                )
                 _VALIDATORS_BY_PATH[path] = validate
 
             output = func(*args, **kwargs)
@@ -96,11 +124,20 @@ def check_output(path: str):
     return decorator
 
 
+def strip_accents(text: str) -> str:
+    normalized = unicodedata.normalize("NFKD", text)
+    return "".join(c for c in normalized if not unicodedata.combining(c))
+
+
 def normalize_name(name: str) -> str:
     """
     Transliterates any string (including Cyrillic or non-ASCII characters) to ASCII.
     """
-    name = unidecode(name)
+    if unidecode:
+        name = unidecode.unidecode(name)
+    else:
+        name = strip_accents(name)
+
     name = name.lower()
     name = name.replace(" ", "_")
 
@@ -181,7 +218,7 @@ def get_layer_flags(
 
 def get_layer_edit_form(
     fields: QgsFields,
-    layer_def: LayerDef,
+    layer_def: VectorLayerDef,
     form_config: QgsEditFormConfig | None = None,
 ) -> QgsEditFormConfig:
     if form_config is None:
@@ -286,7 +323,12 @@ def get_layer_edit_form(
 
         elif item_type == "text":
             if form_item_def["is_markdown"]:
-                item_label = markdown.markdown(item_label)
+                if markdown:
+                    item_label = markdown.markdown(item_label)
+                else:
+                    logger.warning(
+                        f"Markdown support is not available. Text item '{item_label}' will not be rendered as HTML, but as raw markdown."
+                    )
 
             container = QgsAttributeEditorTextElement(item_label, parent)
 
@@ -355,7 +397,7 @@ def create_field(field_def: FieldDef) -> QgsField:
     return field
 
 
-def create_fields(layer_def: LayerDef) -> QgsFields:
+def create_fields(layer_def: VectorLayerDef) -> QgsFields:
     fields = QgsFields()
 
     for field_def in layer_def["fields"]:
@@ -365,7 +407,7 @@ def create_fields(layer_def: LayerDef) -> QgsFields:
     return fields
 
 
-def set_layer_fields(layer: QgsVectorLayer, layer_def: LayerDef) -> None:
+def set_layer_fields(layer: QgsVectorLayer, layer_def: VectorLayerDef) -> None:
     fields = layer.fields()
 
     # For geopackage layers, hide the 'fid' field by default
@@ -528,20 +570,7 @@ def set_field_widget(field: QgsField, field_def: FieldDef) -> None:
             }
         )
     elif widget_type == "ExternalResource":
-        wc.update(
-            {
-                "DocumentViewer": wc.get("is_document_viewer_enabled", True),
-                "DocumentViewerHeight": wc.get("document_viewer_height", 0),
-                "DocumentViewerWidth": wc.get("document_viewer_width", 0),
-                "FileWidget": wc.get("use_file_widget", True),
-                "FileWidgetButton": wc.get("show_file_widget_button", True),
-                "FileWidgetFilter": wc.get("file_widget_filter", ""),
-                "RelativeStorage": wc.get("use_relative_storage", 1),
-                "StorageAuthConfigId": wc.get("storage_auth_config_id", None),
-                "StorageMode": wc.get("storage_mode", 0),
-                "StorageType": wc.get("storage_type", None),
-            }
-        )
+        wc.update(wc)
     elif widget_type == "ValueMap":
         wc.update(
             {

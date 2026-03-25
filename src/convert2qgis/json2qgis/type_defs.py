@@ -152,18 +152,11 @@ class WeakLayerDef(TypedDict, total=False):
     is_removable: bool
 
 
-class LayerDef(TypedDict):
+class BaseLayerDef(TypedDict):
     layer_id: str
     name: str
-    geometry_type: GeometryType
     layer_type: LayerType
     crs: CrsDef
-    datasource_format: str
-    fields: list[FieldDef]
-    form_config: list[FormItemDef]
-    data: list[dict[str, Any]]
-    primary_key: str
-    indices: list[str]
 
     is_read_only: bool
     is_identifiable: bool
@@ -172,14 +165,39 @@ class LayerDef(TypedDict):
     is_removable: bool
 
 
-class ProjectDef(TypedDict):
-    version: str
-    title: str
+class VectorLayerDef(BaseLayerDef):
+    geometry_type: GeometryType
+    datasource_format: str
+    fields: list[FieldDef]
+    form_config: list[FormItemDef]
+    data: list[dict[str, Any]]
+    primary_key: str
+    indices: list[str]
+
+
+class RasterLayerDef(BaseLayerDef):
+    datasource: str
+    datasource_format: str
+
+
+LayerDef = VectorLayerDef | RasterLayerDef
+
+
+class ProjectMetadataDef(TypedDict):
+    custom_properties: dict[str, Any]
+    crs: CrsDef
     author: str
+    title: str
+    extent: str
+
+
+class ProjectDef(TypedDict):
+    project: ProjectMetadataDef
+    version: str
     layers: list[LayerDef]
     layer_tree: list[LayerTreeItemDef]
-
-    crs: CrsDef
+    relations: list[RelationDef]
+    polymorphic_relations: list[PolymorphicRelationDef]
 
 
 # we might have more fields in the sheet than we actually use, so we want them in the ChoicesDef

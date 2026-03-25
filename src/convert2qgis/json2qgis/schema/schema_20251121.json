@@ -1,14 +1,10 @@
 {
   "$ref": "#/definitions/Json2qgisSchema",
-  "$schema": "http://json-schema.org/draft-06/schema#",
+  "$schema": "https://json-schema.org/draft/2019-09/schema#",
   "definitions": {
     "CustomProperties": {
       "additionalProperties": {
-        "type": [
-          "string",
-          "number",
-          "boolean"
-        ]
+        "type": ["string", "number", "boolean"]
       },
       "type": "object"
     },
@@ -27,18 +23,10 @@
           "constraint_expression",
           "constraint_expression_description"
         ],
-        "is_not_null": [
-          "is_not_null_strength"
-        ],
-        "is_not_null_strength": [
-          "is_not_null"
-        ],
-        "is_unique": [
-          "is_unique_strength"
-        ],
-        "is_unique_strength": [
-          "is_unique"
-        ]
+        "is_not_null": ["is_not_null_strength"],
+        "is_not_null_strength": ["is_not_null"],
+        "is_unique": ["is_unique_strength"],
+        "is_unique_strength": ["is_unique"]
       },
       "properties": {
         "alias": {
@@ -57,11 +45,7 @@
           "type": "string"
         },
         "constraint_expression_strength": {
-          "enum": [
-            "hard",
-            "soft",
-            "not_set"
-          ],
+          "enum": ["hard", "soft", "not_set"],
           "type": "string"
         },
         "default_value": {
@@ -74,22 +58,14 @@
           "type": "boolean"
         },
         "is_not_null_strength": {
-          "enum": [
-            "hard",
-            "soft",
-            "not_set"
-          ],
+          "enum": ["hard", "soft", "not_set"],
           "type": "string"
         },
         "is_unique": {
           "type": "boolean"
         },
         "is_unique_strength": {
-          "enum": [
-            "hard",
-            "soft",
-            "not_set"
-          ],
+          "enum": ["hard", "soft", "not_set"],
           "type": "string"
         },
         "length": {
@@ -108,14 +84,7 @@
           "type": "boolean"
         },
         "type": {
-          "enum": [
-            "string",
-            "integer",
-            "real",
-            "boolean",
-            "datetime",
-            "date"
-          ],
+          "enum": ["string", "integer", "real", "boolean", "datetime", "date"],
           "type": "string"
         },
         "widget_config": {
@@ -177,31 +146,20 @@
             },
             "parent_id": {
               "minLength": 1,
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "show_label": {
               "type": "boolean"
             },
             "type": {
-              "enum": [
-                "field",
-                "relation"
-              ],
+              "enum": ["field", "relation"],
               "type": "string"
             },
             "visibility_expression": {
               "type": "string"
             }
           },
-          "required": [
-            "item_id",
-            "parent_id",
-            "type",
-            "field_name"
-          ],
+          "required": ["item_id", "parent_id", "type", "field_name"],
           "type": "object"
         },
         {
@@ -226,29 +184,17 @@
               "type": "string"
             },
             "parent_id": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": ["string", "null"]
             },
             "type": {
-              "enum": [
-                "tab",
-                "group_box",
-                "text"
-              ],
+              "enum": ["tab", "group_box", "text"],
               "type": "string"
             },
             "visibility_expression": {
               "type": "string"
             }
           },
-          "required": [
-            "item_id",
-            "parent_id",
-            "type",
-            "label"
-          ],
+          "required": ["item_id", "parent_id", "type", "label"],
           "type": "object"
         }
       ],
@@ -263,7 +209,14 @@
         },
         "layers": {
           "items": {
-            "$ref": "#/definitions/Layer"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/VectorLayer"
+              },
+              {
+                "$ref": "#/definitions/RasterLayer"
+              }
+            ]
           },
           "type": "array"
         },
@@ -296,7 +249,7 @@
       "title": "Empty",
       "type": "object"
     },
-    "Layer": {
+    "VectorLayer": {
       "additionalProperties": false,
       "properties": {
         "crs": {
@@ -313,10 +266,7 @@
           "type": "array"
         },
         "datasource_format": {
-          "enum": [
-            "gpkg",
-            "memory"
-          ],
+          "enum": ["gpkg", "memory"],
           "type": "string"
         },
         "display_expression": {
@@ -370,14 +320,8 @@
           "type": "string"
         },
         "layer_type": {
-          "enum": [
-            "vector",
-            "raster",
-            "mesh",
-            "vector_tile",
-            "point_cloud"
-          ],
-          "type": "string"
+          "type": "string",
+          "const": "vector"
         },
         "name": {
           "type": "string"
@@ -398,7 +342,60 @@
         "name",
         "layer_type"
       ],
-      "title": "Layer",
+      "title": "Vector Layer",
+      "type": "object"
+    },
+    "RasterLayer": {
+      "additionalProperties": false,
+      "properties": {
+        "crs": {
+          "pattern": "^EPSG:\\d+$",
+          "type": "string"
+        },
+        "custom_properties": {
+          "$ref": "#/definitions/CustomProperties"
+        },
+        "datasource": {
+          "type": "string"
+        },
+        "datasource_format": {
+          "enum": ["wms"],
+          "type": "string"
+        },
+        "is_identifiable": {
+          "type": "boolean"
+        },
+        "is_private": {
+          "type": "boolean"
+        },
+        "is_read_only": {
+          "type": "boolean"
+        },
+        "is_removable": {
+          "type": "boolean"
+        },
+        "is_searchable": {
+          "type": "boolean"
+        },
+        "layer_id": {
+          "type": "string"
+        },
+        "layer_type": {
+          "type": "string",
+          "const": "raster"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "crs",
+        "datasource",
+        "datasource_format",
+        "name",
+        "layer_type"
+      ],
+      "title": "Raster Layer",
       "type": "object"
     },
     "LayerTree": {
@@ -423,32 +420,21 @@
           "type": "string"
         },
         "mutually_exclusive_child_index": {
-          "min": -1,
+          "minimum": -1,
           "type": "integer"
         },
         "name": {
           "type": "string"
         },
         "parent_id": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "type": {
-          "enum": [
-            "group",
-            "layer"
-          ],
+          "enum": ["group", "layer"],
           "type": "string"
         }
       },
-      "required": [
-        "item_id",
-        "name",
-        "parent_id",
-        "type"
-      ],
+      "required": ["item_id", "name", "parent_id", "type"],
       "title": "Child",
       "type": "object"
     },
@@ -466,10 +452,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "from_field",
-              "to_field"
-            ],
+            "required": ["from_field", "to_field"],
             "title": "FieldPair",
             "type": "object"
           },
@@ -485,10 +468,7 @@
           "type": "string"
         },
         "strength": {
-          "enum": [
-            "association",
-            "composition"
-          ],
+          "enum": ["association", "composition"],
           "type": "string"
         },
         "to_field": {
@@ -529,11 +509,16 @@
         },
         "title": {
           "type": "string"
+        },
+        "crs": {
+          "type": "string",
+          "pattern": "EPSG:\\d+"
+        },
+        "extent": {
+          "type": "string"
         }
       },
-      "required": [
-        "title"
-      ],
+      "required": ["title"],
       "title": "Project",
       "type": "object"
     },
@@ -551,10 +536,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "from_field",
-              "to_field"
-            ],
+            "required": ["from_field", "to_field"],
             "title": "FieldPair",
             "type": "object"
           },
@@ -570,22 +552,14 @@
           "type": "string"
         },
         "strength": {
-          "enum": [
-            "association",
-            "composition"
-          ],
+          "enum": ["association", "composition"],
           "type": "string"
         },
         "to_layer_id": {
           "type": "string"
         }
       },
-      "required": [
-        "relation_id",
-        "name",
-        "from_layer_id",
-        "to_layer_id"
-      ],
+      "required": ["relation_id", "name", "from_layer_id", "to_layer_id"],
       "title": "Relation",
       "type": "object"
     },
@@ -612,7 +586,7 @@
             "max": {
               "type": "integer"
             },
-            "min": {
+            "minimum": {
               "type": "integer"
             },
             "precision": {
@@ -700,11 +674,7 @@
               "type": "string"
             },
             "text_display_method": {
-              "enum": [
-                0,
-                1,
-                2
-              ],
+              "enum": [0, 1, 2],
               "type": "integer"
             },
             "unchecked_state": {
