@@ -4,12 +4,12 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field, fields
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Literal, TypeVar, cast
+from typing import Any, Literal, TypeAlias, TypeVar, cast
 
-RelationStrength = Literal["association", "composition"]
-ConstraintStrength = Literal["hard", "soft", "not_set"]
+RelationStrength: TypeAlias = Literal["association", "composition"]
+ConstraintStrength: TypeAlias = Literal["hard", "soft", "not_set"]
 CrsDef = str
-GeometryType = Literal[
+GeometryType: TypeAlias = Literal[
     "Point",
     "LineString",
     "Polygon",
@@ -18,9 +18,11 @@ GeometryType = Literal[
     "MultiPolygon",
     "NoGeometry",
 ]
-FormItemTypes = Literal["field", "relation", "group_box", "tab", "row", "text"]
-FormItemGroupTypes = Literal["group_box", "tab"]
-LayerType = Literal["vector", "raster", "mesh", "vector_tile", "point_cloud"]
+FormItemTypes: TypeAlias = Literal[
+    "field", "relation", "group_box", "tab", "row", "text"
+]
+FormItemGroupTypes: TypeAlias = Literal["group_box", "tab"]
+LayerType: TypeAlias = Literal["vector", "raster", "mesh", "vector_tile", "point_cloud"]
 
 
 T = TypeVar("T", bound="DataclassModelMixin")
