@@ -15,9 +15,11 @@ from convert2qgis.json2qgis.generate import (
     generate_relation_def,
     generate_uuid_field_def,
 )
-from convert2qgis.json2qgis.json2qgis import ProjectCreator, ProjectDef
+from convert2qgis.json2qgis.json2qgis import ProjectCreator
 from convert2qgis.json2qgis.type_defs import (
     AliasDef,
+    AliasSimpleDef,
+    AliasWithExpressionDef,
     ChoicesDef,
     ConstraintStrength,
     CrsDef,
@@ -28,6 +30,8 @@ from convert2qgis.json2qgis.type_defs import (
     LayerDef,
     LayerTreeItemDef,
     PathOrStr,
+    ProjectDef,
+    ProjectMetadataDef,
     RelationDef,
     VectorLayerDef,
     WeakFieldDef,
@@ -165,7 +169,7 @@ def convert_xlsform_to_json(
     *,
     settings: ConverterSettings | None = None,
     skip_failed_expressions: bool = False,
-) -> ProjectDef:
+) -> dict[str, Any]:
     survey_sheet, choices_sheet, settings_sheet = parse_xlsform_sheets(xlsform_filename)
 
     converter = XlsformConverter(
@@ -328,7 +332,7 @@ class XlsformConverter:
 
     def find_layer(self, layer_id: str) -> LayerDef | None:
         for layer_def in self.layers:
-            if layer_def["layer_id"] == layer_id:
+            if layer_def.layer_id == layer_id:
                 return layer_def
 
         return None
@@ -382,8 +386,8 @@ class XlsformConverter:
             raise
 
     def _enter_layer(self, layer_def: LayerDef) -> None:
-        layer_id = layer_def["layer_id"]
-        layer_name = layer_def["name"]
+        layer_id = layer_def.layer_id
+        layer_name = layer_def.name
 
         self.layers.append(layer_def)
         self._layer_ids.append(layer_id)
@@ -391,14 +395,14 @@ class XlsformConverter:
         self._enter_container(None)
 
         self.layer_tree.append(
-            {
-                "layer_id": layer_id,
-                "item_id": f"layer_{layer_id}",
-                "name": layer_name,
-                "parent_id": "",
-                "type": "layer",
-                "is_checked": True,
-            }
+            LayerTreeItemDef(
+                layer_id=layer_id,
+                item_id=f"layer_{layer_id}",
+                name=layer_name,
+                parent_id="",
+                type="layer",
+                is_checked=True,
+            )
         )
 
         form_item = generate_form_item_def(
@@ -430,15 +434,15 @@ class XlsformConverter:
 
     def _add_container(self, container_def: FormItemDef) -> None:
         current_layer_def = self._current_layer()
-        assert current_layer_def["layer_type"] == "vector"
+        assert current_layer_def.layer_type == "vector"
         current_layer_def = cast(VectorLayerDef, current_layer_def)
-        current_layer_def["form_config"].append(container_def)
+        current_layer_def.form_config.append(container_def)
 
     def _enter_container(self, container_def: FormItemDef | None) -> None:
         if container_def:
             self._add_container(container_def)
 
-            self._container_ids.append(container_def["item_id"])
+            self._container_ids.append(container_def.item_id)
         else:
             self._container_ids.append(None)
 
@@ -455,11 +459,11 @@ class XlsformConverter:
             return None
 
         current_layer_def = self._current_layer()
-        assert current_layer_def["layer_type"] == "vector"
+        assert current_layer_def.layer_type == "vector"
         current_layer_def = cast(VectorLayerDef, current_layer_def)
 
-        for form_item_def in reversed(current_layer_def["form_config"]):
-            if form_item_def["item_id"] == self._container_ids[-1]:
+        for form_item_def in reversed(current_layer_def.form_config):
+            if form_item_def.item_id == self._container_ids[-1]:
                 return form_item_def
 
         raise AssertionError(
@@ -488,7 +492,7 @@ class XlsformConverter:
         alias_str = self._get_label(sheet_row)
 
         if not alias_str:
-            return {}
+            return AliasSimpleDef()
 
         alias_expression = self.get_expression(
             alias_str,
@@ -498,16 +502,14 @@ class XlsformConverter:
         )
 
         if alias_expression.is_str():
-            return {
-                "alias": alias_str,
-            }
-        else:
-            return {
-                "alias_expression": alias_expression.to_qgis(),
-            }
+            return AliasSimpleDef(alias=alias_str)
+
+        return AliasWithExpressionDef(
+            alias_expression=alias_expression.to_qgis(),
+        )
 
     def _get_field_def(self, sheet_row: ParsedSheetRow) -> WeakFieldDef:
-        field_def: WeakFieldDef = {}
+        field_def = WeakFieldDef()
         indices = self.survey_sheet.indices
         xlsform_type = get_xlsform_type(sheet_row["type"])
         field_name = str(sheet_row["name"]).strip()
@@ -516,7 +518,7 @@ class XlsformConverter:
         if not field_type:
             logger.debug(f"Couldn't determine the type for `{field_name}`!")
 
-            return {}
+            return WeakFieldDef()
 
         self._check_xlsform_type_compatibility(xlsform_type)
 
@@ -588,10 +590,9 @@ class XlsformConverter:
                 # TODO @suricactus: handle last-saved functionality, skipping for now
                 pass
 
-        return cast(
-            WeakFieldDef,
+        return WeakFieldDef.from_data(
             {
-                **field_def,
+                **field_def.to_dict(),
                 "name": field_name,
                 "type": field_type,
                 "is_not_null": is_not_null,
@@ -599,7 +600,7 @@ class XlsformConverter:
                 "constraint_expression": constraint_expression,
                 "constraint_expression_description": constraint_expression_description,
                 "constraint_expression_strength": constraint_expression_strength,
-            },
+            }
         )
 
     def _check_xlsform_type_compatibility(self, xlsform_type: str) -> None:
@@ -683,26 +684,28 @@ class XlsformConverter:
 
         return display_expression
 
-    def to_json(self) -> ProjectDef:
+    def to_json(self) -> dict[str, Any]:
         self.convert()
 
-        return {
-            "project": {
-                "custom_properties": {
+        project_def = ProjectDef(
+            project=ProjectMetadataDef(
+                custom_properties={
                     "qfieldsync/maximumImageWidthHeight": 0,
                     "qfieldsync/initialMapMode": "digitize",
                 },
-                "crs": self._project_crs,
-                "author": self._project_author,
-                "title": self._xlsform_settings["form_title"],
-                "extent": self.get_project_extent(),
-            },
-            "layers": self.layers,
-            "layer_tree": self.layer_tree,
-            "relations": self.relations,
-            "polymorphic_relations": [],
-            "version": "1.0",
-        }
+                crs=self._project_crs,
+                author=self._project_author,
+                title=self._xlsform_settings["form_title"],
+                extent=self.get_project_extent(),
+            ),
+            layers=self.layers,
+            layer_tree=self.layer_tree,
+            relations=self.relations,
+            polymorphic_relations=[],
+            version="1.0",
+        )
+
+        return project_def.to_dict()
 
     def convert(self) -> None:
         assert self.survey_sheet
@@ -765,8 +768,8 @@ class XlsformConverter:
                     self._parse_form_row(row)
                 )
 
-                layer_def["fields"].extend(row_field_defs)
-                layer_def["form_config"].extend(row_form_item_defs)
+                layer_def.fields.extend(row_field_defs)
+                layer_def.form_config.extend(row_form_item_defs)
 
                 # TODO find a better place for `max_pixels` logic
                 if row["type"] == "image":
@@ -775,7 +778,7 @@ class XlsformConverter:
                 if row_geometry_type:
                     if layer_id in geometry_type_by_layer_id:
                         logger.warning(
-                            f"Multiple geometry types defined for layer `{layer_def['name']}`; using the first one `{row_geometry_type}`"
+                            f"Multiple geometry types defined for layer `{layer_def.name}`; using the first one `{row_geometry_type}`"
                         )
 
                         continue
@@ -796,7 +799,7 @@ class XlsformConverter:
             assert layer_def is not None
             assert geometry_type is not None
 
-            layer_def["geometry_type"] = geometry_type
+            layer_def.geometry_type = geometry_type
 
     def add_basemap_layer(self):
         layer_id = "basemap_layer"
@@ -810,14 +813,14 @@ class XlsformConverter:
 
         self.layers.append(basemap_layer_def)
         self.layer_tree.append(
-            {
-                "layer_id": layer_id,
-                "item_id": f"layer_{layer_id}",
-                "name": self._project_basemap_name,
-                "parent_id": "",
-                "type": "layer",
-                "is_checked": True,
-            }
+            LayerTreeItemDef(
+                layer_id=layer_id,
+                item_id=f"layer_{layer_id}",
+                name=self._project_basemap_name,
+                parent_id="",
+                type="layer",
+                is_checked=True,
+            )
         )
 
     def _parse_form_row(
@@ -840,7 +843,7 @@ class XlsformConverter:
 
         # we start with some defaults that are common for all field and widget types
         field_default: WeakFieldDef = self._get_field_def(row)
-        form_item_default: WeakFormItemDef = {}
+        form_item_default = WeakFormItemDef()
 
         if row["relevant"]:
             visibility_expr = self.get_expression(
@@ -850,7 +853,7 @@ class XlsformConverter:
             visibility_expr = ""
 
         if visibility_expr:
-            form_item_default["visibility_expression"] = visibility_expr
+            form_item_default.visibility_expression = visibility_expr
 
         parsed_row = widget_type_cb(WidgetContext(self, row))
         current_container = self._current_container()
@@ -858,23 +861,22 @@ class XlsformConverter:
         # If the `parent_id` is `None`, it means we are at the root level
         # the form item's `parent_id` set to `None` represents that.
         if current_container is not None:
-            parent_id = current_container["item_id"]
+            parent_id = current_container.item_id
         else:
             parent_id = None
 
         # Determine the parent id for the current form item.
         # If `group_status` is `GroupStatus.END``, then the last parent id is popped from the stack and no new element is added.
         if parsed_row.group_status == GroupStatus.BEGIN:
-            self._enter_container(
-                generate_form_item_def(
-                    **{
-                        "type": self.get_form_group_type(),
-                        **form_item_default,
-                        **parsed_row.form_container,
-                        "parent_id": parent_id,
-                    },
-                )
+            container_item = generate_form_item_def(type=self.get_form_group_type())
+            container_item.update(
+                {
+                    **form_item_default.to_dict(),
+                    **parsed_row.form_container,
+                    "parent_id": parent_id,
+                }
             )
+            self._enter_container(container_item)
         # alternatively, we could do call get_form recursively:
         # self.get_form(parsed_row.form_container["item_id"])
         elif parsed_row.group_status == GroupStatus.END:
@@ -883,7 +885,11 @@ class XlsformConverter:
         # Determine the layer id for the current form item.
         # If `layer_status` is `layerStatus.END``, then the last layer id is popped from the stack and no new element is added.
         if parsed_row.layer_status == LayerStatus.BEGIN:
-            self._enter_layer(generate_layer_def(**parsed_row.layer))
+            layer = generate_layer_def(
+                layer_type=cast(str, parsed_row.layer.layer_type or "vector")
+            )
+            layer.update(parsed_row.layer)
+            self._enter_layer(layer)
         elif parsed_row.layer_status == LayerStatus.END:
             self._exit_layer()
 
@@ -898,39 +904,42 @@ class XlsformConverter:
         if parsed_row.field:
             assert not parsed_row.form_container
 
-            field = generate_field_def(
-                **{**field_default, **parsed_row.field},
+            field = generate_field_def()
+            field.update(
+                {
+                    **field_default.to_dict(),
+                    **parsed_row.field.to_dict(),
+                }
             )
             fields.append(field)
-            form_items.append(
-                generate_form_item_def(
-                    **{
-                        "is_label_on_top": True,
-                        **form_item_default,
-                        **parsed_row.form_field,
-                        "field_name": field["name"],
-                        "parent_id": parent_id,
-                        "type": "field",
-                    },
-                )
+            form_item = generate_form_item_def(type="field")
+            form_item.update(
+                {
+                    "is_label_on_top": True,
+                    **form_item_default.to_dict(),
+                    **parsed_row.form_field.to_dict(),
+                    "field_name": field.name,
+                    "parent_id": parent_id,
+                }
             )
+            form_items.append(form_item)
         elif (
             parsed_row.form_container
             and parsed_row.group_status == GroupStatus.NONE
             and parsed_row.layer_status == LayerStatus.NONE
         ):
-            self._add_container(
-                generate_form_item_def(
-                    **{
-                        **parsed_row.form_container,
-                        "parent_id": parent_id,
-                    }
-                )
+            container_item = generate_form_item_def()
+            container_item.update(
+                {
+                    **parsed_row.form_container,
+                    "parent_id": parent_id,
+                }
             )
+            self._add_container(container_item)
 
         if parsed_row.relation:
             assert parsed_row.form_field is not None
-            assert parsed_row.form_field.get("type") == "relation"
+            assert parsed_row.form_field.type == "relation"
 
             self.relations.append(
                 generate_relation_def(
@@ -938,17 +947,17 @@ class XlsformConverter:
                 )
             )
 
-            form_items.append(
-                generate_form_item_def(
-                    **{
-                        "visibility_expression": visibility_expr,
-                        "is_label_on_top": True,
-                        **form_item_default,
-                        **parsed_row.form_field,
-                        "parent_id": parent_id,
-                    }
-                )
+            form_item = generate_form_item_def()
+            form_item.update(
+                {
+                    "visibility_expression": visibility_expr,
+                    "is_label_on_top": True,
+                    **form_item_default.to_dict(),
+                    **parsed_row.form_field.to_dict(),
+                    "parent_id": parent_id,
+                }
             )
+            form_items.append(form_item)
 
         return fields, form_items, geometry_type
 
@@ -957,7 +966,7 @@ class XlsformConverter:
         # so we need to iterate over all rows for the given choice group and collect the columns that are non-empty.
         columns_set = set()
         for list_choices_row in list_choices:
-            for col_name, col_value in list_choices_row.items():
+            for col_name, col_value in list_choices_row.to_dict().items():
                 if col_name in columns_set:
                     continue
 
@@ -978,7 +987,7 @@ class XlsformConverter:
     def _get_choices_record(
         self, columns: list[str], raw_choice_record: ChoicesDef | None
     ) -> ChoicesDef:
-        record: ChoicesDef = {}
+        record = ChoicesDef()
 
         for column in columns:
             if raw_choice_record is None:
@@ -987,9 +996,9 @@ class XlsformConverter:
                 else:
                     value = None
             else:
-                value = raw_choice_record[column]  # type: ignore
+                value = getattr(raw_choice_record, column, None)
 
-            record[column] = value  # type: ignore
+            setattr(record, column, value)
 
         return record
 
@@ -1014,10 +1023,10 @@ class XlsformConverter:
             if last_list_name is not None and last_list_name != row["list_name"]:
                 assert last_list_name not in choices
 
-            choice_data: ChoicesDef = {
-                "name": str(row["name"]).strip(),
-                "label": self._get_label(row),
-            }
+            choice_data = ChoicesDef(
+                name=str(row["name"]).strip(),
+                label=self._get_label(row),
+            )
 
             for col_name, col_value in row.items():
                 if col_name in ("name", "label", "list_name"):
@@ -1030,7 +1039,7 @@ class XlsformConverter:
 
                     continue
 
-                choice_data[col_name] = col_value  # type: ignore
+                setattr(choice_data, col_name, col_value)
 
             choices[row["list_name"]].append(choice_data)
 
@@ -1045,11 +1054,6 @@ class XlsformConverter:
             ]
 
             for raw_choice_record in raw_choice_records:
-                cleaned_row = {}
-
-                for col_name in columns:
-                    cleaned_row[col_name] = raw_choice_record[col_name]  # type: ignore
-
                 cleaned_choices.append(
                     self._get_choices_record(columns, raw_choice_record)
                 )
@@ -1067,7 +1071,7 @@ class XlsformConverter:
             layer_name = build_choices_layer_name(list_name)
 
             fields = []
-            for col_name in list_choices[0].keys():
+            for col_name in list_choices[0].to_dict().keys():
                 fields.append(
                     generate_field_def(
                         name=col_name,

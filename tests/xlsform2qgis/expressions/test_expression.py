@@ -23,8 +23,8 @@ def build_context(
 ) -> ExpressionContext:
     choices_by_list: dict[str, list[ChoicesDef]] = {
         "my-list": [
-            {"name": "", "label": ""},
-            {"name": "one", "label": "One"},
+            ChoicesDef(name="", label=""),
+            ChoicesDef(name="one", label="One"),
         ]
     }
     survey_settings: XlsformSettings = cast(

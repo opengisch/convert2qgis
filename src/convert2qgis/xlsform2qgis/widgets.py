@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -42,20 +42,20 @@ class WidgetContext:
 class ParsedRow:
     def __init__(
         self,
-        layer: WeakLayerDef | None = None,
-        relation: dict[str, Any] | None = None,
-        field: WeakFieldDef | None = None,
-        form_field: WeakFormItemDef | None = None,
-        form_container: dict[str, Any] | None = None,
+        layer: WeakLayerDef | Mapping[str, Any] | None = None,
+        relation: Mapping[str, Any] | None = None,
+        field: WeakFieldDef | Mapping[str, Any] | None = None,
+        form_field: WeakFormItemDef | Mapping[str, Any] | None = None,
+        form_container: Mapping[str, Any] | None = None,
         geometry_type: GeometryType | None = None,
         group_status: GroupStatus = GroupStatus.NONE,
         layer_status: LayerStatus = LayerStatus.NONE,
     ) -> None:
-        self.layer = layer or {}
-        self.relation = relation or {}
-        self.field = field or {}
-        self.form_field = form_field or {}
-        self.form_container = form_container or {}
+        self.layer: WeakLayerDef = WeakLayerDef.from_data(layer or {})
+        self.relation: dict[str, Any] = dict(relation or {})
+        self.field: WeakFieldDef = WeakFieldDef.from_data(field or {})
+        self.form_field: WeakFormItemDef = WeakFormItemDef.from_data(form_field or {})
+        self.form_container: dict[str, Any] = dict(form_container or {})
         self.geometry_type: GeometryType | None = geometry_type
         self.group_status = group_status
         self.layer_status = layer_status
@@ -116,7 +116,7 @@ def register_type(
 
 @register_type(["calculate"])
 def widget_calculate(ctx: WidgetContext) -> ParsedRow:
-    form_item: WeakFieldDef = {}
+    form_item = WeakFieldDef()
 
     if ctx.row["calculation"]:
         form_item.update(
@@ -140,7 +140,7 @@ def widget_calculate(ctx: WidgetContext) -> ParsedRow:
     return ParsedRow(
         field={
             "widget_type": widget_type,
-            **form_item,
+            **form_item.to_dict(),
         },
         form_field={
             "is_read_only": True,
@@ -151,7 +151,7 @@ def widget_calculate(ctx: WidgetContext) -> ParsedRow:
 
 @register_type(["hidden"])
 def widget_hidden(ctx: WidgetContext) -> ParsedRow:
-    field: WeakFieldDef = {}
+    field = WeakFieldDef()
 
     if ctx.row["calculation"]:
         default_value_expr = ctx.converter.get_expression(
@@ -168,7 +168,7 @@ def widget_hidden(ctx: WidgetContext) -> ParsedRow:
     return ParsedRow(
         field={
             "widget_type": "Hidden",
-            **field,
+            **field.to_dict(),
         },
         form_field={
             "show_label": False,
@@ -381,7 +381,7 @@ def widget_media(ctx: WidgetContext) -> ParsedRow:
     ]
 )
 def widget_select_from_file(ctx: WidgetContext) -> ParsedRow:
-    layer: WeakLayerDef = {}
+    layer = WeakLayerDef()
     xlsform_type, *type_details = str(ctx.row["type"]).strip().split(" ")
     layer_id = build_choices_layer_id(*type_details)
 
@@ -532,29 +532,31 @@ def widget_note(ctx: WidgetContext) -> ParsedRow:
 @register_type(["begin repeat", "begin_repeat"])
 def widget_begin_repeat(ctx: WidgetContext) -> ParsedRow:
     layer_id = f"layer_repeat_{ctx.row.idx}"
-    layer: WeakLayerDef = {
-        "layer_id": layer_id,
-        "name": f"repeat_{ctx.row['name']}",
-        "primary_key": "uuid",
-        "geometry_type": "NoGeometry",
-        "layer_type": "vector",
-        "fields": [
-            generate_uuid_field_def(),
-            generate_field_def(
-                name="uuid_parent",
-                type="string",
-                alias="Parent UUID",
-                widget_type="TextEdit",
-            ),
-        ],
-        "is_private": True,
-    }
+    layer = WeakLayerDef.from_data(
+        {
+            "layer_id": layer_id,
+            "name": f"repeat_{ctx.row['name']}",
+            "primary_key": "uuid",
+            "geometry_type": "NoGeometry",
+            "layer_type": "vector",
+            "fields": [
+                generate_uuid_field_def(),
+                generate_field_def(
+                    name="uuid_parent",
+                    type="string",
+                    alias="Parent UUID",
+                    widget_type="TextEdit",
+                ),
+            ],
+            "is_private": True,
+        }
+    )
 
     relation_id = f"relation_{ctx.row.idx}"
     relation = {
         "relation_id": relation_id,
         "name": relation_id,
-        "to_layer_id": ctx.converter.layers[-1]["layer_id"],
+        "to_layer_id": ctx.converter.layers[-1].layer_id,
         "from_layer_id": layer_id,
         "field_pairs": [
             {
@@ -564,11 +566,13 @@ def widget_begin_repeat(ctx: WidgetContext) -> ParsedRow:
         ],
     }
 
-    form_field: WeakFormItemDef = {
-        "item_id": relation_id,
-        "field_name": relation_id,
-        "type": "relation",
-    }
+    form_field = WeakFormItemDef.from_data(
+        {
+            "item_id": relation_id,
+            "field_name": relation_id,
+            "type": "relation",
+        }
+    )
 
     return ParsedRow(
         layer=layer,
