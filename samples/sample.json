@@ -159,16 +159,16 @@
           "set_default_value_on_update": false,
           "type": "string",
           "widget_config": {
-            "document_viewer_height": 0,
-            "document_viewer_width": 0,
-            "file_widget_filter": "",
-            "is_document_viewer_enabled": true,
-            "show_file_widget_button": true,
-            "storage_auth_config_id": null,
-            "storage_mode": 0,
-            "storage_type": null,
-            "use_file_widget": true,
-            "use_relative_storage": true
+            "DocumentViewerHeight": 0,
+            "DocumentViewerWidth": 0,
+            "FileWidgetFilter": "",
+            "DocumentViewer": true,
+            "FileWidgetButton": true,
+            "StorageAuthConfigId": null,
+            "StorageMode": 0,
+            "StorageType": null,
+            "FileWidget": true,
+            "RelativeStorage": true
           },
           "widget_type": "ExternalResource"
         },
