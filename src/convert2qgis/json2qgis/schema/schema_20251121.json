@@ -607,34 +607,34 @@
         {
           "description": "Used by ExternalResource widget",
           "properties": {
-            "document_viewer_height": {
+            "DocumentViewerHeight": {
               "type": "integer"
             },
-            "document_viewer_width": {
+            "DocumentViewerWidth": {
               "type": "integer"
             },
-            "file_widget_filter": {
+            "FileWidgetFilter": {
               "type": "string"
             },
-            "is_document_viewer_enabled": {
+            "DocumentViewer": {
               "type": "boolean"
             },
-            "show_file_widget_button": {
+            "FileWidgetButton": {
               "type": "boolean"
             },
-            "storage_auth_config_id": {
-              "type": "null"
+            "StorageAuthConfigId": {
+              "type": ["null", "string"]
             },
-            "storage_mode": {
+            "StorageMode": {
               "type": "integer"
             },
-            "storage_type": {
+            "StorageType": {
               "type": "null"
             },
-            "use_file_widget": {
+            "FileWidget": {
               "type": "boolean"
             },
-            "use_relative_storage": {
+            "RelativeStorage": {
               "type": "boolean"
             }
           },

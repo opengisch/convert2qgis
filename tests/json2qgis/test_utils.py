@@ -872,16 +872,16 @@ class TestUtils:
             {
                 "widget_type": "ExternalResource",
                 "widget_config": {
-                    "is_document_viewer_enabled": True,
-                    "document_viewer_height": 100,
-                    "document_viewer_width": 100,
-                    "use_file_widget": True,
-                    "show_file_widget_button": True,
-                    "file_widget_filter": "*.png",
-                    "use_relative_storage": True,
-                    "storage_auth_config_id": "abc",
-                    "storage_mode": 0,
-                    "storage_type": None,
+                    "DocumentViewer": True,
+                    "DocumentViewerHeight": 100,
+                    "DocumentViewerWidth": 100,
+                    "FileWidget": True,
+                    "FileWidgetButton": True,
+                    "FileWidgetFilter": "*.png",
+                    "RelativeStorage": True,
+                    "StorageAuthConfigId": "abc",
+                    "StorageMode": 0,
+                    "StorageType": None,
                 },
             }
         )

@@ -13,6 +13,7 @@ dependencies = []
 
 [project.optional-dependencies]
 optional = [
+    "unidecode >=1.0.0",
     "fastjsonschema (>=2.21.2,<3.0.0)",
     "markdown>=3.10",
 ]
