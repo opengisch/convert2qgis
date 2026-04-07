@@ -590,20 +590,7 @@ def set_field_widget(field: QgsField, field_def: FieldDef | dict[str, Any]) -> N
             }
         )
     elif widget_type == "ExternalResource":
-        wc.update(
-            {
-                "DocumentViewer": wc.get("is_document_viewer_enabled", False),
-                "DocumentViewerHeight": wc.get("document_viewer_height", 0),
-                "DocumentViewerWidth": wc.get("document_viewer_width", 0),
-                "FileWidget": wc.get("use_file_widget", False),
-                "FileWidgetButton": wc.get("show_file_widget_button", False),
-                "FileWidgetFilter": wc.get("file_widget_filter", ""),
-                "RelativeStorage": wc.get("use_relative_storage", False),
-                "StorageAuthConfigId": wc.get("storage_auth_config_id", ""),
-                "StorageMode": wc.get("storage_mode", 0),
-                "StorageType": wc.get("storage_type"),
-            }
-        )
+        wc.update(wc)
     elif widget_type == "ValueMap":
         wc.update(
             {
