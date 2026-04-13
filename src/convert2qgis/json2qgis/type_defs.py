@@ -404,7 +404,7 @@ class BaseDatasetDef(DataclassModelMixin):
 
 @dataclass
 class VectorDatasetDef(BaseDatasetDef):
-    layer_type: Literal["vector"] = "vector"
+    layer_type: Literal["vector"] = "vector"  # type: ignore[assignment]
     geometry_type: GeometryType = "NoGeometry"
     datasource_format: str = VectorLayerDataprovider.GPKG
     fields: list[FieldDef] = field(default_factory=list)
@@ -442,7 +442,7 @@ class VectorDatasetDef(BaseDatasetDef):
 
 @dataclass
 class RasterDatasetDef(BaseDatasetDef):
-    layer_type: Literal["raster"] = "raster"
+    layer_type: Literal["raster"] = "raster"  # type: ignore[assignment]
     datasource: str = ""
     datasource_format: str = "wms"
 
