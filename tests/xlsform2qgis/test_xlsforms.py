@@ -268,9 +268,9 @@ class TestConverter:
 
         converter.convert()
 
-        assert len(converter.datasets) == 1
+        assert len(converter.vector_datasets) == 1
 
-        survey_layer = converter.datasets[0]
+        survey_layer = converter.vector_datasets[0]
 
         assert len(survey_layer.fields) == 2
         assert survey_layer.fields[0] == generate_uuid_field_def(
@@ -330,9 +330,9 @@ class TestConverter:
         converter._xlsform_settings = converter._get_xlsform_settings()
         converter.convert()
 
-        assert len(converter.datasets) == 1
+        assert len(converter.vector_datasets) == 1
 
-        survey_layer = converter.datasets[0]
+        survey_layer = converter.vector_datasets[0]
 
         assert len(survey_layer.fields) == 4
 
@@ -381,9 +381,9 @@ class TestConverter:
 
         converter.convert()
 
-        assert len(converter.datasets) == 1
+        assert len(converter.vector_datasets) == 1
 
-        survey_layer = converter.datasets[0]
+        survey_layer = converter.vector_datasets[0]
 
         assert len(survey_layer.fields) == 2
         assert survey_layer.fields[0] == generate_uuid_field_def(
@@ -449,9 +449,9 @@ class TestConverter:
 
         converter.convert()
 
-        assert len(converter.datasets) == 1
+        assert len(converter.vector_datasets) == 1
 
-        survey_layer = converter.datasets[0]
+        survey_layer = converter.vector_datasets[0]
 
         assert len(survey_layer.fields) == 2
         assert survey_layer.fields[0] == generate_uuid_field_def(
@@ -528,9 +528,9 @@ class TestConverter:
 
         converter.convert()
 
-        assert len(converter.datasets) == 2
+        assert len(converter.vector_datasets) == 2
 
-        survey_layer, repeat_layer_1 = converter.datasets
+        survey_layer, repeat_layer_1 = converter.vector_datasets
 
         assert survey_layer.layer_id == "survey_layer"
         assert len(survey_layer.fields) == 2
@@ -564,9 +564,9 @@ class TestConverter:
 
         converter.convert()
 
-        assert len(converter.datasets) == 1
+        assert len(converter.vector_datasets) == 1
 
-        survey_layer = converter.datasets[0]
+        survey_layer = converter.vector_datasets[0]
 
         assert survey_layer.geometry_type == expected_geometry
 

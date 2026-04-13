@@ -336,10 +336,6 @@ class XlsformConverter:
         return True
 
     @property
-    def datasets(self) -> list[DatasetDef]:
-        return self.all_datasets
-
-    @property
     def all_datasets(self) -> list[DatasetDef]:
         return [*self.vector_datasets, *self.raster_datasets]
 
