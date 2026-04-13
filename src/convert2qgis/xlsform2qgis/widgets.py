@@ -95,9 +95,7 @@ class WidgetRegistry:
 
 def register_type(
     format_name: list[str],
-) -> Callable[
-    [Callable[[WidgetContext], ParsedRow]], Callable[[WidgetContext], ParsedRow]
-]:
+) -> Callable[[Callable[[WidgetContext], ParsedRow]], Callable[[WidgetContext], ParsedRow]]:
     widget_registry = WidgetRegistry()
 
     def decorator(
@@ -154,9 +152,7 @@ def widget_hidden(ctx: WidgetContext) -> ParsedRow:
     field = WeakFieldDef()
 
     if ctx.row["calculation"]:
-        default_value_expr = ctx.converter.get_expression(
-            ctx.row["calculation"], str(ctx.row["name"])
-        )
+        default_value_expr = ctx.converter.get_expression(ctx.row["calculation"], str(ctx.row["name"]))
 
         field.update(
             {
@@ -389,13 +385,9 @@ def widget_select_from_file(ctx: WidgetContext) -> ParsedRow:
         "select_one_from_file",
         "select_multiple_from_file",
     ):
-        list_key, list_value = parse_xlsform_select_from_file_parameters(
-            ctx.row["parameters"]
-        )
+        list_key, list_value = parse_xlsform_select_from_file_parameters(ctx.row["parameters"])
 
-        raise NotImplementedError(
-            "select_from_file and select_multiple_from_file not implemented yet"
-        )
+        raise NotImplementedError("select_from_file and select_multiple_from_file not implemented yet")
         # layers.append(
         #     generate_vector_dataset_def(
         #         id=layer_id,
@@ -510,9 +502,7 @@ def widget_end_group(ctx: WidgetContext) -> ParsedRow:
 def widget_note(ctx: WidgetContext) -> ParsedRow:
     container_id = f"item_container_{ctx.row.idx}"
     label_expr_str = ctx.row["label"] or ""
-    label_expr = ctx.converter.get_expression(
-        label_expr_str, str(ctx.row["name"]), ParserType.TEMPLATE
-    )
+    label_expr = ctx.converter.get_expression(label_expr_str, str(ctx.row["name"]), ParserType.TEMPLATE)
 
     if label_expr.is_str():
         label = label_expr_str

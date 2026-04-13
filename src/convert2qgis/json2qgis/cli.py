@@ -11,9 +11,7 @@ logging.basicConfig(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Convert a JSON project definition into a QGIS project file."
-    )
+    parser = argparse.ArgumentParser(description="Convert a JSON project definition into a QGIS project file.")
     parser.add_argument(
         "json_file",
         type=argparse.FileType("r"),

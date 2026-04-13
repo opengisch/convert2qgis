@@ -68,8 +68,8 @@ class ProjectCreator:
         if fastjsonschema:
             try:
                 schema_validator(normalized_definition.to_dict())
-            except fastjsonschema.JsonSchemaException as e:
-                raise Qgis2JsonError(f'{e} with data "{getattr(e, "value", None)}"')
+            except fastjsonschema.JsonSchemaException as err:
+                raise Qgis2JsonError(f'{err} with data "{getattr(err, "value", None)}"') from err
 
         self._project = QgsProject()
         self.definition = normalized_definition
@@ -128,17 +128,13 @@ class ProjectCreator:
 
             # Display coordinates in WGS84 to provide a more useful experience for the average person
             display_settings.setCoordinateType(Qgis.CoordinateDisplayType.CustomCrs)
-            display_settings.setCoordinateCustomCrs(
-                QgsCoordinateReferenceSystem("EPSG:4326")
-            )
+            display_settings.setCoordinateCustomCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
 
         self._project.setTitle(project_title)
         self._project.setMetadata(metadata)
         self._project.writeProject.connect(self._process_project_write)
 
-        project_filename = self._output_dir.joinpath(
-            f"{normalize_name(project_title)}.qgs"
-        )
+        project_filename = self._output_dir.joinpath(f"{normalize_name(project_title)}.qgs")
         if not self._project.write(str(project_filename)):
             logger.error(f"Failed to write project to {project_filename}")
 
@@ -155,9 +151,7 @@ class ProjectCreator:
         nl = document.elementsByTagName("qgis")
 
         if nl.count() == 0:
-            logger.warning(
-                "Failed to find qgis node, skip saving project extent and CRS!"
-            )
+            logger.warning("Failed to find qgis node, skip saving project extent and CRS!")
 
             return
 
@@ -221,8 +215,8 @@ class ProjectCreator:
 
         try:
             crs = QgsCoordinateReferenceSystem(dataset_def.crs)
-        except Exception as e:
-            raise UnknownCrsSystem(f"Failed to create CRS: {e}")
+        except Exception as err:
+            raise UnknownCrsSystem(f"Failed to create CRS: {err}") from err
 
         if not crs.isValid():
             raise UnknownCrsSystem(f"Invalid CRS: {dataset_def.crs}")
@@ -260,7 +254,7 @@ class ProjectCreator:
         except ValueError:
             raise UnknownVectorLayerDataproviderError(
                 f"Unknown vector layer data provider: {dataset_def.datasource_format}"
-            )
+            ) from None
 
         normalized_name = normalize_name(dataset_def.name)
 
@@ -271,19 +265,15 @@ class ProjectCreator:
         file_name = normalized_name + "." + driver_name.value.lower()
 
         # TODO @suricactus: consider switching to `QgsVectorFileWriter.create()`
-        write_result, error_message, new_file, _new_layer = (
-            QgsVectorFileWriter.writeAsVectorFormatV3(
-                layer,
-                file_name,
-                self._project.transformContext(),
-                options,
-            )
+        write_result, error_message, new_file, _new_layer = QgsVectorFileWriter.writeAsVectorFormatV3(
+            layer,
+            file_name,
+            self._project.transformContext(),
+            options,
         )
 
         if write_result != QgsVectorFileWriter.WriterError.NoError:
-            raise Qgis2JsonError(
-                f"Error writing vector layer: {write_result} {error_message}"
-            )
+            raise Qgis2JsonError(f"Error writing vector layer: {write_result} {error_message}")
 
         new_layer = QgsVectorLayer(new_file, dataset_def.name, layer_provider_lib)
 
@@ -302,25 +292,19 @@ class ProjectCreator:
         layer_data_provider = layer.dataProvider()
 
         if layer_data_provider is None:
-            raise UnknownVectorLayerDataproviderError(
-                f"Failed to get data provider for layer: {dataset_def.name}"
-            )
+            raise UnknownVectorLayerDataproviderError(f"Failed to get data provider for layer: {dataset_def.name}")
 
         fields = create_fields(dataset_def)
 
         layer_data_provider.addAttributes(fields)
         layer.updateFields()
 
-    def _add_vector_layer_data(
-        self, layer: QgsVectorLayer, dataset_def: VectorDatasetDef
-    ) -> None:
+    def _add_vector_layer_data(self, layer: QgsVectorLayer, dataset_def: VectorDatasetDef) -> None:
         layer.startEditing()
         layer_data_provider = layer.dataProvider()
 
         if not bool(layer_data_provider) or not layer_data_provider.isValid():
-            raise UnknownVectorLayerDataproviderError(
-                f"Failed to get data provider for layer 1: {dataset_def.name}"
-            )
+            raise UnknownVectorLayerDataproviderError(f"Failed to get data provider for layer 1: {dataset_def.name}")
 
         if layer.geometryType() != Qgis.GeometryType.Null:
             raise NotImplementedError(

@@ -91,9 +91,7 @@ class FunctionSpec:
                 return result.format(*args)
 
         if len(args) > args_count + 1:
-            raise ValueError(
-                f"Expected at most {args_count} arguments, got {len(args)}"
-            )
+            raise ValueError(f"Expected at most {args_count} arguments, got {len(args)}")
 
         while len(args) < args_count:
             args += ("NULL",)
@@ -295,17 +293,11 @@ def register_function(
         if args_count is not None and params is not None:
             raise ValueError("Pass either `params` or `args_count`, not both")
 
-        effective_args_count = (
-            _to_args_count(_normalize_params(target, params))
-            if args_count is None
-            else args_count
-        )
+        effective_args_count = _to_args_count(_normalize_params(target, params)) if args_count is None else args_count
 
         function_name = name or target.__name__.replace("_", "-")
 
-        assert function_name not in SUPPORTED_FUNCTIONS, (
-            f"Function {function_name} already registered!"
-        )
+        assert function_name not in SUPPORTED_FUNCTIONS, f"Function {function_name} already registered!"
 
         SUPPORTED_FUNCTIONS[function_name] = FunctionSpec(
             effective_args_count,
@@ -359,9 +351,7 @@ def pulldata(*args: str) -> str:
         if looking_for == "'y'":
             return "$y"
 
-    raise ValueError(
-        f"Unsupported implementation of pulldata with parameters {args} in QGIS expressions!"
-    )
+    raise ValueError(f"Unsupported implementation of pulldata with parameters {args} in QGIS expressions!")
 
 
 @register_function(name="uuid", params=[0, 1])
@@ -379,9 +369,7 @@ def jr_choice_name(choice_value: str, list_name: str, ctx: ExpressionContext) ->
     list_name = list_name.strip("'")
 
     if list_name not in ctx.choices_by_list:
-        raise ValueError(
-            f"Unknown choices list {list_name}, expected one of {list(ctx.choices_by_list.keys())}!"
-        )
+        raise ValueError(f"Unknown choices list {list_name}, expected one of {list(ctx.choices_by_list.keys())}!")
 
     for choice in ctx.choices_by_list[list_name]:
         if choice.name == choice_value:

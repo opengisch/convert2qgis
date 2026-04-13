@@ -418,9 +418,7 @@ class TestUtils:
     def test_get_constraint_strength_not_set(self):
         """Test get_constraint_strength with 'not_set'."""
         strength = get_constraint_strength("not_set")
-        assert (
-            strength == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthNotSet
-        )
+        assert strength == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthNotSet
 
     def test_get_constraint_strength_unknown(self):
         """Test get_constraint_strength with unknown value."""
@@ -510,7 +508,6 @@ class TestUtils:
 
     def test_set_field_default_value_no_default(self, sample_field, sample_field_def):
         """Test setting default value for a field."""
-
         sample_field_def.update(
             {
                 "default_value": None,
@@ -524,7 +521,6 @@ class TestUtils:
 
     def test_set_field_default_value_with_default(self, sample_field, sample_field_def):
         """Test setting default value for a field."""
-
         sample_field_def.update(
             {
                 "default_value": "'default value'",
@@ -542,7 +538,6 @@ class TestUtils:
 
     def test_set_field_constraints_no_constraints(self, sample_field, sample_field_def):
         """Test setting constraints for a field with no constraints."""
-
         sample_field_def.update(
             {
                 "is_not_null": False,
@@ -556,22 +551,12 @@ class TestUtils:
         constraints = sample_field.constraints()
 
         # Check that no constraints are set
-        assert (
-            not constraints.constraints()
-            & QgsFieldConstraints.Constraint.ConstraintNotNull
-        )
-        assert (
-            not constraints.constraints()
-            & QgsFieldConstraints.Constraint.ConstraintUnique
-        )
-        assert (
-            not constraints.constraints()
-            & QgsFieldConstraints.Constraint.ConstraintExpression
-        )
+        assert not constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintNotNull
+        assert not constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintUnique
+        assert not constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintExpression
 
     def test_set_field_constraints_with_not_null(self, sample_field, sample_field_def):
         """Test setting constraints for a field."""
-
         sample_field_def.update(
             {
                 "is_not_null": True,
@@ -584,28 +569,17 @@ class TestUtils:
         constraints = sample_field.constraints()
 
         # Check Not Null constraint
+        assert constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintNotNull
         assert (
-            constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintNotNull
-        )
-        assert (
-            constraints.constraintStrength(
-                QgsFieldConstraints.Constraint.ConstraintNotNull
-            )
+            constraints.constraintStrength(QgsFieldConstraints.Constraint.ConstraintNotNull)
             == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthSoft
         )
 
-        assert (
-            not constraints.constraints()
-            & QgsFieldConstraints.Constraint.ConstraintUnique
-        )
-        assert (
-            not constraints.constraints()
-            & QgsFieldConstraints.Constraint.ConstraintExpression
-        )
+        assert not constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintUnique
+        assert not constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintExpression
 
     def test_set_field_constraints_with_unique(self, sample_field, sample_field_def):
         """Test setting constraints for a field."""
-
         sample_field_def.update(
             {
                 "is_unique": True,
@@ -618,30 +592,17 @@ class TestUtils:
         constraints = sample_field.constraints()
 
         # Check Not Null constraint
+        assert constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintUnique
         assert (
-            constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintUnique
-        )
-        assert (
-            constraints.constraintStrength(
-                QgsFieldConstraints.Constraint.ConstraintUnique
-            )
+            constraints.constraintStrength(QgsFieldConstraints.Constraint.ConstraintUnique)
             == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
         )
 
-        assert (
-            not constraints.constraints()
-            & QgsFieldConstraints.Constraint.ConstraintNotNull
-        )
-        assert (
-            not constraints.constraints()
-            & QgsFieldConstraints.Constraint.ConstraintExpression
-        )
+        assert not constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintNotNull
+        assert not constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintExpression
 
-    def test_set_field_constraints_with_expression(
-        self, sample_field, sample_field_def
-    ):
+    def test_set_field_constraints_with_expression(self, sample_field, sample_field_def):
         """Test setting constraints for a field."""
-
         sample_field_def.update(
             {
                 "constraint_expression": "random() > 0.5",
@@ -655,30 +616,18 @@ class TestUtils:
         constraints = sample_field.constraints()
 
         # Check Not Null constraint
+        assert constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintExpression
         assert (
-            constraints.constraints()
-            & QgsFieldConstraints.Constraint.ConstraintExpression
-        )
-        assert (
-            constraints.constraintStrength(
-                QgsFieldConstraints.Constraint.ConstraintExpression
-            )
+            constraints.constraintStrength(QgsFieldConstraints.Constraint.ConstraintExpression)
             == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
         )
         assert constraints.constraintDescription() == "Random constraint message"
 
-        assert (
-            not constraints.constraints()
-            & QgsFieldConstraints.Constraint.ConstraintNotNull
-        )
-        assert (
-            not constraints.constraints()
-            & QgsFieldConstraints.Constraint.ConstraintUnique
-        )
+        assert not constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintNotNull
+        assert not constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintUnique
 
     def test_set_field_constraints_all(self, sample_field, sample_field_def):
         """Test setting all constraints for a field."""
-
         sample_field_def.update(
             {
                 "is_not_null": True,
@@ -696,43 +645,29 @@ class TestUtils:
         constraints = sample_field.constraints()
 
         # Check Not Null constraint
+        assert constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintNotNull
         assert (
-            constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintNotNull
-        )
-        assert (
-            constraints.constraintStrength(
-                QgsFieldConstraints.Constraint.ConstraintNotNull
-            )
+            constraints.constraintStrength(QgsFieldConstraints.Constraint.ConstraintNotNull)
             == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthSoft
         )
 
         # Check Unique constraint
+        assert constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintUnique
         assert (
-            constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintUnique
-        )
-        assert (
-            constraints.constraintStrength(
-                QgsFieldConstraints.Constraint.ConstraintUnique
-            )
+            constraints.constraintStrength(QgsFieldConstraints.Constraint.ConstraintUnique)
             == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
         )
 
         # Check Expression constraint
+        assert constraints.constraints() & QgsFieldConstraints.Constraint.ConstraintExpression
         assert (
-            constraints.constraints()
-            & QgsFieldConstraints.Constraint.ConstraintExpression
-        )
-        assert (
-            constraints.constraintStrength(
-                QgsFieldConstraints.Constraint.ConstraintExpression
-            )
+            constraints.constraintStrength(QgsFieldConstraints.Constraint.ConstraintExpression)
             == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
         )
         assert constraints.constraintDescription() == "Random constraint message"
 
     def test_set_field_widget_hidden(self, sample_field, sample_field_def):
         """Test setting widget for a hidden field."""
-
         sample_field_def.update(
             {
                 "widget_type": "Hidden",
@@ -749,7 +684,6 @@ class TestUtils:
 
     def test_set_field_widget_color(self, sample_field, sample_field_def):
         """Test setting widget for a color field."""
-
         sample_field_def.update(
             {
                 "widget_type": "Color",
@@ -766,7 +700,6 @@ class TestUtils:
 
     def test_set_field_widget_text(self, sample_field, sample_field_def):
         """Test setting widget for a text field."""
-
         sample_field_def.update(
             {
                 "widget_type": "TextEdit",
@@ -787,7 +720,6 @@ class TestUtils:
 
     def test_set_field_widget_range(self, sample_field, sample_field_def):
         """Test setting widget for a range field."""
-
         sample_field_def.update(
             {
                 "widget_type": "Range",
@@ -818,7 +750,6 @@ class TestUtils:
 
     def test_set_field_widget_checkbox(self, sample_field, sample_field_def):
         """Test setting widget for a checkbox field."""
-
         sample_field_def.update(
             {
                 "widget_type": "CheckBox",
@@ -843,7 +774,6 @@ class TestUtils:
 
     def test_set_field_widget_datetime(self, sample_field, sample_field_def):
         """Test setting widget for a range field."""
-
         sample_field_def.update(
             {
                 "widget_type": "DateTime",
@@ -872,7 +802,6 @@ class TestUtils:
 
     def test_set_field_widget_externalresource(self, sample_field, sample_field_def):
         """Test setting widget for a externalresource field."""
-
         sample_field_def.update(
             {
                 "widget_type": "ExternalResource",
@@ -909,7 +838,6 @@ class TestUtils:
 
     def test_set_field_widget_valuemap(self, sample_field, sample_field_def):
         """Test setting widget for a valuemap field."""
-
         sample_field_def.update(
             {
                 "widget_type": "ValueMap",
@@ -932,7 +860,6 @@ class TestUtils:
 
     def test_get_layer_flags_to_false(self, sample_vector_layer_def):
         """Test getting layer flags from VectorDatasetDef."""
-
         sample_vector_layer_def.update(
             {
                 "is_identifiable": False,
@@ -953,7 +880,6 @@ class TestUtils:
 
     def test_get_layer_flags_to_true(self, sample_vector_layer_def):
         """Test getting layer flags from VectorDatasetDef."""
-
         sample_vector_layer_def.update(
             {
                 "is_identifiable": True,
@@ -974,7 +900,6 @@ class TestUtils:
 
     def test_set_layer_field_configurations(self, sample_vector_layer_def):
         """Test setting layer field configurations."""
-
         fields = create_fields(sample_vector_layer_def)
 
         assert fields.count() == 6
@@ -1029,7 +954,6 @@ class TestUtils:
 
     def test_get_layer_edit_form(self, sample_vector_layer_def):
         """Test getting layer edit form configuration."""
-
         fields = create_fields(sample_vector_layer_def)
         form_config = get_layer_edit_form(fields, sample_vector_layer_def)
 
@@ -1077,7 +1001,6 @@ class TestUtils:
 
     def test_set_layer_fields(self, sample_vector_layer_def):
         """Test setting layer fields from VectorDatasetDef."""
-
         fields = create_fields(sample_vector_layer_def)
 
         layer = QgsVectorLayer("Point?crs=EPSG:4326", "test_layer", "memory")
@@ -1123,10 +1046,7 @@ class TestUtils:
             field_int_constraints[QgsFieldConstraints.Constraint.ConstraintUnique]
             == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthSoft
         )
-        assert (
-            QgsFieldConstraints.Constraint.ConstraintExpression
-            not in field_int_constraints
-        )
+        assert QgsFieldConstraints.Constraint.ConstraintExpression not in field_int_constraints
 
         field_real = fields.field(1)
         editor_widget = layer.editorWidgetSetup(1)
@@ -1153,10 +1073,7 @@ class TestUtils:
             == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
         )
 
-        assert (
-            QgsFieldConstraints.Constraint.ConstraintUnique
-            not in field_real_constraints
-        )
+        assert QgsFieldConstraints.Constraint.ConstraintUnique not in field_real_constraints
         assert (
             field_real_constraints[QgsFieldConstraints.Constraint.ConstraintExpression]
             == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
@@ -1180,14 +1097,8 @@ class TestUtils:
             field_bool_constraints[QgsFieldConstraints.Constraint.ConstraintNotNull]
             == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
         )
-        assert (
-            QgsFieldConstraints.Constraint.ConstraintUnique
-            not in field_bool_constraints
-        )
-        assert (
-            QgsFieldConstraints.Constraint.ConstraintExpression
-            not in field_bool_constraints
-        )
+        assert QgsFieldConstraints.Constraint.ConstraintUnique not in field_bool_constraints
+        assert QgsFieldConstraints.Constraint.ConstraintExpression not in field_bool_constraints
 
         field_string = fields.field(3)
         editor_widget = layer.editorWidgetSetup(3)
@@ -1207,14 +1118,8 @@ class TestUtils:
             field_string_constraints[QgsFieldConstraints.Constraint.ConstraintNotNull]
             == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
         )
-        assert (
-            QgsFieldConstraints.Constraint.ConstraintUnique
-            not in field_string_constraints
-        )
-        assert (
-            QgsFieldConstraints.Constraint.ConstraintExpression
-            not in field_string_constraints
-        )
+        assert QgsFieldConstraints.Constraint.ConstraintUnique not in field_string_constraints
+        assert QgsFieldConstraints.Constraint.ConstraintExpression not in field_string_constraints
 
         field_date = fields.field(4)
         editor_widget = layer.editorWidgetSetup(4)
@@ -1238,14 +1143,8 @@ class TestUtils:
             field_date_constraints[QgsFieldConstraints.Constraint.ConstraintNotNull]
             == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
         )
-        assert (
-            QgsFieldConstraints.Constraint.ConstraintUnique
-            not in field_date_constraints
-        )
-        assert (
-            QgsFieldConstraints.Constraint.ConstraintExpression
-            not in field_date_constraints
-        )
+        assert QgsFieldConstraints.Constraint.ConstraintUnique not in field_date_constraints
+        assert QgsFieldConstraints.Constraint.ConstraintExpression not in field_date_constraints
 
         field_datetime = fields.field(5)
         editor_widget = layer.editorWidgetSetup(5)
@@ -1269,18 +1168,11 @@ class TestUtils:
             field_datetime_constraints[QgsFieldConstraints.Constraint.ConstraintNotNull]
             == QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
         )
-        assert (
-            QgsFieldConstraints.Constraint.ConstraintUnique
-            not in field_datetime_constraints
-        )
-        assert (
-            QgsFieldConstraints.Constraint.ConstraintExpression
-            not in field_datetime_constraints
-        )
+        assert QgsFieldConstraints.Constraint.ConstraintUnique not in field_datetime_constraints
+        assert QgsFieldConstraints.Constraint.ConstraintExpression not in field_datetime_constraints
 
     def test_set_layer_tree(self, sample_project_def):
         """Test setting layer tree from ProjectDef."""
-
         project = QgsProject.instance()
         test_layer = QgsVectorLayer("Point?crs=EPSG:4326", "My test layer", "memory")
         test_layer.setId("d942d84e-bcbf-430b-bf5d-9b39caeabf71")
@@ -1328,13 +1220,10 @@ class TestUtils:
         assert test_layer is not None
         assert test_layer.isVisible() is True
         assert test_layer.name() == "My test layer"
-        assert test_layer == group_child.findLayer(
-            "d942d84e-bcbf-430b-bf5d-9b39caeabf71"
-        )
+        assert test_layer == group_child.findLayer("d942d84e-bcbf-430b-bf5d-9b39caeabf71")
 
     def test_create_relation(self, project, sample_relation_def):
         """Test creating relation."""
-
         referencing_layer = QgsVectorLayer(
             "Point?field=layer_a_field:integer&crs=EPSG:4326",
             "layer_a",
@@ -1364,11 +1253,8 @@ class TestUtils:
         assert rel.strength() == Qgis.RelationshipStrength.Composition
         assert rel.isValid()
 
-    def test_create_polymorphic_relation(
-        self, project: QgsProject, sample_polymorphic_relation_def
-    ):
+    def test_create_polymorphic_relation(self, project: QgsProject, sample_polymorphic_relation_def):
         """Test creating polymorphic relation."""
-
         referencing_layer = QgsVectorLayer(
             "Point?field=layer_id:string&field=uuid:string&crs=EPSG:4326",
             "documents",

@@ -29,7 +29,7 @@ repos:
     rev: v0.14.6
     hooks:
       - id: ruff-check
-        args: [--fix, --select, I]
+        args: [--fix]
       - id: ruff-format
 
   - repo: https://github.com/pre-commit/mirrors-mypy

@@ -1,55 +1,16 @@
-import json
 import logging
 import re
 from collections import defaultdict
-from collections.abc import Callable, Iterable, Iterator
-from dataclasses import dataclass
-from datetime import datetime
-from pathlib import Path
+from collections.abc import Iterable, Iterator
 from typing import Any, cast
 
 from qgis.core import (
     QgsVectorLayer,
 )
-from qgis.PyQt.QtCore import QObject, QVariant, pyqtSignal
+from qgis.PyQt.QtCore import QVariant
 
-from convert2qgis.json2qgis.generate import (
-    generate_field_def,
-    generate_form_item_def,
-    generate_relation_def,
-)
 from convert2qgis.json2qgis.type_defs import (
-    AliasDef,
-    ChoicesDef,
-    ConstraintStrength,
-    DatasetDef,
-    FieldDef,
-    FormItemDef,
-    FormItemGroupTypes,
-    GeometryType,
-    LayerTreeItemDef,
     PathOrStr,
-    RelationDef,
-    WeakDatasetDef,
-    WeakFieldDef,
-    WeakFormItemDef,
-)
-from convert2qgis.xlsform2qgis.converter_utils import (
-    parse_xlsform_range_parameters,
-    parse_xlsform_select_from_file_parameters,
-    strip_html,
-)
-from convert2qgis.xlsform2qgis.expressions.expression import (
-    Expression,
-    ExpressionContext,
-    ParserType,
-    QgisRenderType,
-)
-from convert2qgis.xlsform2qgis.expressions.parser import ParseError
-from convert2qgis.xlsform2qgis.type_defs import (
-    GroupStatus,
-    LayerStatus,
-    XlsformSettings,
 )
 
 logger = logging.getLogger(__package__)
@@ -106,8 +67,7 @@ class ParsedSheet:
             raise ValueError(f"Unexpected sheet name {self.name}!")
 
         self.layer = QgsVectorLayer(
-            str(xlsform_filename)
-            + f"|layername={self.name}|option:FIELD_TYPES=STRING|option:HEADERS=FORCE",
+            str(xlsform_filename) + f"|layername={self.name}|option:FIELD_TYPES=STRING|option:HEADERS=FORCE",
             self.name,
             "ogr",
         )
@@ -137,9 +97,7 @@ class ParsedSheet:
                 continue
 
             if field_name == f"Field{index + 1}":
-                logger.debug(
-                    f"Skipping default field name `{field_name}` at index {index} in sheet `{self.name}`!"
-                )
+                logger.debug(f"Skipping default field name `{field_name}` at index {index} in sheet `{self.name}`!")
 
                 continue
 
@@ -167,14 +125,7 @@ class ParsedSheet:
                     row[col] = None
                 else:
                     value = feat.attribute(self.indices[col])
-
-                    if isinstance(value, QVariant):
-                        if value.isNull():
-                            value = None
-                        else:
-                            value = value.value()
-
-                    row[col] = value
+                    row[col] = ParsedSheet._to_python_value(value)
 
             for col_name, col_idx in self.indices.items():
                 if col_idx == -1:
@@ -182,16 +133,20 @@ class ParsedSheet:
 
                 value = feat.attribute(col_idx)
 
-                if isinstance(value, QVariant):
-                    assert value.isNull()
-                    value = None
-
-                row[col_name] = value
+                row[col_name] = ParsedSheet._to_python_value(value)
 
             if not any(row.values()):
-                logger.debug(
-                    f"Skipping spreadsheet row with empty values at row index {idx} in sheet `{self.name}`!"
-                )
+                logger.debug(f"Skipping spreadsheet row with empty values at row index {idx} in sheet `{self.name}`!")
                 continue
 
             yield row
+
+    @staticmethod
+    def _to_python_value(value: Any) -> Any:
+        if isinstance(value, QVariant):
+            if value.isNull():
+                return None
+            else:
+                return value.value()
+
+        return value

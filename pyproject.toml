@@ -20,6 +20,19 @@ optional = [
 
 [tool.pyright]
 
+[tool.ruff]
+line-length = 120
+lint.select = [
+    "E",  # All errors
+    "F",  # All pyflakes checks
+    "W",  # All warnings
+    "C90",  # Complexity checks
+    "B",  # Bugbear checks
+    "I",  # Import checks (isort)
+]
+lint.ignore = [
+    "E501",  # Line too long
+]
 
 [build-system]
 requires = ["uv_build>=0.9.13,<0.10.0"]
