@@ -36,15 +36,15 @@ from qgis.PyQt.QtGui import QColor
 
 from convert2qgis.json2qgis.errors import MissingParentError, Qgis2JsonError
 from convert2qgis.json2qgis.type_defs import (
+    DatasetDef,
     FieldDef,
-    LayerDef,
     PolymorphicRelationDef,
     ProjectDef,
     RelationDef,
     RelationStrength,
+    VectorDatasetDef,
     VectorLayerDataprovider,
-    VectorLayerDef,
-    layer_from_data,
+    dataset_from_data,
 )
 
 try:
@@ -194,26 +194,26 @@ def get_field_type(type_name: str) -> QMetaType.Type:
 
 
 def get_layer_flags(
-    flags: QgsMapLayer.LayerFlags, layer_def: LayerDef | dict[str, Any]
+    flags: QgsMapLayer.LayerFlags, dataset_def: DatasetDef | dict[str, Any]
 ) -> QgsMapLayer.LayerFlags:
-    layer_def = layer_from_data(layer_def)
+    dataset_def = dataset_from_data(dataset_def)
 
-    if layer_def.is_identifiable:
+    if dataset_def.is_identifiable:
         flags |= QgsMapLayer.LayerFlag.Identifiable
     else:
         flags &= ~QgsMapLayer.LayerFlag.Identifiable  # type: ignore
 
-    if layer_def.is_removable:
+    if dataset_def.is_removable:
         flags |= QgsMapLayer.LayerFlag.Removable
     else:
         flags &= ~QgsMapLayer.LayerFlag.Removable  # type: ignore
 
-    if layer_def.is_searchable:
+    if dataset_def.is_searchable:
         flags |= QgsMapLayer.LayerFlag.Searchable
     else:
         flags &= ~QgsMapLayer.LayerFlag.Searchable  # type: ignore
 
-    if layer_def.is_private:
+    if dataset_def.is_private:
         flags |= QgsMapLayer.LayerFlag.Private
     else:
         flags &= ~QgsMapLayer.LayerFlag.Private  # type: ignore
@@ -223,10 +223,10 @@ def get_layer_flags(
 
 def get_layer_edit_form(
     fields: QgsFields,
-    layer_def: VectorLayerDef | dict[str, Any],
+    dataset_def: VectorDatasetDef | dict[str, Any],
     form_config: QgsEditFormConfig | None = None,
 ) -> QgsEditFormConfig:
-    layer_def = VectorLayerDef.from_data(layer_def)
+    dataset_def = VectorDatasetDef.from_data(dataset_def)
 
     if form_config is None:
         form_config = QgsEditFormConfig()
@@ -236,7 +236,7 @@ def get_layer_edit_form(
 
     containers_mapping: dict[str, QgsAttributeEditorContainer] = {}
 
-    for form_item_def in layer_def.form_config:
+    for form_item_def in dataset_def.form_config:
         item_type = form_item_def.type
         item_label = form_item_def.label
         item_parent_id = form_item_def.parent_id
@@ -371,7 +371,7 @@ def get_layer_edit_form(
         if container.parent() is None:
             form_config.addTab(container)
 
-    for field_def in layer_def.fields:
+    for field_def in dataset_def.fields:
         field_idx = fields.indexOf(field_def.name)
 
         assert field_idx != -1
@@ -403,12 +403,12 @@ def create_field(field_def: FieldDef | dict[str, Any]) -> QgsField:
     return field
 
 
-def create_fields(layer_def: VectorLayerDef | dict[str, Any]) -> QgsFields:
-    layer_def = VectorLayerDef.from_data(layer_def)
+def create_fields(dataset_def: VectorDatasetDef | dict[str, Any]) -> QgsFields:
+    dataset_def = VectorDatasetDef.from_data(dataset_def)
 
     fields = QgsFields()
 
-    for field_def in layer_def.fields:
+    for field_def in dataset_def.fields:
         field = create_field(field_def)
         fields.append(field)
 
@@ -416,14 +416,14 @@ def create_fields(layer_def: VectorLayerDef | dict[str, Any]) -> QgsFields:
 
 
 def set_layer_fields(
-    layer: QgsVectorLayer, layer_def: VectorLayerDef | dict[str, Any]
+    layer: QgsVectorLayer, dataset_def: VectorDatasetDef | dict[str, Any]
 ) -> None:
-    layer_def = VectorLayerDef.from_data(layer_def)
+    dataset_def = VectorDatasetDef.from_data(dataset_def)
 
     fields = layer.fields()
 
     # For geopackage layers, hide the 'fid' field by default
-    if layer_def.datasource_format == VectorLayerDataprovider.GPKG:
+    if dataset_def.datasource_format == VectorLayerDataprovider.GPKG:
         field_idx = fields.indexOf("fid")
 
         assert field_idx != -1
@@ -431,13 +431,13 @@ def set_layer_fields(
         widget_setup = QgsEditorWidgetSetup("Hidden", {})
         layer.setEditorWidgetSetup(field_idx, widget_setup)
 
-    for field_def in layer_def.fields:
+    for field_def in dataset_def.fields:
         field_name = field_def.name
         field_idx = fields.indexOf(field_name)
 
         if field_idx == -1:
             logger.warning(
-                f"Field '{field_name}' not found in layer '{layer_def.name}'. Skipping field configuration."
+                f"Field '{field_name}' not found in layer '{dataset_def.name}'. Skipping field configuration."
             )
 
             continue

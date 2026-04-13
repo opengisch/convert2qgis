@@ -16,24 +16,23 @@ from qgis.PyQt.QtCore import QObject, QVariant, pyqtSignal
 from convert2qgis.json2qgis.generate import (
     generate_field_def,
     generate_form_item_def,
-    generate_layer_def,
     generate_relation_def,
 )
 from convert2qgis.json2qgis.type_defs import (
     AliasDef,
     ChoicesDef,
     ConstraintStrength,
+    DatasetDef,
     FieldDef,
     FormItemDef,
     FormItemGroupTypes,
     GeometryType,
-    LayerDef,
     LayerTreeItemDef,
     PathOrStr,
     RelationDef,
+    WeakDatasetDef,
     WeakFieldDef,
     WeakFormItemDef,
-    WeakLayerDef,
 )
 from convert2qgis.xlsform2qgis.converter_utils import (
     parse_xlsform_range_parameters,

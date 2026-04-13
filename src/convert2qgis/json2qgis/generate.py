@@ -4,11 +4,10 @@ from typing import Any
 from convert2qgis.json2qgis.type_defs import (
     FieldDef,
     FormItemDef,
-    LayerDef,
-    RasterLayerDef,
+    RasterDatasetDef,
     RelationDef,
+    VectorDatasetDef,
     VectorLayerDataprovider,
-    VectorLayerDef,
 )
 
 
@@ -53,56 +52,51 @@ def generate_uuid_field_def(**kwargs: Any) -> FieldDef:
     return field_def
 
 
-def generate_layer_def(**kwargs: Any) -> LayerDef:
-    layer_type = kwargs.get("layer_type")
-
-    if layer_type == "vector":
-        vector_layer_def = VectorLayerDef(
-            layer_id=str(uuid.uuid4()),
-            crs="EPSG:4326",
-            name="",
-            custom_properties={},
-            is_read_only=False,
-            is_identifiable=False,
-            is_private=False,
-            is_searchable=False,
-            is_removable=True,
-            primary_key="",
-            geometry_type="NoGeometry",
-            layer_type="vector",
-            datasource_format=VectorLayerDataprovider.GPKG,
-            fields=[],
-            form_config=[],
-            data=[],
-            indices=[],
-            foreign_keys=[],
-            display_expression="",
-        )
-        vector_layer_def.update(kwargs)
-
-        return vector_layer_def
-    if layer_type == "raster":
-        raster_layer_def = RasterLayerDef(
-            layer_id=str(uuid.uuid4()),
-            crs="EPSG:4326",
-            name="",
-            custom_properties={},
-            is_read_only=False,
-            is_identifiable=False,
-            is_private=False,
-            is_searchable=False,
-            is_removable=True,
-            layer_type="raster",
-            datasource="",
-            datasource_format="wms",
-        )
-        raster_layer_def.update(kwargs)
-
-        return raster_layer_def
-
-    raise NotImplementedError(
-        f"Only vector and raster layers are supported for now, but `{layer_type}` given!"
+def generate_vector_dataset_def(**kwargs: Any) -> VectorDatasetDef:
+    vector_dataset_def = VectorDatasetDef(
+        layer_id=str(uuid.uuid4()),
+        crs="EPSG:4326",
+        name="",
+        custom_properties={},
+        is_read_only=False,
+        is_identifiable=False,
+        is_private=False,
+        is_searchable=False,
+        is_removable=True,
+        primary_key="",
+        geometry_type="NoGeometry",
+        layer_type="vector",
+        datasource_format=VectorLayerDataprovider.GPKG,
+        fields=[],
+        form_config=[],
+        data=[],
+        indices=[],
+        foreign_keys=[],
+        display_expression="",
     )
+    vector_dataset_def.update(kwargs)
+
+    return vector_dataset_def
+
+
+def generate_raster_dataset_def(**kwargs: Any) -> RasterDatasetDef:
+    raster_dataset_def = RasterDatasetDef(
+        layer_id=str(uuid.uuid4()),
+        crs="EPSG:4326",
+        name="",
+        custom_properties={},
+        is_read_only=False,
+        is_identifiable=False,
+        is_private=False,
+        is_searchable=False,
+        is_removable=True,
+        layer_type="raster",
+        datasource="",
+        datasource_format="wms",
+    )
+    raster_dataset_def.update(kwargs)
+
+    return raster_dataset_def
 
 
 def generate_form_item_def(**kwargs: Any) -> FormItemDef:

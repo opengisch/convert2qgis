@@ -8,9 +8,9 @@ from convert2qgis.json2qgis.generate import (
 )
 from convert2qgis.json2qgis.type_defs import (
     GeometryType,
+    WeakDatasetDef,
     WeakFieldDef,
     WeakFormItemDef,
-    WeakLayerDef,
 )
 from convert2qgis.xlsform2qgis.converter_utils import (
     build_choices_layer_id,
@@ -42,7 +42,7 @@ class WidgetContext:
 class ParsedRow:
     def __init__(
         self,
-        layer: WeakLayerDef | Mapping[str, Any] | None = None,
+        layer: WeakDatasetDef | Mapping[str, Any] | None = None,
         relation: Mapping[str, Any] | None = None,
         field: WeakFieldDef | Mapping[str, Any] | None = None,
         form_field: WeakFormItemDef | Mapping[str, Any] | None = None,
@@ -51,7 +51,7 @@ class ParsedRow:
         group_status: GroupStatus = GroupStatus.NONE,
         layer_status: LayerStatus = LayerStatus.NONE,
     ) -> None:
-        self.layer: WeakLayerDef = WeakLayerDef.from_data(layer or {})
+        self.layer: WeakDatasetDef = WeakDatasetDef.from_data(layer or {})
         self.relation: dict[str, Any] = dict(relation or {})
         self.field: WeakFieldDef = WeakFieldDef.from_data(field or {})
         self.form_field: WeakFormItemDef = WeakFormItemDef.from_data(form_field or {})
@@ -381,7 +381,7 @@ def widget_media(ctx: WidgetContext) -> ParsedRow:
     ]
 )
 def widget_select_from_file(ctx: WidgetContext) -> ParsedRow:
-    layer = WeakLayerDef()
+    dataset = WeakDatasetDef()
     xlsform_type, *type_details = str(ctx.row["type"]).strip().split(" ")
     layer_id = build_choices_layer_id(*type_details)
 
@@ -397,7 +397,7 @@ def widget_select_from_file(ctx: WidgetContext) -> ParsedRow:
             "select_from_file and select_multiple_from_file not implemented yet"
         )
         # layers.append(
-        #     generate_layer_def(
+        #     generate_vector_dataset_def(
         #         id=layer_id,
         #         name=layer_id,
         #         fields=fields_def,
@@ -415,7 +415,7 @@ def widget_select_from_file(ctx: WidgetContext) -> ParsedRow:
         list_key = "name"
         list_value = "label"
 
-        assert ctx.converter.find_layer(layer_id)
+        assert ctx.converter.find_vector_dataset(layer_id)
 
     filter_expressions = []
     choice_filter_expr = ctx.converter.get_expression(
@@ -453,7 +453,7 @@ def widget_select_from_file(ctx: WidgetContext) -> ParsedRow:
                 "FilterExpression": filter_expression,
             },
         },
-        layer=layer,
+        layer=dataset,
     )
 
 
@@ -532,7 +532,7 @@ def widget_note(ctx: WidgetContext) -> ParsedRow:
 @register_type(["begin repeat", "begin_repeat"])
 def widget_begin_repeat(ctx: WidgetContext) -> ParsedRow:
     layer_id = f"layer_repeat_{ctx.row.idx}"
-    layer = WeakLayerDef.from_data(
+    dataset = WeakDatasetDef.from_data(
         {
             "layer_id": layer_id,
             "name": f"repeat_{ctx.row['name']}",
@@ -556,7 +556,7 @@ def widget_begin_repeat(ctx: WidgetContext) -> ParsedRow:
     relation = {
         "relation_id": relation_id,
         "name": relation_id,
-        "to_layer_id": ctx.converter.layers[-1].layer_id,
+        "to_layer_id": ctx.converter.vector_datasets[-1].layer_id,
         "from_layer_id": layer_id,
         "field_pairs": [
             {
@@ -575,7 +575,7 @@ def widget_begin_repeat(ctx: WidgetContext) -> ParsedRow:
     )
 
     return ParsedRow(
-        layer=layer,
+        layer=dataset,
         relation=relation,
         form_field=form_field,
         layer_status=LayerStatus.BEGIN,

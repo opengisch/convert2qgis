@@ -204,21 +204,14 @@
     "Json2qgisSchema": {
       "additionalProperties": false,
       "properties": {
-        "layer_tree": {
-          "$ref": "#/definitions/LayerTree"
-        },
-        "layers": {
+        "datasets": {
           "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/VectorLayer"
-              },
-              {
-                "$ref": "#/definitions/RasterLayer"
-              }
-            ]
+            "$ref": "#/definitions/DatasetGroup"
           },
           "type": "array"
+        },
+        "layer_tree": {
+          "$ref": "#/definitions/LayerTree"
         },
         "polymorphic_relations": {
           "items": {
@@ -240,13 +233,35 @@
         }
       },
       "required": [
+        "datasets",
         "relations",
         "polymorphic_relations",
         "layer_tree",
-        "layers",
         "version"
       ],
       "title": "Empty",
+      "type": "object"
+    },
+    "DatasetGroup": {
+      "additionalProperties": false,
+      "properties": {
+        "raster_datasets": {
+          "items": {
+            "$ref": "#/definitions/RasterLayer"
+          },
+          "type": "array"
+        },
+        "vector_datasets": {
+          "items": {
+            "$ref": "#/definitions/VectorLayer"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "vector_datasets",
+        "raster_datasets"
+      ],
       "type": "object"
     },
     "VectorLayer": {

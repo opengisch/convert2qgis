@@ -7,9 +7,9 @@ import pytest
 from convert2qgis.json2qgis.generate import (
     generate_field_def,
     generate_form_item_def,
-    generate_layer_def,
+    generate_vector_dataset_def,
 )
-from convert2qgis.json2qgis.type_defs import VectorLayerDef
+from convert2qgis.json2qgis.type_defs import VectorDatasetDef
 from convert2qgis.xlsform2qgis.converter import (
     ParsedSheetRow,
     XlsformConverter,
@@ -123,7 +123,7 @@ class TestConverter:
             ],
         }
 
-    def test_get_choices_layers(self, converter):
+    def test_get_choices_datasets(self, converter):
         converter.choices_sheet.__iter__.return_value = to_parsed_sheet_rows(
             [
                 {
@@ -145,15 +145,14 @@ class TestConverter:
         )
 
         choices_by_list = converter._get_choices_by_list()
-        choices_layers = converter._get_choices_layers()
+        choices_datasets = converter._get_choices_datasets()
 
-        assert choices_layers == [
-            generate_layer_def(
+        assert choices_datasets == [
+            generate_vector_dataset_def(
                 **{
                     "name": "list_list_001",
-                    "layer_id": choices_layers[0].layer_id,
+                    "layer_id": choices_datasets[0].layer_id,
                     "geometry_type": "NoGeometry",
-                    "layer_type": "vector",
                     "crs": "EPSG:4326",
                     "custom_properties": {
                         "QFieldSync/action": "copy",
@@ -164,7 +163,7 @@ class TestConverter:
                     "fields": [
                         generate_field_def(
                             **{
-                                "field_id": choices_layers[0].fields[0].field_id,
+                                "field_id": choices_datasets[0].fields[0].field_id,
                                 "name": "name",
                                 "type": "string",
                                 "widget_type": "TextEdit",
@@ -172,7 +171,7 @@ class TestConverter:
                         ),
                         generate_field_def(
                             **{
-                                "field_id": choices_layers[0].fields[1].field_id,
+                                "field_id": choices_datasets[0].fields[1].field_id,
                                 "name": "label",
                                 "type": "string",
                                 "widget_type": "TextEdit",
@@ -181,12 +180,11 @@ class TestConverter:
                     ],
                 }
             ),
-            generate_layer_def(
+            generate_vector_dataset_def(
                 **{
                     "name": "list_list_002",
-                    "layer_id": choices_layers[1].layer_id,
+                    "layer_id": choices_datasets[1].layer_id,
                     "geometry_type": "NoGeometry",
-                    "layer_type": "vector",
                     "crs": "EPSG:4326",
                     "custom_properties": {
                         "QFieldSync/action": "copy",
@@ -197,7 +195,7 @@ class TestConverter:
                     "fields": [
                         generate_field_def(
                             **{
-                                "field_id": choices_layers[1].fields[0].field_id,
+                                "field_id": choices_datasets[1].fields[0].field_id,
                                 "name": "name",
                                 "type": "string",
                                 "widget_type": "TextEdit",
@@ -205,7 +203,7 @@ class TestConverter:
                         ),
                         generate_field_def(
                             **{
-                                "field_id": choices_layers[1].fields[1].field_id,
+                                "field_id": choices_datasets[1].fields[1].field_id,
                                 "name": "label",
                                 "type": "string",
                                 "widget_type": "TextEdit",
@@ -270,9 +268,9 @@ class TestConverter:
 
         converter.convert()
 
-        assert len(converter.layers) == 1
+        assert len(converter.vector_datasets) == 1
 
-        survey_layer = converter.layers[0]
+        survey_layer = converter.vector_datasets[0]
 
         assert len(survey_layer.fields) == 2
         assert survey_layer.fields[0] == generate_uuid_field_def(
@@ -332,9 +330,9 @@ class TestConverter:
         converter._xlsform_settings = converter._get_xlsform_settings()
         converter.convert()
 
-        assert len(converter.layers) == 1
+        assert len(converter.vector_datasets) == 1
 
-        survey_layer = converter.layers[0]
+        survey_layer = converter.vector_datasets[0]
 
         assert len(survey_layer.fields) == 4
 
@@ -383,9 +381,9 @@ class TestConverter:
 
         converter.convert()
 
-        assert len(converter.layers) == 1
+        assert len(converter.vector_datasets) == 1
 
-        survey_layer = converter.layers[0]
+        survey_layer = converter.vector_datasets[0]
 
         assert len(survey_layer.fields) == 2
         assert survey_layer.fields[0] == generate_uuid_field_def(
@@ -451,9 +449,9 @@ class TestConverter:
 
         converter.convert()
 
-        assert len(converter.layers) == 1
+        assert len(converter.vector_datasets) == 1
 
-        survey_layer = converter.layers[0]
+        survey_layer = converter.vector_datasets[0]
 
         assert len(survey_layer.fields) == 2
         assert survey_layer.fields[0] == generate_uuid_field_def(
@@ -530,9 +528,9 @@ class TestConverter:
 
         converter.convert()
 
-        assert len(converter.layers) == 2
+        assert len(converter.vector_datasets) == 2
 
-        survey_layer, repeat_layer_1 = converter.layers
+        survey_layer, repeat_layer_1 = converter.vector_datasets
 
         assert survey_layer.layer_id == "survey_layer"
         assert len(survey_layer.fields) == 2
@@ -566,9 +564,9 @@ class TestConverter:
 
         converter.convert()
 
-        assert len(converter.layers) == 1
+        assert len(converter.vector_datasets) == 1
 
-        survey_layer = converter.layers[0]
+        survey_layer = converter.vector_datasets[0]
 
         assert survey_layer.geometry_type == expected_geometry
 
@@ -614,12 +612,12 @@ class TestConverter:
 
         converter.convert()
 
-        assert len(converter.layers) == 6
+        assert len(converter.all_datasets) == 6
 
-        sorted_layers = sorted(converter.layers, key=lambda ml: ml.name)
+        sorted_datasets = sorted(converter.all_datasets, key=lambda ml: ml.name)
 
-        survey_layer, *_ = sorted_layers
-        survey_layer = cast(VectorLayerDef, survey_layer)
+        survey_layer, *_ = sorted_datasets
+        survey_layer = cast(VectorDatasetDef, survey_layer)
 
         assert len(survey_layer.fields) == 21
         assert survey_layer.fields[0] == generate_uuid_field_def(

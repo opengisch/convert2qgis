@@ -11,9 +11,10 @@ from qgis.core import QgsFeatureSource, QgsProject
 from convert2qgis.json2qgis.generate import (
     generate_field_def,
     generate_form_item_def,
-    generate_layer_def,
+    generate_raster_dataset_def,
     generate_relation_def,
     generate_uuid_field_def,
+    generate_vector_dataset_def,
 )
 from convert2qgis.json2qgis.json2qgis import ProjectCreator
 from convert2qgis.json2qgis.type_defs import (
@@ -23,17 +24,19 @@ from convert2qgis.json2qgis.type_defs import (
     ChoicesDef,
     ConstraintStrength,
     CrsDef,
+    DatasetDef,
+    DatasetGroupDef,
     FieldDef,
     FormItemDef,
     FormItemGroupTypes,
     GeometryType,
-    LayerDef,
     LayerTreeItemDef,
     PathOrStr,
     ProjectDef,
     ProjectMetadataDef,
+    RasterDatasetDef,
     RelationDef,
-    VectorLayerDef,
+    VectorDatasetDef,
     WeakFieldDef,
     WeakFormItemDef,
 )
@@ -225,7 +228,8 @@ class XlsformConverter:
     survey_sheet: ParsedSheet
     choices_sheet: ParsedSheet
     settings_sheet: ParsedSheet
-    layers: list[LayerDef]
+    vector_datasets: list[VectorDatasetDef]
+    raster_datasets: list[RasterDatasetDef]
     layer_tree: list[LayerTreeItemDef]
     relations: list[RelationDef]
 
@@ -306,7 +310,8 @@ class XlsformConverter:
         self._project_basemap_name = basemap_name
 
         # state
-        self.layers = []
+        self.vector_datasets = []
+        self.raster_datasets = []
         self.layer_tree = []
         self.relations = []
         self._calculate_expressions = {}
@@ -330,10 +335,14 @@ class XlsformConverter:
 
         return True
 
-    def find_layer(self, layer_id: str) -> LayerDef | None:
-        for layer_def in self.layers:
-            if layer_def.layer_id == layer_id:
-                return layer_def
+    @property
+    def all_datasets(self) -> list[DatasetDef]:
+        return [*self.vector_datasets, *self.raster_datasets]
+
+    def find_vector_dataset(self, layer_id: str) -> VectorDatasetDef | None:
+        for dataset_def in self.vector_datasets:
+            if dataset_def.layer_id == layer_id:
+                return dataset_def
 
         return None
 
@@ -385,11 +394,11 @@ class XlsformConverter:
 
             raise
 
-    def _enter_layer(self, layer_def: LayerDef) -> None:
-        layer_id = layer_def.layer_id
-        layer_name = layer_def.name
+    def _enter_vector_dataset(self, dataset_def: VectorDatasetDef) -> None:
+        layer_id = dataset_def.layer_id
+        layer_name = dataset_def.name
 
-        self.layers.append(layer_def)
+        self.vector_datasets.append(dataset_def)
         self._layer_ids.append(layer_id)
 
         self._enter_container(None)
@@ -413,30 +422,28 @@ class XlsformConverter:
         )
         self._enter_container(form_item)
 
-    def _exit_layer(self) -> str:
+    def _exit_dataset(self) -> str:
         layer_id = self._layer_ids.pop()
 
         self._exit_container()
 
         return layer_id
 
-    def _current_layer(self) -> LayerDef:
+    def _current_dataset(self) -> VectorDatasetDef:
         if not self._layer_ids:
             raise ValueError("No layers defined yet!")
 
         layer_id = self._layer_ids[-1]
-        layer_def = self.find_layer(layer_id)
+        dataset_def = self.find_vector_dataset(layer_id)
 
-        if not layer_def:
+        if not dataset_def:
             raise ValueError(f"Current layer with id {layer_id} not found!")
 
-        return layer_def
+        return dataset_def
 
     def _add_container(self, container_def: FormItemDef) -> None:
-        current_layer_def = self._current_layer()
-        assert current_layer_def.layer_type == "vector"
-        current_layer_def = cast(VectorLayerDef, current_layer_def)
-        current_layer_def.form_config.append(container_def)
+        current_dataset_def = self._current_dataset()
+        current_dataset_def.form_config.append(container_def)
 
     def _enter_container(self, container_def: FormItemDef | None) -> None:
         if container_def:
@@ -458,11 +465,9 @@ class XlsformConverter:
         if self._container_ids[-1] is None:
             return None
 
-        current_layer_def = self._current_layer()
-        assert current_layer_def.layer_type == "vector"
-        current_layer_def = cast(VectorLayerDef, current_layer_def)
+        current_dataset_def = self._current_dataset()
 
-        for form_item_def in reversed(current_layer_def.form_config):
+        for form_item_def in reversed(current_dataset_def.form_config):
             if form_item_def.item_id == self._container_ids[-1]:
                 return form_item_def
 
@@ -698,7 +703,12 @@ class XlsformConverter:
                 title=self._xlsform_settings["form_title"],
                 extent=self.get_project_extent(),
             ),
-            layers=self.layers,
+            datasets=[
+                DatasetGroupDef(
+                    vector_datasets=self.vector_datasets,
+                    raster_datasets=self.raster_datasets,
+                )
+            ],
             layer_tree=self.layer_tree,
             relations=self.relations,
             polymorphic_relations=[],
@@ -712,15 +722,15 @@ class XlsformConverter:
         assert self.settings_sheet
         assert self.choices_sheet
 
-        self.layers.extend(self._get_choices_layers())
+        self.vector_datasets.extend(self._get_choices_datasets())
 
         display_expression = self.get_display_expression(
             self._xlsform_settings["instance_name"]
         )
         layer_id = "survey_layer"
         layer_name = "Survey"
-        self._enter_layer(
-            generate_layer_def(
+        self._enter_vector_dataset(
+            generate_vector_dataset_def(
                 layer_id=layer_id,
                 name=layer_name,
                 primary_key="uuid",
@@ -752,10 +762,9 @@ class XlsformConverter:
                 # If there are not `parent_ids`, it means we are at the root level
                 # the form item's `parent_id` set to `None` represents that.
                 layer_id = self._layer_ids[-1]
-                layer_def = self.find_layer(layer_id)
-                layer_def = cast(VectorLayerDef, layer_def)
+                dataset_def = self.find_vector_dataset(layer_id)
 
-                assert layer_def is not None
+                assert dataset_def is not None
 
                 if not row["type"]:
                     logger.debug(
@@ -768,8 +777,8 @@ class XlsformConverter:
                     self._parse_form_row(row)
                 )
 
-                layer_def.fields.extend(row_field_defs)
-                layer_def.form_config.extend(row_form_item_defs)
+                dataset_def.fields.extend(row_field_defs)
+                dataset_def.form_config.extend(row_form_item_defs)
 
                 # TODO find a better place for `max_pixels` logic
                 if row["type"] == "image":
@@ -778,7 +787,7 @@ class XlsformConverter:
                 if row_geometry_type:
                     if layer_id in geometry_type_by_layer_id:
                         logger.warning(
-                            f"Multiple geometry types defined for layer `{layer_def.name}`; using the first one `{row_geometry_type}`"
+                            f"Multiple geometry types defined for layer `{dataset_def.name}`; using the first one `{row_geometry_type}`"
                         )
 
                         continue
@@ -793,17 +802,16 @@ class XlsformConverter:
                 raise
 
         for layer_id, geometry_type in geometry_type_by_layer_id.items():
-            layer_def = self.find_layer(layer_id)
-            layer_def = cast(VectorLayerDef, layer_def)
+            dataset_def = self.find_vector_dataset(layer_id)
 
-            assert layer_def is not None
+            assert dataset_def is not None
             assert geometry_type is not None
 
-            layer_def.geometry_type = geometry_type
+            dataset_def.geometry_type = geometry_type
 
     def add_basemap_layer(self):
         layer_id = "basemap_layer"
-        basemap_layer_def = generate_layer_def(
+        basemap_dataset_def = generate_raster_dataset_def(
             crs="EPSG:3857",
             layer_id=layer_id,
             datasource=self._project_basemap_url,
@@ -811,7 +819,7 @@ class XlsformConverter:
             layer_type="raster",
         )
 
-        self.layers.append(basemap_layer_def)
+        self.raster_datasets.append(basemap_dataset_def)
         self.layer_tree.append(
             LayerTreeItemDef(
                 layer_id=layer_id,
@@ -885,13 +893,11 @@ class XlsformConverter:
         # Determine the layer id for the current form item.
         # If `layer_status` is `layerStatus.END``, then the last layer id is popped from the stack and no new element is added.
         if parsed_row.layer_status == LayerStatus.BEGIN:
-            layer = generate_layer_def(
-                layer_type=cast(str, parsed_row.layer.layer_type or "vector")
-            )
-            layer.update(parsed_row.layer)
-            self._enter_layer(layer)
+            dataset = generate_vector_dataset_def()
+            dataset.update(parsed_row.layer)
+            self._enter_vector_dataset(dataset)
         elif parsed_row.layer_status == LayerStatus.END:
-            self._exit_layer()
+            self._exit_dataset()
 
         if parsed_row.geometry_type:
             assert not parsed_row.layer
@@ -1055,8 +1061,8 @@ class XlsformConverter:
 
         return cleaned_choices_by_list
 
-    def _get_choices_layers(self) -> list[LayerDef]:
-        choices_layers: list[LayerDef] = []
+    def _get_choices_datasets(self) -> list[VectorDatasetDef]:
+        choices_datasets: list[VectorDatasetDef] = []
         choice_values_by_list_name = self._get_choices_by_list()
 
         for list_name, list_choices in choice_values_by_list_name.items():
@@ -1076,8 +1082,8 @@ class XlsformConverter:
                     ),
                 )
 
-            choices_layers.append(
-                generate_layer_def(
+            choices_datasets.append(
+                generate_vector_dataset_def(
                     layer_id=layer_id,
                     name=layer_name,
                     crs="EPSG:4326",
@@ -1088,11 +1094,10 @@ class XlsformConverter:
                         "QFieldSync/action": "copy",
                     },
                     data=list_choices,
-                    layer_type="vector",
                 )
             )
 
-        return choices_layers
+        return choices_datasets
 
     def get_project_extent(self) -> str:
         if self._project_extent:

@@ -1,41 +1,47 @@
+from typing import cast
+
 from convert2qgis.json2qgis.generate import (
     generate_field_def,
     generate_form_item_def,
-    generate_layer_def,
     generate_relation_def,
+    generate_vector_dataset_def,
 )
 from convert2qgis.json2qgis.json2qgis import ProjectCreator
 from convert2qgis.json2qgis.type_defs import (
+    DatasetGroupDef,
     FieldDef,
     ProjectDef,
     ProjectMetadataDef,
     RelationFieldPairDef,
-    VectorLayerDef,
+    VectorDatasetDef,
 )
 
 
 def build_project_dict() -> dict:
-    layer = generate_layer_def(
-        layer_type="vector",
-        layer_id="layer_1",
-        name="Survey",
-        geometry_type="NoGeometry",
-        fields=[
-            generate_field_def(
-                field_id="field_1",
-                name="uuid",
-                type="string",
-                widget_type="TextEdit",
-            )
-        ],
-        form_config=[
-            generate_form_item_def(
-                item_id="form_1",
-                type="field",
-                field_name="uuid",
-            )
-        ],
-        primary_key="uuid",
+    layer = cast(
+        VectorDatasetDef,
+        generate_vector_dataset_def(
+            layer_type="vector",
+            layer_id="layer_1",
+            name="Survey",
+            geometry_type="NoGeometry",
+            fields=[
+                generate_field_def(
+                    field_id="field_1",
+                    name="uuid",
+                    type="string",
+                    widget_type="TextEdit",
+                )
+            ],
+            form_config=[
+                generate_form_item_def(
+                    item_id="form_1",
+                    type="field",
+                    field_name="uuid",
+                )
+            ],
+            primary_key="uuid",
+        ),
     )
     relation = generate_relation_def(
         relation_id="rel_1",
@@ -53,7 +59,7 @@ def build_project_dict() -> dict:
             extent="0 0, 1 1",
         ),
         version="1.0",
-        layers=[layer],
+        datasets=[DatasetGroupDef(vector_datasets=[layer])],
         layer_tree=[],
         relations=[relation],
         polymorphic_relations=[],
@@ -89,8 +95,7 @@ def test_field_def_round_trip() -> None:
 
 
 def test_vector_layer_round_trip() -> None:
-    layer_dict = generate_layer_def(
-        layer_type="vector",
+    layer_dict = generate_vector_dataset_def(
         layer_id="layer_1",
         name="Survey",
         geometry_type="NoGeometry",
@@ -112,9 +117,9 @@ def test_vector_layer_round_trip() -> None:
         primary_key="uuid",
     ).to_dict()
 
-    layer_def = VectorLayerDef.from_data(layer_dict)
+    dataset_def = VectorDatasetDef.from_data(layer_dict)
 
-    assert layer_def.to_dict() == layer_dict
+    assert dataset_def.to_dict() == layer_dict
 
 
 def test_project_round_trip() -> None:
@@ -126,11 +131,11 @@ def test_project_round_trip() -> None:
 
 
 def test_mutable_defaults_are_not_shared() -> None:
-    left = generate_layer_def(layer_type="vector")
-    right = generate_layer_def(layer_type="vector")
+    left = generate_vector_dataset_def()
+    right = generate_vector_dataset_def()
 
-    assert isinstance(left, VectorLayerDef)
-    assert isinstance(right, VectorLayerDef)
+    assert isinstance(left, VectorDatasetDef)
+    assert isinstance(right, VectorDatasetDef)
 
     left.fields.append(generate_field_def(name="left_only"))
     left.custom_properties["scope"] = "left"
