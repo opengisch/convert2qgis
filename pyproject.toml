@@ -20,6 +20,8 @@ optional = [
 
 [tool.pyright]
 
+[tool.ruff]
+line-length = 120
 
 [build-system]
 requires = ["uv_build>=0.9.13,<0.10.0"]

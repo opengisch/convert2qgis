@@ -4,7 +4,6 @@ import logging
 import unicodedata
 from collections.abc import Callable
 from importlib.resources import files
-from pathlib import Path
 from typing import Any, cast
 
 from qgis.core import (
@@ -89,7 +88,6 @@ def get_schema_validator() -> Callable[[dict[str, Any]], None]:
 
 def check_output(path: str):
     """Decorator to quickly do a sanity check if the output of a given function is a valid JSON schema."""
-
     schema = get_schema_json()
 
     def decorator(func):
@@ -133,9 +131,7 @@ def strip_accents(text: str) -> str:
 
 
 def normalize_name(name: str) -> str:
-    """
-    Transliterates any string (including Cyrillic or non-ASCII characters) to ASCII.
-    """
+    """Transliterates any string (including Cyrillic or non-ASCII characters) to ASCII."""
     if unidecode:
         name = unidecode.unidecode(name)
     else:
@@ -170,9 +166,7 @@ def get_attribute_form_container_type(
     }
 
     if type_name not in type_names:
-        raise NotImplementedError(
-            f"Unsupported attribute container item type: {type_name}"
-        )
+        raise NotImplementedError(f"Unsupported attribute container item type: {type_name}")
 
     return type_names[type_name]
 
@@ -193,9 +187,7 @@ def get_field_type(type_name: str) -> QMetaType.Type:
     return type_map[type_name]
 
 
-def get_layer_flags(
-    flags: QgsMapLayer.LayerFlags, dataset_def: DatasetDef | dict[str, Any]
-) -> QgsMapLayer.LayerFlags:
+def get_layer_flags(flags: QgsMapLayer.LayerFlags, dataset_def: DatasetDef | dict[str, Any]) -> QgsMapLayer.LayerFlags:
     dataset_def = dataset_from_data(dataset_def)
 
     if dataset_def.is_identifiable:
@@ -246,9 +238,7 @@ def get_layer_edit_form(
             parent = containers_mapping.get(item_parent_id)
 
             if not parent:
-                raise MissingParentError(
-                    f"Parent with ID '{item_parent_id}' not found for form item '{item_label}'"
-                )
+                raise MissingParentError(f"Parent with ID '{item_parent_id}' not found for form item '{item_label}'")
         else:
             parent = form_config.invisibleRootContainer()
 
@@ -261,9 +251,7 @@ def get_layer_edit_form(
             if form_item_def.visibility_expression:
                 parent_container = QgsAttributeEditorContainer("~CONDITIONAL~", parent)
                 parent_container.setVisibilityExpression(
-                    QgsOptionalExpression(
-                        QgsExpression(form_item_def.visibility_expression)
-                    )
+                    QgsOptionalExpression(QgsExpression(form_item_def.visibility_expression))
                 )
                 parent_container.setShowLabel(False)
                 container = QgsAttributeEditorField(
@@ -301,9 +289,7 @@ def get_layer_edit_form(
             if form_item_def.visibility_expression:
                 parent_container = QgsAttributeEditorContainer("", parent)
                 parent_container.setVisibilityExpression(
-                    QgsOptionalExpression(
-                        QgsExpression(form_item_def.visibility_expression)
-                    )
+                    QgsOptionalExpression(QgsExpression(form_item_def.visibility_expression))
                 )
                 container = QgsAttributeEditorRelation(
                     form_item_def.field_name,
@@ -350,11 +336,7 @@ def get_layer_edit_form(
         container.setType(get_attribute_form_container_type(item_type))
 
         if form_item_def.visibility_expression:
-            container.setVisibilityExpression(
-                QgsOptionalExpression(
-                    QgsExpression(form_item_def.visibility_expression)
-                )
-            )
+            container.setVisibilityExpression(QgsOptionalExpression(QgsExpression(form_item_def.visibility_expression)))
 
         if form_item_def.background_color:
             container.setBackgroundColor(QColor(form_item_def.background_color))
@@ -415,9 +397,7 @@ def create_fields(dataset_def: VectorDatasetDef | dict[str, Any]) -> QgsFields:
     return fields
 
 
-def set_layer_fields(
-    layer: QgsVectorLayer, dataset_def: VectorDatasetDef | dict[str, Any]
-) -> None:
+def set_layer_fields(layer: QgsVectorLayer, dataset_def: VectorDatasetDef | dict[str, Any]) -> None:
     dataset_def = VectorDatasetDef.from_data(dataset_def)
 
     fields = layer.fields()
@@ -481,9 +461,7 @@ def set_layer_fields(
                 )
 
 
-def set_field_default_value(
-    field: QgsField, field_def: FieldDef | dict[str, Any]
-) -> None:
+def set_field_default_value(field: QgsField, field_def: FieldDef | dict[str, Any]) -> None:
     field_def = FieldDef.from_data(field_def)
 
     if field_def.default_value is None:
@@ -496,9 +474,7 @@ def set_field_default_value(
     field.setDefaultValueDefinition(default_value)
 
 
-def set_field_constraints(
-    field: QgsField, field_def: FieldDef | dict[str, Any]
-) -> None:
+def set_field_constraints(field: QgsField, field_def: FieldDef | dict[str, Any]) -> None:
     field_def = FieldDef.from_data(field_def)
 
     constraints = field.constraints()
@@ -530,9 +506,7 @@ def set_field_constraints(
     if field_def.constraint_expression:
         constraint_expression = field_def.constraint_expression
         constraint_description = field_def.constraint_expression_description
-        constraint_expression_strength = get_constraint_strength(
-            field_def.constraint_expression_strength
-        )
+        constraint_expression_strength = get_constraint_strength(field_def.constraint_expression_strength)
 
         constraints.setConstraint(
             QgsFieldConstraints.Constraint.ConstraintExpression,
@@ -542,9 +516,7 @@ def set_field_constraints(
             QgsFieldConstraints.Constraint.ConstraintExpression,
             constraint_expression_strength,
         )
-        constraints.setConstraintExpression(
-            constraint_expression, constraint_description
-        )
+        constraints.setConstraintExpression(constraint_expression, constraint_description)
 
     field.setConstraints(constraints)
 
@@ -606,9 +578,7 @@ def set_field_widget(field: QgsField, field_def: FieldDef | dict[str, Any]) -> N
     field.setEditorWidgetSetup(widget_setup)
 
 
-def set_layer_tree(
-    project: QgsProject, project_def: ProjectDef | dict[str, Any]
-) -> None:
+def set_layer_tree(project: QgsProject, project_def: ProjectDef | dict[str, Any]) -> None:
     project_def = ProjectDef.from_data(project_def)
 
     tree_root = project.layerTreeRoot()
@@ -629,9 +599,7 @@ def set_layer_tree(
             parent = layer_tree_items_mapping[parent_name]
 
             if not parent:
-                raise MissingParentError(
-                    f"Parent group '{parent_name}' not found for layer tree item '{item_name}'"
-                )
+                raise MissingParentError(f"Parent group '{parent_name}' not found for layer tree item '{item_name}'")
 
             assert isinstance(parent, QgsLayerTreeGroup)
         else:
@@ -648,9 +616,7 @@ def set_layer_tree(
             layer = project.mapLayer(layer_tree_def.layer_id)
 
             if not layer:
-                raise Qgis2JsonError(
-                    f"Layer '{item_name}' not found in project for layer tree item."
-                )
+                raise Qgis2JsonError(f"Layer '{item_name}' not found in project for layer tree item.")
 
             tree_item = QgsLayerTreeLayer(layer)
 

@@ -185,9 +185,7 @@ class TestXlsformParser:
             parse_expression("substr('hello', 1, 5)(${arg})")
 
     def test_not_supported_xlsform_function(self) -> None:
-        with pytest.raises(
-            ParseError, match="Function not supported in QGIS expressions `digest`"
-        ):
+        with pytest.raises(ParseError, match="Function not supported in QGIS expressions `digest`"):
             parse_expression("digest('abcd', 'key')")
 
     def test_concatenate_function(self):

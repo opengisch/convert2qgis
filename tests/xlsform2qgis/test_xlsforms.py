@@ -323,9 +323,7 @@ class TestConverter:
                 ),
             ]
         )
-        converter.settings_sheet.__iter__.return_value = to_parsed_sheet_rows(
-            [{"default_language": "English"}]
-        )
+        converter.settings_sheet.__iter__.return_value = to_parsed_sheet_rows([{"default_language": "English"}])
 
         converter._xlsform_settings = converter._get_xlsform_settings()
         converter.convert()
@@ -581,14 +579,9 @@ class TestConverter:
         converter.convert()
 
         assert converter._xlsform_settings
+        assert converter._xlsform_settings["instance_name"] == r"concat(${lname}, '-', ${fname}, '-', uuid())"
         assert (
-            converter._xlsform_settings["instance_name"]
-            == r"concat(${lname}, '-', ${fname}, '-', uuid())"
-        )
-        assert (
-            converter.get_display_expression(
-                converter._xlsform_settings["instance_name"]
-            )
+            converter.get_display_expression(converter._xlsform_settings["instance_name"])
             == "concat(\"lname\", '-', \"fname\", '-', uuid(format:='WithoutBraces'))"
         )
 
@@ -597,9 +590,7 @@ class TestConverter:
         return str(Path(__file__).parent / "data/service_rating.xlsx")
 
     def test_xlsform_survey_rating_file(self, xlsform_filename: str):
-        survey_sheet, choices_sheet, settings_sheet = parse_xlsform_sheets(
-            xlsform_filename
-        )
+        survey_sheet, choices_sheet, settings_sheet = parse_xlsform_sheets(xlsform_filename)
 
         converter = XlsformConverter(
             survey_sheet,

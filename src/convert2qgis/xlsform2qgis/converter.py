@@ -4,7 +4,7 @@ import re
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any, TypedDict, cast
+from typing import Any, cast
 
 from qgis.core import QgsFeatureSource, QgsProject
 
@@ -118,7 +118,6 @@ def parse_xlsform_sheets(
     xlsform_filename: PathOrStr,
 ) -> tuple[ParsedSheet, ParsedSheet, ParsedSheet]:
     """Extract the survey, choices and settings sheets from the given XLSForm file."""
-
     logger.debug(f"Parsing XLSForm file: {xlsform_filename}")
 
     xlsform_filename = Path(xlsform_filename)
@@ -136,7 +135,7 @@ def parse_xlsform_sheets(
     except ValueError as err:
         raise XlsformConverterError(
             f'Expected the provided spreadsheet to contain sheets named "survey", "choices" and "settings", but got an error: {err}'
-        )
+        ) from err
 
     return (survey_sheet, choices_sheet, settings_sheet)
 
@@ -205,9 +204,7 @@ def convert_xlsform_to_qgis_project(
     )
 
     if json_filename:
-        logger.info(
-            "Writing intermediate JSON representation to file: {}".format(json_filename)
-        )
+        logger.info("Writing intermediate JSON representation to file: {}".format(json_filename))
 
         json_filename = Path(json_filename)
         json_filename.parent.mkdir(parents=True, exist_ok=True)
@@ -381,9 +378,7 @@ class XlsformConverter:
                 should_strip_tags=should_strip_tags,
             )
         except ParseError as err:
-            logger.error(
-                f"Failed to parse expression `{expression_str}` for field `{current_field}`: {err}"
-            )
+            logger.error(f"Failed to parse expression `{expression_str}` for field `{current_field}`: {err}")
 
             if self._skip_failed_expressions:
                 return Expression(
@@ -471,9 +466,7 @@ class XlsformConverter:
             if form_item_def.item_id == self._container_ids[-1]:
                 return form_item_def
 
-        raise AssertionError(
-            f"Current container with id {self._container_ids[-1]} not found!"
-        )
+        raise AssertionError(f"Current container with id {self._container_ids[-1]} not found!")
 
     def _get_label(self, sheet_row: ParsedSheetRow) -> str:
         label = ""
@@ -533,17 +526,13 @@ class XlsformConverter:
 
         if sheet_row["constraint"]:
             constraint_str = str(sheet_row["constraint"]).strip()
-            constraint_expression = self.get_expression(
-                constraint_str, field_name
-            ).to_qgis()
+            constraint_expression = self.get_expression(constraint_str, field_name).to_qgis()
 
             if constraint_expression:
                 constraint_expression_strength = "hard"
 
             if sheet_row["constraint_message"]:
-                constraint_expression_description = str(
-                    sheet_row["constraint_message"]
-                ).strip()
+                constraint_expression_description = str(sheet_row["constraint_message"]).strip()
 
         is_not_null = False
         is_not_null_strength: ConstraintStrength = "not_set"
@@ -559,15 +548,11 @@ class XlsformConverter:
 
         # you cannot define both `calculation` and `default` at the same time, in such case use only `calculation`
         if sheet_row["calculation"] and sheet_row["default"]:
-            logger.warning(
-                "Both `calculation` and `default` are set; only calculation will be used"
-            )
+            logger.warning("Both `calculation` and `default` are set; only calculation will be used")
 
         # handle default value from either `calculation` or `default` column
         if sheet_row["calculation"]:
-            default_value_expression = self.get_expression(
-                sheet_row["calculation"], field_name
-            ).to_qgis()
+            default_value_expression = self.get_expression(sheet_row["calculation"], field_name).to_qgis()
 
             field_def.update(
                 {
@@ -724,9 +709,7 @@ class XlsformConverter:
 
         self.vector_datasets.extend(self._get_choices_datasets())
 
-        display_expression = self.get_display_expression(
-            self._xlsform_settings["instance_name"]
-        )
+        display_expression = self.get_display_expression(self._xlsform_settings["instance_name"])
         layer_id = "survey_layer"
         layer_name = "Survey"
         self._enter_vector_dataset(
@@ -767,15 +750,11 @@ class XlsformConverter:
                 assert dataset_def is not None
 
                 if not row["type"]:
-                    logger.debug(
-                        f"Skipping row with empty `type` at row index {row.idx}!"
-                    )
+                    logger.debug(f"Skipping row with empty `type` at row index {row.idx}!")
 
                     continue
 
-                row_field_defs, row_form_item_defs, row_geometry_type = (
-                    self._parse_form_row(row)
-                )
+                row_field_defs, row_form_item_defs, row_geometry_type = self._parse_form_row(row)
 
                 dataset_def.fields.extend(row_field_defs)
                 dataset_def.form_config.extend(row_form_item_defs)
@@ -831,9 +810,7 @@ class XlsformConverter:
             )
         )
 
-    def _parse_form_row(
-        self, row: ParsedSheetRow
-    ) -> tuple[list[FieldDef], list[FormItemDef], GeometryType | None]:
+    def _parse_form_row(self, row: ParsedSheetRow) -> tuple[list[FieldDef], list[FormItemDef], GeometryType | None]:
         fields = []
         form_items = []
         geometry_type = None
@@ -854,9 +831,7 @@ class XlsformConverter:
         form_item_default = WeakFormItemDef()
 
         if row["relevant"]:
-            visibility_expr = self.get_expression(
-                row["relevant"], row["name"]
-            ).to_qgis()
+            visibility_expr = self.get_expression(row["relevant"], row["name"]).to_qgis()
         else:
             visibility_expr = ""
 
@@ -1007,9 +982,7 @@ class XlsformConverter:
             last_list_name = None
 
             if not row["list_name"]:
-                logger.debug(
-                    f"Skipping row with empty `list_name` in choices at row {idx}!"
-                )
+                logger.debug(f"Skipping row with empty `list_name` in choices at row {idx}!")
 
                 last_list_name = None
 
@@ -1047,15 +1020,11 @@ class XlsformConverter:
 
             cleaned_choices = [
                 # We always add an empty option
-                self._get_choices_record(
-                    columns, ChoicesDef(name="", label="", list_name=list_name)
-                ),
+                self._get_choices_record(columns, ChoicesDef(name="", label="", list_name=list_name)),
             ]
 
             for raw_choice_record in raw_choice_records:
-                cleaned_choices.append(
-                    self._get_choices_record(columns, raw_choice_record)
-                )
+                cleaned_choices.append(self._get_choices_record(columns, raw_choice_record))
 
             cleaned_choices_by_list[list_name] = cleaned_choices
 
@@ -1105,16 +1074,12 @@ class XlsformConverter:
 
         return "-9.88, 33.41, 40.97, 61.11"
 
-    def _get_field_settings_max_pixels(
-        self, row, previous_max_pixels: int | None
-    ) -> int | None:
+    def _get_field_settings_max_pixels(self, row, previous_max_pixels: int | None) -> int | None:
         # the current image field does not have parameters set, return the previous value
         if not row["parameters"]:
             return previous_max_pixels
 
-        image_max_pixels_matches = re.search(
-            r"max-pixels=\s*([0-9]+)", row["parameters"], flags=re.IGNORECASE
-        )
+        image_max_pixels_matches = re.search(r"max-pixels=\s*([0-9]+)", row["parameters"], flags=re.IGNORECASE)
 
         # the current image field does not have max-pixels parameter, return the previous value
         if not image_max_pixels_matches:
@@ -1138,9 +1103,7 @@ class XlsformConverter:
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Convert an XLSForm file to a QGIS project via JSON representation"
-    )
+    parser = argparse.ArgumentParser(description="Convert an XLSForm file to a QGIS project via JSON representation")
     parser.add_argument(
         "input_xlsform",
         type=str,

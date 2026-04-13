@@ -63,9 +63,7 @@ def test_register_function_duplicate_name_raises_assertion_error():
         def tmp_registry_duplicate_a(value: str, ctx) -> str:
             return value
 
-        with pytest.raises(
-            AssertionError, match=f"Function {name} already registered!"
-        ):
+        with pytest.raises(AssertionError, match=f"Function {name} already registered!"):
 
             @register_function(name=name)
             def tmp_registry_duplicate_b(value: str, ctx) -> str:

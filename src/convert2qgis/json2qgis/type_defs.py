@@ -18,9 +18,7 @@ GeometryType: TypeAlias = Literal[
     "MultiPolygon",
     "NoGeometry",
 ]
-FormItemTypes: TypeAlias = Literal[
-    "field", "relation", "group_box", "tab", "row", "text"
-]
+FormItemTypes: TypeAlias = Literal["field", "relation", "group_box", "tab", "row", "text"]
 FormItemGroupTypes: TypeAlias = Literal["group_box", "tab"]
 LayerType: TypeAlias = Literal["vector", "raster", "mesh", "vector_tile", "point_cloud"]
 
@@ -110,10 +108,7 @@ class RelationDef(DataclassModelMixin):
             name=data.get("name", ""),
             from_layer_id=data.get("from_layer_id", ""),
             to_layer_id=data.get("to_layer_id", ""),
-            field_pairs=[
-                RelationFieldPairDef.from_data(item)
-                for item in data.get("field_pairs", [])
-            ],
+            field_pairs=[RelationFieldPairDef.from_data(item) for item in data.get("field_pairs", [])],
             strength=data.get("strength", "association"),
         )
 
@@ -138,10 +133,7 @@ class PolymorphicRelationDef(DataclassModelMixin):
             to_layer_field=data.get("to_layer_field", ""),
             to_layer_expression=data.get("to_layer_expression", ""),
             to_layer_ids=list(data.get("to_layer_ids", [])),
-            field_pairs=[
-                RelationFieldPairDef.from_data(item)
-                for item in data.get("field_pairs", [])
-            ],
+            field_pairs=[RelationFieldPairDef.from_data(item) for item in data.get("field_pairs", [])],
             strength=data.get("strength", "association"),
         )
 
@@ -408,13 +400,9 @@ class VectorDatasetDef(BaseDatasetDef):
             is_searchable=data.get("is_searchable", False),
             is_removable=data.get("is_removable", True),
             geometry_type=data.get("geometry_type", "NoGeometry"),
-            datasource_format=data.get(
-                "datasource_format", VectorLayerDataprovider.GPKG
-            ),
+            datasource_format=data.get("datasource_format", VectorLayerDataprovider.GPKG),
             fields=[FieldDef.from_data(item) for item in data.get("fields", [])],
-            form_config=[
-                FormItemDef.from_data(item) for item in data.get("form_config", [])
-            ],
+            form_config=[FormItemDef.from_data(item) for item in data.get("form_config", [])],
             data=list(data.get("data", [])),
             primary_key=data.get("primary_key", ""),
             indices=list(data.get("indices", [])),
@@ -467,14 +455,8 @@ class DatasetGroupDef(DataclassModelMixin):
     @classmethod
     def _from_dict(cls, data: Mapping[str, Any]) -> "DatasetGroupDef":
         return cls(
-            vector_datasets=[
-                VectorDatasetDef.from_data(item)
-                for item in data.get("vector_datasets", [])
-            ],
-            raster_datasets=[
-                RasterDatasetDef.from_data(item)
-                for item in data.get("raster_datasets", [])
-            ],
+            vector_datasets=[VectorDatasetDef.from_data(item) for item in data.get("vector_datasets", [])],
+            raster_datasets=[RasterDatasetDef.from_data(item) for item in data.get("raster_datasets", [])],
         )
 
     def iter_datasets(self) -> Iterable[DatasetDef]:
@@ -496,28 +478,17 @@ class ProjectDef(DataclassModelMixin):
         return cls(
             project=ProjectMetadataDef.from_data(data.get("project", {})),
             version=data.get("version", ""),
-            datasets=[
-                DatasetGroupDef.from_data(item) for item in data.get("datasets", [])
-            ],
-            layer_tree=[
-                LayerTreeItemDef.from_data(item) for item in data.get("layer_tree", [])
-            ],
-            relations=[
-                RelationDef.from_data(item) for item in data.get("relations", [])
-            ],
+            datasets=[DatasetGroupDef.from_data(item) for item in data.get("datasets", [])],
+            layer_tree=[LayerTreeItemDef.from_data(item) for item in data.get("layer_tree", [])],
+            relations=[RelationDef.from_data(item) for item in data.get("relations", [])],
             polymorphic_relations=[
-                PolymorphicRelationDef.from_data(item)
-                for item in data.get("polymorphic_relations", [])
+                PolymorphicRelationDef.from_data(item) for item in data.get("polymorphic_relations", [])
             ],
         )
 
     @property
     def all_datasets(self) -> list[DatasetDef]:
-        return [
-            dataset
-            for dataset_group in self.datasets
-            for dataset in dataset_group.iter_datasets()
-        ]
+        return [dataset for dataset_group in self.datasets for dataset in dataset_group.iter_datasets()]
 
 
 def dataset_from_data(data: DatasetDef | Mapping[str, Any]) -> DatasetDef:

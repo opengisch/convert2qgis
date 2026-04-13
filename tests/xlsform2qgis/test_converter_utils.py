@@ -52,9 +52,7 @@ class TestParseXlsformRangeParameters:
 
 class TestParseXlsformSelectFromFileParameters:
     def test_all_parameters_present(self) -> None:
-        key, value = parse_xlsform_select_from_file_parameters(
-            "value=uuid label=display_name"
-        )
+        key, value = parse_xlsform_select_from_file_parameters("value=uuid label=display_name")
 
         assert (key, value) == ("uuid", "display_name")
 
@@ -69,8 +67,6 @@ class TestParseXlsformSelectFromFileParameters:
         assert (key, value) == ("my_id", "label")
 
     def test_whitespace_around_equal(self) -> None:
-        key, value = parse_xlsform_select_from_file_parameters(
-            "value = custom_id label   = custom_label"
-        )
+        key, value = parse_xlsform_select_from_file_parameters("value = custom_id label   = custom_label")
 
         assert (key, value) == ("custom_id", "custom_label")
