@@ -34,6 +34,12 @@ lint.ignore = [
     "E501",  # Line too long
 ]
 
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+disable_error_code = ["import-untyped"]
+
+
 [build-system]
 requires = ["uv_build>=0.9.13,<0.10.0"]
 build-backend = "uv_build"
