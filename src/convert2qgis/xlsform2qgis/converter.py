@@ -286,7 +286,7 @@ class XlsformConverter:
         # settings
         self._form_group_type = settings.get("form_group_type") or "group_box"
         self._root_form_group_type = settings.get("root_form_group_type") or "tab"
-        self._project_crs = settings.get("crs") or "EPSG:3867"
+        self._project_crs = settings.get("crs") or "EPSG:3857"
         self._project_author = settings.get("author") or ""
         self._project_extent = settings.get("extent", "").strip() or ""
         self._xlsform_settings = {
