@@ -612,9 +612,9 @@ class TestConverter:
 
         converter.convert()
 
-        assert len(converter.datasets) == 6
+        assert len(converter.all_datasets) == 6
 
-        sorted_datasets = sorted(converter.datasets, key=lambda ml: ml.name)
+        sorted_datasets = sorted(converter.all_datasets, key=lambda ml: ml.name)
 
         survey_layer, *_ = sorted_datasets
         survey_layer = cast(VectorDatasetDef, survey_layer)

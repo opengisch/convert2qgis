@@ -415,7 +415,7 @@ def widget_select_from_file(ctx: WidgetContext) -> ParsedRow:
         list_key = "name"
         list_value = "label"
 
-        assert ctx.converter.find_dataset(layer_id)
+        assert ctx.converter.find_vector_dataset(layer_id)
 
     filter_expressions = []
     choice_filter_expr = ctx.converter.get_expression(
@@ -556,7 +556,7 @@ def widget_begin_repeat(ctx: WidgetContext) -> ParsedRow:
     relation = {
         "relation_id": relation_id,
         "name": relation_id,
-        "to_layer_id": ctx.converter.datasets[-1].layer_id,
+        "to_layer_id": ctx.converter.vector_datasets[-1].layer_id,
         "from_layer_id": layer_id,
         "field_pairs": [
             {
