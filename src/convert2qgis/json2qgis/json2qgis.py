@@ -1,7 +1,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 from qgis.core import (
     Qgis,
@@ -61,16 +61,18 @@ class ProjectCreator:
     _has_geometry: bool = False
     """Whether any of the project vector layers has a geometry type."""
 
-    def __init__(self, definition: ProjectDef) -> None:
+    def __init__(self, definition: ProjectDef | dict[str, Any]) -> None:
+        normalized_definition = ProjectDef.from_data(definition)
+
         # validate the project definition against the JSON schema if a schema validator is available
         if fastjsonschema:
             try:
-                schema_validator(cast(dict[str, Any], definition))
+                schema_validator(normalized_definition.to_dict())
             except fastjsonschema.JsonSchemaException as e:
                 raise Qgis2JsonError(f'{e} with data "{getattr(e, "value", None)}"')
 
         self._project = QgsProject()
-        self.definition = definition
+        self.definition = normalized_definition
         self._output_dir = Path()
 
     def build(self, output_dir: PathOrStr) -> QgsProject:
@@ -87,7 +89,7 @@ class ProjectCreator:
         return self._create_project()
 
     def _create_project(self) -> QgsProject:
-        for layer_def in self.definition["layers"]:
+        for layer_def in self.definition.layers:
             self._create_layer(layer_def)
 
         set_layer_tree(self._project, self.definition)
@@ -96,13 +98,12 @@ class ProjectCreator:
 
         self._set_relations()
 
-        for layer_def in self.definition["layers"]:
-            if layer_def["layer_type"] != "vector":
+        for layer_def in self.definition.layers:
+            if layer_def.layer_type != "vector":
                 continue
 
-            layer_def = cast(VectorLayerDef, layer_def)
-
-            layer = self._project.mapLayer(layer_def["layer_id"])
+            assert isinstance(layer_def, VectorLayerDef)
+            layer = self._project.mapLayer(layer_def.layer_id)
 
             assert layer
             assert isinstance(layer, QgsVectorLayer)
@@ -115,10 +116,10 @@ class ProjectCreator:
                 ),
             )
 
-        project_title = self.definition["project"].get("title", "xlsform_project")
+        project_title = self.definition.project.title or "xlsform_project"
 
         metadata = self._project.metadata()
-        metadata.setAuthor(self.definition.get("author", ""))
+        metadata.setAuthor(self.definition.project.author)
 
         if self._project.crs().authid() == "EPSG:3857":
             display_settings = self._project.displaySettings()
@@ -144,7 +145,7 @@ class ProjectCreator:
         return self._project
 
     def _get_project_crs(self) -> QgsCoordinateReferenceSystem:
-        crs = QgsCoordinateReferenceSystem(self.definition["project"]["crs"])
+        crs = QgsCoordinateReferenceSystem(self.definition.project.crs)
         if not crs.isValid():
             crs = QgsCoordinateReferenceSystem("EPSG:3857")
 
@@ -170,7 +171,7 @@ class ProjectCreator:
         map_settings.setDestinationCrs(self._get_project_crs())
         map_settings.setOutputSize(QSize(500, 500))
 
-        extent_coords = self.definition["project"]["extent"]
+        extent_coords = self.definition.project.extent
         if extent_coords:
             logger.info(f'Attempting to set project extent to "{extent_coords}"')
 
@@ -194,9 +195,9 @@ class ProjectCreator:
         map_settings.writeXml(map_canvas_node, document)
 
     def _create_layer(self, layer_def: LayerDef) -> None:
-        layer_type = layer_def["layer_type"]
+        layer_type = layer_def.layer_type
         if layer_type == "vector":
-            layer_def = cast(VectorLayerDef, layer_def)
+            assert isinstance(layer_def, VectorLayerDef)
             layer = self._create_vector_layer(layer_def)
 
             if layer.geometryType() not in (
@@ -206,7 +207,7 @@ class ProjectCreator:
                 self._has_geometry = True
 
         elif layer_type == "raster":
-            layer_def = cast(RasterLayerDef, layer_def)
+            assert isinstance(layer_def, RasterLayerDef)
             layer = self._create_raster_layer(layer_def)
         # Additional layer types can be handled here
         elif layer_type == "mesh":
@@ -219,15 +220,15 @@ class ProjectCreator:
             raise NotImplementedError(f"Unsupported layer type: {layer_type}")
 
         try:
-            crs = QgsCoordinateReferenceSystem(layer_def["crs"])
+            crs = QgsCoordinateReferenceSystem(layer_def.crs)
         except Exception as e:
             raise UnknownCrsSystem(f"Failed to create CRS: {e}")
 
         if not crs.isValid():
-            raise UnknownCrsSystem(f"Invalid CRS: {layer_def['crs']}")
+            raise UnknownCrsSystem(f"Invalid CRS: {layer_def.crs}")
 
-        if not layer.setId(layer_def["layer_id"]):
-            raise Qgis2JsonError(f"Failed to set layer ID: {layer_def['layer_id']}")
+        if not layer.setId(layer_def.layer_id):
+            raise Qgis2JsonError(f"Failed to set layer ID: {layer_def.layer_id}")
 
         layer.setCrs(crs)
         layer.setFlags(get_layer_flags(layer.flags(), layer_def))
@@ -243,25 +244,25 @@ class ProjectCreator:
         return geometry_type
 
     def _create_vector_layer(self, layer_def: VectorLayerDef) -> QgsVectorLayer:
-        geometry_type = self._get_geometry_type(layer_def["geometry_type"])
-        source = f"{geometry_type}?crs={layer_def['crs']}"
+        geometry_type = self._get_geometry_type(layer_def.geometry_type)
+        source = f"{geometry_type}?crs={layer_def.crs}"
 
-        layer = QgsVectorLayer(source, layer_def["name"], "memory")
+        layer = QgsVectorLayer(source, layer_def.name, "memory")
 
         if not layer.isValid():
-            raise Qgis2JsonError(f"Vector layer invalid: {layer_def['name']}")
+            raise Qgis2JsonError(f"Vector layer invalid: {layer_def.name}")
 
         self._set_fields(layer, layer_def)
 
         try:
-            driver_name = VectorLayerDataprovider(layer_def["datasource_format"])
+            driver_name = VectorLayerDataprovider(layer_def.datasource_format)
             layer_provider_lib = "ogr"
         except ValueError:
             raise UnknownVectorLayerDataproviderError(
-                f"Unknown vector layer data provider: {layer_def['datasource_format']}"
+                f"Unknown vector layer data provider: {layer_def.datasource_format}"
             )
 
-        normalized_name = normalize_name(layer_def["name"])
+        normalized_name = normalize_name(layer_def.name)
 
         options = QgsVectorFileWriter.SaveVectorOptions()
         options.layerName = normalized_name
@@ -284,15 +285,15 @@ class ProjectCreator:
                 f"Error writing vector layer: {write_result} {error_message}"
             )
 
-        new_layer = QgsVectorLayer(new_file, layer_def["name"], layer_provider_lib)
+        new_layer = QgsVectorLayer(new_file, layer_def.name, layer_provider_lib)
 
         set_layer_fields(new_layer, layer_def)
 
-        if layer_def.get("data"):
+        if layer_def.data:
             self._add_vector_layer_data(new_layer, layer_def)
 
         new_layer.setReadOnly(
-            layer_def.get("is_read_only", False),
+            layer_def.is_read_only,
         )
 
         return new_layer
@@ -302,7 +303,7 @@ class ProjectCreator:
 
         if layer_data_provider is None:
             raise UnknownVectorLayerDataproviderError(
-                f"Failed to get data provider for layer: {layer_def['name']}"
+                f"Failed to get data provider for layer: {layer_def.name}"
             )
 
         fields = create_fields(layer_def)
@@ -318,17 +319,17 @@ class ProjectCreator:
 
         if not bool(layer_data_provider) or not layer_data_provider.isValid():
             raise UnknownVectorLayerDataproviderError(
-                f"Failed to get data provider for layer 1: {layer_def['name']}"
+                f"Failed to get data provider for layer 1: {layer_def.name}"
             )
 
         if layer.geometryType() != Qgis.GeometryType.Null:
             raise NotImplementedError(
-                f"Cannot edit geometry layer: {layer_def['name']} has geometry {layer.geometryType()}"
+                f"Cannot edit geometry layer: {layer_def.name} has geometry {layer.geometryType()}"
             )
 
-        layer_data = cast(list[dict[str, Any]] | None, layer_def.get("data"))
+        layer_data = layer_def.data
         if not layer_data:
-            logger.debug(f"No feature data to be added to layer {layer_def['name']}!")
+            logger.debug(f"No feature data to be added to layer {layer_def.name}!")
 
             return
 
@@ -350,16 +351,16 @@ class ProjectCreator:
 
         assert relation_manager is not None
 
-        for relation_def in self.definition.get("relations", []):
+        for relation_def in self.definition.relations:
             relation = create_relation(relation_def)
             relation_manager.addRelation(relation)
 
     def _create_raster_layer(self, layer: RasterLayerDef) -> QgsMapLayer:
         # Implementation for creating a raster layer
         return QgsRasterLayer(
-            layer["datasource"],
-            layer["name"],
-            layer["datasource_format"],
+            layer.datasource,
+            layer.name,
+            layer.datasource_format,
         )
 
     def _create_mesh_layer(self, layer: LayerDef) -> QgsMapLayer:

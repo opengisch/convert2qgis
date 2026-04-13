@@ -384,11 +384,8 @@ def jr_choice_name(choice_value: str, list_name: str, ctx: ExpressionContext) ->
         )
 
     for choice in ctx.choices_by_list[list_name]:
-        assert "name" in choice
-        assert "label" in choice
-
-        if choice["name"] == choice_value:
-            return choice["label"]
+        if choice.name == choice_value:
+            return choice.label
 
     raise ValueError(f"Value `{choice_value}` not found in {list_name}!")
 

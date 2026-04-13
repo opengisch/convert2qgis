@@ -44,6 +44,7 @@ from convert2qgis.json2qgis.type_defs import (
     RelationStrength,
     VectorLayerDataprovider,
     VectorLayerDef,
+    layer_from_data,
 )
 
 try:
@@ -87,6 +88,8 @@ def get_schema_validator() -> Callable[[dict[str, Any]], None]:
 
 
 def check_output(path: str):
+    """Decorator to quickly do a sanity check if the output of a given function is a valid JSON schema."""
+
     schema = get_schema_json()
 
     def decorator(func):
@@ -191,24 +194,26 @@ def get_field_type(type_name: str) -> QMetaType.Type:
 
 
 def get_layer_flags(
-    flags: QgsMapLayer.LayerFlags, layer_def: LayerDef
+    flags: QgsMapLayer.LayerFlags, layer_def: LayerDef | dict[str, Any]
 ) -> QgsMapLayer.LayerFlags:
-    if layer_def.get("is_identifiable", False):
+    layer_def = layer_from_data(layer_def)
+
+    if layer_def.is_identifiable:
         flags |= QgsMapLayer.LayerFlag.Identifiable
     else:
         flags &= ~QgsMapLayer.LayerFlag.Identifiable  # type: ignore
 
-    if layer_def.get("is_removable", False):
+    if layer_def.is_removable:
         flags |= QgsMapLayer.LayerFlag.Removable
     else:
         flags &= ~QgsMapLayer.LayerFlag.Removable  # type: ignore
 
-    if layer_def.get("is_searchable", False):
+    if layer_def.is_searchable:
         flags |= QgsMapLayer.LayerFlag.Searchable
     else:
         flags &= ~QgsMapLayer.LayerFlag.Searchable  # type: ignore
 
-    if layer_def.get("is_private", False):
+    if layer_def.is_private:
         flags |= QgsMapLayer.LayerFlag.Private
     else:
         flags &= ~QgsMapLayer.LayerFlag.Private  # type: ignore
@@ -218,9 +223,11 @@ def get_layer_flags(
 
 def get_layer_edit_form(
     fields: QgsFields,
-    layer_def: VectorLayerDef,
+    layer_def: VectorLayerDef | dict[str, Any],
     form_config: QgsEditFormConfig | None = None,
 ) -> QgsEditFormConfig:
+    layer_def = VectorLayerDef.from_data(layer_def)
+
     if form_config is None:
         form_config = QgsEditFormConfig()
 
@@ -229,11 +236,10 @@ def get_layer_edit_form(
 
     containers_mapping: dict[str, QgsAttributeEditorContainer] = {}
 
-    for form_item_def in layer_def["form_config"]:
-        item_type = form_item_def["type"]
-        # TODO @suricactus: ensure we should use `dict().get()`` here
-        item_label = form_item_def.get("label", "")
-        item_parent_id = form_item_def.get("parent_id")
+    for form_item_def in layer_def.form_config:
+        item_type = form_item_def.type
+        item_label = form_item_def.label
+        item_parent_id = form_item_def.parent_id
 
         parent = None
         if item_parent_id:
@@ -247,23 +253,22 @@ def get_layer_edit_form(
             parent = form_config.invisibleRootContainer()
 
         if item_type == "field":
-            field_idx = fields.indexOf(form_item_def["field_name"])
+            assert form_item_def.field_name is not None
+            field_idx = fields.indexOf(form_item_def.field_name)
 
-            assert field_idx != -1, (
-                f"Could not find field {form_item_def['field_name']}"
-            )
+            assert field_idx != -1, f"Could not find field {form_item_def.field_name}"
 
-            if form_item_def.get("visibility_expression", ""):
+            if form_item_def.visibility_expression:
                 parent_container = QgsAttributeEditorContainer("~CONDITIONAL~", parent)
                 parent_container.setVisibilityExpression(
                     QgsOptionalExpression(
-                        QgsExpression(form_item_def["visibility_expression"])
+                        QgsExpression(form_item_def.visibility_expression)
                     )
                 )
                 parent_container.setShowLabel(False)
                 container = QgsAttributeEditorField(
-                    form_item_def["field_name"],
-                    fields.indexOf(form_item_def["field_name"]),
+                    form_item_def.field_name,
+                    fields.indexOf(form_item_def.field_name),
                     parent_container,
                 )
 
@@ -273,35 +278,36 @@ def get_layer_edit_form(
                     parent.addChildElement(parent_container)
             else:
                 container = QgsAttributeEditorField(
-                    form_item_def["field_name"],
-                    fields.indexOf(form_item_def["field_name"]),
+                    form_item_def.field_name,
+                    fields.indexOf(form_item_def.field_name),
                     parent,
                 )
 
                 if parent:
                     parent.addChildElement(container)
 
-            if form_item_def.get("is_read_only", False):
+            if form_item_def.is_read_only:
                 form_config.setReadOnly(field_idx, True)
 
-            if form_item_def.get("is_label_on_top", False):
+            if form_item_def.is_label_on_top:
                 form_config.setLabelOnTop(field_idx, True)
 
-            container.setShowLabel(form_item_def.get("show_label", True))
+            container.setShowLabel(form_item_def.show_label)
 
             continue
 
         elif item_type == "relation":
-            if form_item_def.get("visibility_expression", ""):
+            assert form_item_def.field_name is not None
+            if form_item_def.visibility_expression:
                 parent_container = QgsAttributeEditorContainer("", parent)
                 parent_container.setVisibilityExpression(
                     QgsOptionalExpression(
-                        QgsExpression(form_item_def["visibility_expression"])
+                        QgsExpression(form_item_def.visibility_expression)
                     )
                 )
                 container = QgsAttributeEditorRelation(
-                    form_item_def["field_name"],
-                    form_item_def["item_id"],
+                    form_item_def.field_name,
+                    form_item_def.item_id,
                     parent_container,
                 )
 
@@ -311,8 +317,8 @@ def get_layer_edit_form(
                     parent.addChildElement(parent_container)
             else:
                 container = QgsAttributeEditorRelation(
-                    form_item_def["field_name"],
-                    form_item_def["item_id"],
+                    form_item_def.field_name,
+                    form_item_def.item_id,
                     parent,
                 )
 
@@ -322,7 +328,7 @@ def get_layer_edit_form(
             continue
 
         elif item_type == "text":
-            if form_item_def["is_markdown"]:
+            if form_item_def.is_markdown:
                 if markdown:
                     item_label = markdown.markdown(item_label)
                 else:
@@ -343,75 +349,81 @@ def get_layer_edit_form(
         container = QgsAttributeEditorContainer(item_label, parent)
         container.setType(get_attribute_form_container_type(item_type))
 
-        if form_item_def.get("visibility_expression", ""):
+        if form_item_def.visibility_expression:
             container.setVisibilityExpression(
                 QgsOptionalExpression(
-                    QgsExpression(form_item_def.get("visibility_expression", ""))
+                    QgsExpression(form_item_def.visibility_expression)
                 )
             )
 
-        if form_item_def.get("background_color", ""):
-            container.setBackgroundColor(
-                QColor(form_item_def.get("background_color", ""))
-            )
+        if form_item_def.background_color:
+            container.setBackgroundColor(QColor(form_item_def.background_color))
 
-        container.setCollapsed(form_item_def.get("is_collapsed", False))
-        container.setColumnCount(form_item_def.get("column_count", 1))
+        container.setCollapsed(form_item_def.is_collapsed)
+        container.setColumnCount(form_item_def.column_count)
 
         if parent:
             parent.addChildElement(container)
 
-        containers_mapping[form_item_def["item_id"]] = container
+        containers_mapping[form_item_def.item_id] = container
 
     for container in containers_mapping.values():
         if container.parent() is None:
             form_config.addTab(container)
 
-    for field_def in layer_def.get("fields", []):
-        field_idx = fields.indexOf(field_def["name"])
+    for field_def in layer_def.fields:
+        field_idx = fields.indexOf(field_def.name)
 
         assert field_idx != -1
 
-        if field_def.get("alias_expression"):
+        if field_def.alias_expression:
             prop = QgsProperty()
-            prop.setExpressionString(field_def["alias_expression"])
+            prop.setExpressionString(field_def.alias_expression)
             props = QgsPropertyCollection()
             props.setProperty(QgsEditFormConfig.DataDefinedProperty.Alias, prop)
-            form_config.setDataDefinedFieldProperties(field_def["name"], props)
+            form_config.setDataDefinedFieldProperties(field_def.name, props)
 
     return form_config
 
 
-def create_field(field_def: FieldDef) -> QgsField:
+def create_field(field_def: FieldDef | dict[str, Any]) -> QgsField:
+    field_def = FieldDef.from_data(field_def)
+
     # Map FieldDef type to Qt QMetaType type IDs
-    qt_type = get_field_type(field_def["type"])
+    qt_type = get_field_type(field_def.type)
 
     field = QgsField(
-        field_def["name"],
+        field_def.name,
         qt_type,
-        len=field_def.get("length", 0),
-        prec=field_def.get("precision", 0),
-        comment=field_def.get("comment", ""),
+        len=field_def.length,
+        prec=field_def.precision,
+        comment=field_def.comment,
     )
 
     return field
 
 
-def create_fields(layer_def: VectorLayerDef) -> QgsFields:
+def create_fields(layer_def: VectorLayerDef | dict[str, Any]) -> QgsFields:
+    layer_def = VectorLayerDef.from_data(layer_def)
+
     fields = QgsFields()
 
-    for field_def in layer_def["fields"]:
+    for field_def in layer_def.fields:
         field = create_field(field_def)
         fields.append(field)
 
     return fields
 
 
-def set_layer_fields(layer: QgsVectorLayer, layer_def: VectorLayerDef) -> None:
+def set_layer_fields(
+    layer: QgsVectorLayer, layer_def: VectorLayerDef | dict[str, Any]
+) -> None:
+    layer_def = VectorLayerDef.from_data(layer_def)
+
     fields = layer.fields()
 
     # For geopackage layers, hide the 'fid' field by default
-    if layer_def["datasource_format"] == VectorLayerDataprovider.GPKG:
+    if layer_def.datasource_format == VectorLayerDataprovider.GPKG:
         field_idx = fields.indexOf("fid")
 
         assert field_idx != -1
@@ -419,23 +431,23 @@ def set_layer_fields(layer: QgsVectorLayer, layer_def: VectorLayerDef) -> None:
         widget_setup = QgsEditorWidgetSetup("Hidden", {})
         layer.setEditorWidgetSetup(field_idx, widget_setup)
 
-    for field_def in layer_def.get("fields", []):
-        field_name = field_def["name"]
+    for field_def in layer_def.fields:
+        field_name = field_def.name
         field_idx = fields.indexOf(field_name)
 
         if field_idx == -1:
             logger.warning(
-                f"Field '{field_name}' not found in layer '{layer_def['name']}'. Skipping field configuration."
+                f"Field '{field_name}' not found in layer '{layer_def.name}'. Skipping field configuration."
             )
 
             continue
 
-        field = fields[field_def["name"]]
+        field = fields[field_def.name]
 
-        if field_def.get("alias"):
-            field.setAlias(field_def["alias"])
+        if field_def.alias:
+            field.setAlias(field_def.alias)
 
-        if field_def.get("is_read_only", False):
+        if field_def.is_read_only:
             field.setReadOnly(True)
 
         set_field_constraints(field, field_def)
@@ -469,24 +481,30 @@ def set_layer_fields(layer: QgsVectorLayer, layer_def: VectorLayerDef) -> None:
                 )
 
 
-def set_field_default_value(field: QgsField, field_def: FieldDef) -> None:
-    if field_def.get("default_value") is None:
+def set_field_default_value(
+    field: QgsField, field_def: FieldDef | dict[str, Any]
+) -> None:
+    field_def = FieldDef.from_data(field_def)
+
+    if field_def.default_value is None:
         return
 
     default_value = QgsDefaultValue(
-        field_def.get("default_value"),
-        field_def.get("set_default_value_on_update", False),
+        field_def.default_value,
+        field_def.set_default_value_on_update,
     )
     field.setDefaultValueDefinition(default_value)
 
 
-def set_field_constraints(field: QgsField, field_def: FieldDef) -> None:
+def set_field_constraints(
+    field: QgsField, field_def: FieldDef | dict[str, Any]
+) -> None:
+    field_def = FieldDef.from_data(field_def)
+
     constraints = field.constraints()
 
-    if field_def.get("is_not_null", False):
-        is_not_null_strength = get_constraint_strength(
-            field_def["is_not_null_strength"]
-        )
+    if field_def.is_not_null:
+        is_not_null_strength = get_constraint_strength(field_def.is_not_null_strength)
 
         constraints.setConstraint(
             QgsFieldConstraints.Constraint.ConstraintNotNull,
@@ -497,8 +515,8 @@ def set_field_constraints(field: QgsField, field_def: FieldDef) -> None:
             is_not_null_strength,
         )
 
-    if field_def.get("is_unique", False):
-        is_unique_strength = get_constraint_strength(field_def["is_unique_strength"])
+    if field_def.is_unique:
+        is_unique_strength = get_constraint_strength(field_def.is_unique_strength)
 
         constraints.setConstraint(
             QgsFieldConstraints.Constraint.ConstraintUnique,
@@ -509,11 +527,11 @@ def set_field_constraints(field: QgsField, field_def: FieldDef) -> None:
             is_unique_strength,
         )
 
-    if field_def.get("constraint_expression", ""):
-        constraint_expression = field_def.get("constraint_expression", "")
-        constraint_description = field_def.get("constraint_expression_description", "")
+    if field_def.constraint_expression:
+        constraint_expression = field_def.constraint_expression
+        constraint_description = field_def.constraint_expression_description
         constraint_expression_strength = get_constraint_strength(
-            field_def["constraint_expression_strength"]
+            field_def.constraint_expression_strength
         )
 
         constraints.setConstraint(
@@ -531,10 +549,12 @@ def set_field_constraints(field: QgsField, field_def: FieldDef) -> None:
     field.setConstraints(constraints)
 
 
-def set_field_widget(field: QgsField, field_def: FieldDef) -> None:
-    widget_type = field_def["widget_type"]
+def set_field_widget(field: QgsField, field_def: FieldDef | dict[str, Any]) -> None:
+    field_def = FieldDef.from_data(field_def)
+
+    widget_type = field_def.widget_type
     # Widget configuration
-    wc = field_def.get("widget_config", {})
+    wc = dict(field_def.widget_config)
 
     if widget_type == "Hidden":
         pass
@@ -586,7 +606,11 @@ def set_field_widget(field: QgsField, field_def: FieldDef) -> None:
     field.setEditorWidgetSetup(widget_setup)
 
 
-def set_layer_tree(project: QgsProject, project_def: ProjectDef) -> None:
+def set_layer_tree(
+    project: QgsProject, project_def: ProjectDef | dict[str, Any]
+) -> None:
+    project_def = ProjectDef.from_data(project_def)
+
     tree_root = project.layerTreeRoot()
 
     assert tree_root, "Failed to get layer tree root. Very unlikely error."
@@ -595,11 +619,11 @@ def set_layer_tree(project: QgsProject, project_def: ProjectDef) -> None:
 
     layer_tree_items_mapping: dict[str, QgsLayerTreeGroup | QgsLayerTreeLayer] = {}
 
-    for layer_tree_def in project_def["layer_tree"]:
-        item_type = layer_tree_def["type"]
-        item_name = layer_tree_def["name"]
-        parent_name = layer_tree_def["parent_id"]
-        is_checked = layer_tree_def["is_checked"]
+    for layer_tree_def in project_def.layer_tree:
+        item_type = layer_tree_def.type
+        item_name = layer_tree_def.name
+        parent_name = layer_tree_def.parent_id
+        is_checked = layer_tree_def.is_checked
 
         if parent_name:
             parent = layer_tree_items_mapping[parent_name]
@@ -617,11 +641,11 @@ def set_layer_tree(project: QgsProject, project_def: ProjectDef) -> None:
             tree_item = QgsLayerTreeGroup(item_name, is_checked)
 
             tree_item.setIsMutuallyExclusive(
-                layer_tree_def.get("is_mutually_exclusive", False),
-                layer_tree_def.get("mutually_exclusive_child_index", -1),
+                layer_tree_def.is_mutually_exclusive,
+                layer_tree_def.mutually_exclusive_child_index,
             )
         elif item_type == "layer":
-            layer = project.mapLayer(layer_tree_def["layer_id"])
+            layer = project.mapLayer(layer_tree_def.layer_id)
 
             if not layer:
                 raise Qgis2JsonError(
@@ -635,7 +659,7 @@ def set_layer_tree(project: QgsProject, project_def: ProjectDef) -> None:
 
         tree_item.setItemVisibilityChecked(is_checked)
 
-        layer_tree_items_mapping[layer_tree_def["item_id"]] = tree_item
+        layer_tree_items_mapping[layer_tree_def.item_id] = tree_item
 
         parent_children_count = len(parent.children())
         parent.insertChildNode(parent_children_count, tree_item)
@@ -653,40 +677,44 @@ def get_relation_strength(strength_name: RelationStrength) -> Qgis.RelationshipS
     return strengths[strength_name]
 
 
-def create_relation(relation_def: RelationDef) -> QgsRelation:
-    relation = QgsRelation()
-    relation.setId(relation_def["relation_id"])
-    relation.setName(relation_def["name"])
-    relation.setReferencingLayer(relation_def["from_layer_id"])
-    relation.setReferencedLayer(relation_def["to_layer_id"])
-    relation.setStrength(get_relation_strength(relation_def["strength"]))
+def create_relation(relation_def: RelationDef | dict[str, Any]) -> QgsRelation:
+    relation_def = RelationDef.from_data(relation_def)
 
-    for field_pair_def in relation_def["field_pairs"]:
+    relation = QgsRelation()
+    relation.setId(relation_def.relation_id)
+    relation.setName(relation_def.name)
+    relation.setReferencingLayer(relation_def.from_layer_id)
+    relation.setReferencedLayer(relation_def.to_layer_id)
+    relation.setStrength(get_relation_strength(relation_def.strength))
+
+    for field_pair_def in relation_def.field_pairs:
         relation.addFieldPair(
-            field_pair_def["from_field"],
-            field_pair_def["to_field"],
+            field_pair_def.from_field,
+            field_pair_def.to_field,
         )
 
     return relation
 
 
 def create_polymorphic_relation(
-    relation_def: PolymorphicRelationDef,
+    relation_def: PolymorphicRelationDef | dict[str, Any],
 ) -> QgsPolymorphicRelation:
+    relation_def = PolymorphicRelationDef.from_data(relation_def)
+
     relation = QgsPolymorphicRelation()
 
-    relation.setId(relation_def["relation_id"])
-    relation.setName(relation_def["name"])
-    relation.setReferencingLayer(relation_def["from_layer_id"])
-    relation.setReferencedLayerField(relation_def["to_layer_field"])
-    relation.setReferencedLayerExpression(relation_def["to_layer_expression"])
-    relation.setReferencedLayerIds(relation_def["to_layer_ids"])
-    relation.setRelationStrength(get_relation_strength(relation_def["strength"]))
+    relation.setId(relation_def.relation_id)
+    relation.setName(relation_def.name)
+    relation.setReferencingLayer(relation_def.from_layer_id)
+    relation.setReferencedLayerField(relation_def.to_layer_field)
+    relation.setReferencedLayerExpression(relation_def.to_layer_expression)
+    relation.setReferencedLayerIds(relation_def.to_layer_ids)
+    relation.setRelationStrength(get_relation_strength(relation_def.strength))
 
-    for field_pair_def in relation_def["field_pairs"]:
+    for field_pair_def in relation_def.field_pairs:
         relation.addFieldPair(
-            field_pair_def["from_field"],
-            field_pair_def["to_field"],
+            field_pair_def.from_field,
+            field_pair_def.to_field,
         )
 
     return relation
