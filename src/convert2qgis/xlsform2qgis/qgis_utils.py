@@ -42,10 +42,6 @@ def start_app() -> str:
     """
     global QGISAPP
 
-    extra_envvars = os.environ.get("QFIELDCLOUD_EXTRA_ENVVARS", "[]")
-
-    logger.info(f"Available user defined environment variables: {extra_envvars}")
-
     if QGISAPP is None:
         logger.info(f"Starting QGIS app version {Qgis.versionInt()} ({Qgis.devVersion()})...")
         argvb: list[str] = []

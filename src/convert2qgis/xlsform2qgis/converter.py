@@ -53,7 +53,7 @@ from convert2qgis.xlsform2qgis.expressions.expression import (
     ParserType,
 )
 from convert2qgis.xlsform2qgis.expressions.parser import ParseError
-from convert2qgis.xlsform2qgis.qgis_utils import set_survey_features
+from convert2qgis.xlsform2qgis.qgis_utils import set_survey_features, start_app
 from convert2qgis.xlsform2qgis.sheet_parser import ParsedSheet, ParsedSheetRow
 from convert2qgis.xlsform2qgis.type_defs import (
     ConverterSettings,
@@ -1139,6 +1139,8 @@ def main():
     )
 
     args = parser.parse_args()
+
+    start_app()
 
     convert_xlsform(
         args.input_xlsform,
