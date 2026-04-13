@@ -217,31 +217,57 @@ class FieldDef(DataclassModelMixin):
 
 
 @dataclass
-class LayerTreeItemDef(DataclassModelMixin):
+class LegendTreeItemBaseDef(DataclassModelMixin):
     item_id: str = ""
-    type: Literal["group", "layer"] = "group"
+    legend_item_type: Literal["group", "layer"] = "group"
     name: str = ""
-    parent_id: str | None = None
-    layer_id: str | None = None
     is_checked: bool = True
+
+
+@dataclass
+class LegendTreeLayerDef(LegendTreeItemBaseDef):
+    legend_item_type: Literal["layer"] = "layer"  # type: ignore[assignment]
+    layer_id: str = ""
+
+
+@dataclass
+class LegendTreeGroupDef(LegendTreeItemBaseDef):
+    legend_item_type: Literal["group"] = "group"  # type: ignore[assignment]
     is_mutually_exclusive: bool = False
     mutually_exclusive_child_index: int = -1
+    children: list["LegendTreeItemDef"] = field(default_factory=list)
 
-    def to_dict(self) -> dict[str, Any]:
-        data: dict[str, Any] = {
-            "item_id": self.item_id,
-            "type": self.type,
-            "name": self.name,
-            "parent_id": self.parent_id,
-            "is_checked": self.is_checked,
-        }
-        if self.layer_id is not None:
-            data["layer_id"] = self.layer_id
-        if self.type == "group":
-            data["is_mutually_exclusive"] = self.is_mutually_exclusive
-            data["mutually_exclusive_child_index"] = self.mutually_exclusive_child_index
+    @classmethod
+    def _from_dict(cls, data: Mapping[str, Any]) -> "LegendTreeGroupDef":
+        return cls(
+            item_id=data.get("item_id", ""),
+            legend_item_type="group",
+            name=data.get("name", ""),
+            is_checked=data.get("is_checked", True),
+            is_mutually_exclusive=data.get("is_mutually_exclusive", False),
+            mutually_exclusive_child_index=data.get("mutually_exclusive_child_index", -1),
+            children=[legend_tree_item_from_data(item) for item in data.get("children", [])],
+        )
 
+
+LegendTreeItemDef = LegendTreeGroupDef | LegendTreeLayerDef
+
+
+def legend_tree_item_from_data(
+    data: LegendTreeItemDef | Mapping[str, Any],
+) -> LegendTreeItemDef:
+    if isinstance(data, LegendTreeGroupDef):
         return data
+    if isinstance(data, LegendTreeLayerDef):
+        return data
+
+    legend_item_type = data.get("legend_item_type")
+    if legend_item_type == "group":
+        return LegendTreeGroupDef.from_data(data)
+    if legend_item_type == "layer":
+        return LegendTreeLayerDef.from_data(data)
+
+    raise NotImplementedError(f"Unsupported legend tree item type: {legend_item_type}")
 
 
 class VectorLayerDataprovider(StrEnum):
@@ -472,7 +498,7 @@ class ProjectDef(DataclassModelMixin):
     project: ProjectMetadataDef = field(default_factory=ProjectMetadataDef)
     version: str = ""
     datasets: list[DatasetGroupDef] = field(default_factory=list)
-    layer_tree: list[LayerTreeItemDef] = field(default_factory=list)
+    legend_tree: LegendTreeGroupDef = field(default_factory=LegendTreeGroupDef)
     relations: list[RelationDef] = field(default_factory=list)
     polymorphic_relations: list[PolymorphicRelationDef] = field(default_factory=list)
 
@@ -482,7 +508,7 @@ class ProjectDef(DataclassModelMixin):
             project=ProjectMetadataDef.from_data(data.get("project", {})),
             version=data.get("version", ""),
             datasets=[DatasetGroupDef.from_data(item) for item in data.get("datasets", [])],
-            layer_tree=[LayerTreeItemDef.from_data(item) for item in data.get("layer_tree", [])],
+            legend_tree=LegendTreeGroupDef.from_data(data.get("legend_tree", {})),
             relations=[RelationDef.from_data(item) for item in data.get("relations", [])],
             polymorphic_relations=[
                 PolymorphicRelationDef.from_data(item) for item in data.get("polymorphic_relations", [])

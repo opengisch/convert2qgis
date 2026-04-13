@@ -30,7 +30,8 @@ from convert2qgis.json2qgis.type_defs import (
     FormItemDef,
     FormItemGroupTypes,
     GeometryType,
-    LayerTreeItemDef,
+    LegendTreeGroupDef,
+    LegendTreeLayerDef,
     PathOrStr,
     ProjectDef,
     ProjectMetadataDef,
@@ -227,7 +228,7 @@ class XlsformConverter:
     settings_sheet: ParsedSheet
     vector_datasets: list[VectorDatasetDef]
     raster_datasets: list[RasterDatasetDef]
-    layer_tree: list[LayerTreeItemDef]
+    legend_tree: LegendTreeGroupDef
     relations: list[RelationDef]
 
     _converter_settings: ConverterSettings
@@ -309,7 +310,11 @@ class XlsformConverter:
         # state
         self.vector_datasets = []
         self.raster_datasets = []
-        self.layer_tree = []
+        self.legend_tree = LegendTreeGroupDef(
+            item_id="legend_root",
+            name="",
+            children=[],
+        )
         self.relations = []
         self._calculate_expressions = {}
         self._layer_ids = []
@@ -398,13 +403,11 @@ class XlsformConverter:
 
         self._enter_container(None)
 
-        self.layer_tree.append(
-            LayerTreeItemDef(
+        self.legend_tree.children.append(
+            LegendTreeLayerDef(
                 layer_id=layer_id,
                 item_id=f"layer_{layer_id}",
                 name=layer_name,
-                parent_id="",
-                type="layer",
                 is_checked=True,
             )
         )
@@ -708,7 +711,7 @@ class XlsformConverter:
                     raster_datasets=self.raster_datasets,
                 )
             ],
-            layer_tree=self.layer_tree,
+            legend_tree=self.legend_tree,
             relations=self.relations,
             polymorphic_relations=[],
             version="1.0",
@@ -813,13 +816,11 @@ class XlsformConverter:
         )
 
         self.raster_datasets.append(basemap_dataset_def)
-        self.layer_tree.append(
-            LayerTreeItemDef(
+        self.legend_tree.children.append(
+            LegendTreeLayerDef(
                 layer_id=layer_id,
                 item_id=f"layer_{layer_id}",
                 name=self._project_basemap_name,
-                parent_id="",
-                type="layer",
                 is_checked=True,
             )
         )

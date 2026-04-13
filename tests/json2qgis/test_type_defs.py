@@ -10,6 +10,7 @@ from convert2qgis.json2qgis.json2qgis import ProjectCreator
 from convert2qgis.json2qgis.type_defs import (
     DatasetGroupDef,
     FieldDef,
+    LegendTreeGroupDef,
     ProjectDef,
     ProjectMetadataDef,
     RelationFieldPairDef,
@@ -60,7 +61,11 @@ def build_project_dict() -> dict:
         ),
         version="1.0",
         datasets=[DatasetGroupDef(vector_datasets=[layer])],
-        layer_tree=[],
+        legend_tree=LegendTreeGroupDef(
+            item_id="legend_root",
+            name="",
+            children=[],
+        ),
         relations=[relation],
         polymorphic_relations=[],
     ).to_dict()
