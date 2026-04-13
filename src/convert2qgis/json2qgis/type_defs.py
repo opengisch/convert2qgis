@@ -460,10 +460,33 @@ class ProjectMetadataDef(DataclassModelMixin):
 
 
 @dataclass
+class DatasetGroupDef(DataclassModelMixin):
+    vector_datasets: list[VectorLayerDef] = field(default_factory=list)
+    raster_datasets: list[RasterLayerDef] = field(default_factory=list)
+
+    @classmethod
+    def _from_dict(cls, data: Mapping[str, Any]) -> "DatasetGroupDef":
+        return cls(
+            vector_datasets=[
+                VectorLayerDef.from_data(item)
+                for item in data.get("vector_datasets", [])
+            ],
+            raster_datasets=[
+                RasterLayerDef.from_data(item)
+                for item in data.get("raster_datasets", [])
+            ],
+        )
+
+    def iter_layers(self) -> Iterable[LayerDef]:
+        yield from self.vector_datasets
+        yield from self.raster_datasets
+
+
+@dataclass
 class ProjectDef(DataclassModelMixin):
     project: ProjectMetadataDef = field(default_factory=ProjectMetadataDef)
     version: str = ""
-    layers: list[LayerDef] = field(default_factory=list)
+    datasets: list[DatasetGroupDef] = field(default_factory=list)
     layer_tree: list[LayerTreeItemDef] = field(default_factory=list)
     relations: list[RelationDef] = field(default_factory=list)
     polymorphic_relations: list[PolymorphicRelationDef] = field(default_factory=list)
@@ -473,7 +496,9 @@ class ProjectDef(DataclassModelMixin):
         return cls(
             project=ProjectMetadataDef.from_data(data.get("project", {})),
             version=data.get("version", ""),
-            layers=[layer_from_data(item) for item in data.get("layers", [])],
+            datasets=[
+                DatasetGroupDef.from_data(item) for item in data.get("datasets", [])
+            ],
             layer_tree=[
                 LayerTreeItemDef.from_data(item) for item in data.get("layer_tree", [])
             ],
@@ -485,6 +510,10 @@ class ProjectDef(DataclassModelMixin):
                 for item in data.get("polymorphic_relations", [])
             ],
         )
+
+    @property
+    def all_datasets(self) -> list[LayerDef]:
+        return [layer for dataset in self.datasets for layer in dataset.iter_layers()]
 
 
 def layer_from_data(data: LayerDef | Mapping[str, Any]) -> LayerDef:

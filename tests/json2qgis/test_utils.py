@@ -282,7 +282,12 @@ def sample_project_def(sample_vector_layer_def):
             "author": "Test Author",
             "title": "Sample Project",
         },
-        "layers": [sample_vector_layer_def],
+        "datasets": [
+            {
+                "vector_datasets": [sample_vector_layer_def],
+                "raster_datasets": [],
+            }
+        ],
         "layer_tree": [
             {
                 "item_id": "my_group_parent",

@@ -23,6 +23,7 @@ from convert2qgis.json2qgis.type_defs import (
     ChoicesDef,
     ConstraintStrength,
     CrsDef,
+    DatasetGroupDef,
     FieldDef,
     FormItemDef,
     FormItemGroupTypes,
@@ -698,7 +699,16 @@ class XlsformConverter:
                 title=self._xlsform_settings["form_title"],
                 extent=self.get_project_extent(),
             ),
-            layers=self.layers,
+            datasets=[
+                DatasetGroupDef(
+                    vector_datasets=[
+                        layer for layer in self.layers if layer.layer_type == "vector"
+                    ],
+                    raster_datasets=[
+                        layer for layer in self.layers if layer.layer_type == "raster"
+                    ],
+                )
+            ],
             layer_tree=self.layer_tree,
             relations=self.relations,
             polymorphic_relations=[],

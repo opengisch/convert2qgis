@@ -89,7 +89,7 @@ class ProjectCreator:
         return self._create_project()
 
     def _create_project(self) -> QgsProject:
-        for layer_def in self.definition.layers:
+        for layer_def in self.definition.all_datasets:
             self._create_layer(layer_def)
 
         set_layer_tree(self._project, self.definition)
@@ -98,7 +98,7 @@ class ProjectCreator:
 
         self._set_relations()
 
-        for layer_def in self.definition.layers:
+        for layer_def in self.definition.all_datasets:
             if layer_def.layer_type != "vector":
                 continue
 

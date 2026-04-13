@@ -1,3 +1,5 @@
+from typing import cast
+
 from convert2qgis.json2qgis.generate import (
     generate_field_def,
     generate_form_item_def,
@@ -6,6 +8,7 @@ from convert2qgis.json2qgis.generate import (
 )
 from convert2qgis.json2qgis.json2qgis import ProjectCreator
 from convert2qgis.json2qgis.type_defs import (
+    DatasetGroupDef,
     FieldDef,
     ProjectDef,
     ProjectMetadataDef,
@@ -15,27 +18,30 @@ from convert2qgis.json2qgis.type_defs import (
 
 
 def build_project_dict() -> dict:
-    layer = generate_layer_def(
-        layer_type="vector",
-        layer_id="layer_1",
-        name="Survey",
-        geometry_type="NoGeometry",
-        fields=[
-            generate_field_def(
-                field_id="field_1",
-                name="uuid",
-                type="string",
-                widget_type="TextEdit",
-            )
-        ],
-        form_config=[
-            generate_form_item_def(
-                item_id="form_1",
-                type="field",
-                field_name="uuid",
-            )
-        ],
-        primary_key="uuid",
+    layer = cast(
+        VectorLayerDef,
+        generate_layer_def(
+            layer_type="vector",
+            layer_id="layer_1",
+            name="Survey",
+            geometry_type="NoGeometry",
+            fields=[
+                generate_field_def(
+                    field_id="field_1",
+                    name="uuid",
+                    type="string",
+                    widget_type="TextEdit",
+                )
+            ],
+            form_config=[
+                generate_form_item_def(
+                    item_id="form_1",
+                    type="field",
+                    field_name="uuid",
+                )
+            ],
+            primary_key="uuid",
+        ),
     )
     relation = generate_relation_def(
         relation_id="rel_1",
@@ -53,7 +59,7 @@ def build_project_dict() -> dict:
             extent="0 0, 1 1",
         ),
         version="1.0",
-        layers=[layer],
+        datasets=[DatasetGroupDef(vector_datasets=[layer])],
         layer_tree=[],
         relations=[relation],
         polymorphic_relations=[],
