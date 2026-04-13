@@ -210,8 +210,8 @@
           },
           "type": "array"
         },
-        "layer_tree": {
-          "$ref": "#/definitions/LayerTree"
+        "legend_tree": {
+          "$ref": "#/definitions/LegendTreeGroup"
         },
         "polymorphic_relations": {
           "items": {
@@ -236,7 +236,7 @@
         "datasets",
         "relations",
         "polymorphic_relations",
-        "layer_tree",
+        "legend_tree",
         "version"
       ],
       "title": "Empty",
@@ -413,45 +413,76 @@
       "title": "Raster Layer",
       "type": "object"
     },
-    "LayerTree": {
-      "items": {
-        "$ref": "#/definitions/LayerTreeItem"
-      },
-      "type": "array"
-    },
-    "LayerTreeItem": {
-      "additionalProperties": false,
+    "LegendTreeItemBase": {
       "properties": {
-        "is_checked": {
-          "type": "boolean"
-        },
-        "is_mutually_exclusive": {
-          "type": "boolean"
-        },
         "item_id": {
           "type": "string"
         },
-        "layer_id": {
-          "type": "string"
-        },
-        "mutually_exclusive_child_index": {
-          "minimum": -1,
-          "type": "integer"
+        "is_checked": {
+          "type": "boolean"
         },
         "name": {
           "type": "string"
         },
-        "parent_id": {
-          "type": ["string", "null"]
-        },
-        "type": {
+        "legend_item_type": {
           "enum": ["group", "layer"],
           "type": "string"
         }
       },
-      "required": ["item_id", "name", "parent_id", "type"],
+      "required": ["item_id", "name", "legend_item_type"],
       "title": "Child",
       "type": "object"
+    },
+    "LegendTreeLayer": {
+      "allOf": [
+        { "$ref": "#/definitions/LegendTreeItemBase" },
+        {
+          "type": "object",
+          "properties": {
+            "layer_id": {
+              "type": "string"
+            },
+            "legend_item_type": {
+              "type": "string",
+              "const": "layer"
+            }
+          }
+        }
+      ]
+    },
+    "LegendTreeGroup": {
+      "allOf": [
+        { "$ref": "#/definitions/LegendTreeItemBase" },
+        {
+          "type": "object",
+          "properties": {
+            "is_mutually_exclusive": {
+              "type": "boolean"
+            },
+            "mutually_exclusive_child_index": {
+              "minimum": -1,
+              "type": "integer"
+            },
+            "children": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/LegendTreeItem"
+              }
+            },
+            "legend_item_type": {
+              "type": "string",
+              "const": "group"
+            }
+          }
+        }
+      ]
+    },
+    "LegendTreeItem": {
+      "oneOf": [
+        { "$ref": "#/definitions/LegendTreeGroup" },
+        { "$ref": "#/definitions/LegendTreeLayer" }
+      ],
+      "unevaluatedProperties": false
     },
     "PolymorphicRelation": {
       "additionalProperties": false,

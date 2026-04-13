@@ -37,6 +37,9 @@ from convert2qgis.json2qgis.errors import MissingParentError, Qgis2JsonError
 from convert2qgis.json2qgis.type_defs import (
     DatasetDef,
     FieldDef,
+    LegendTreeGroupDef,
+    LegendTreeItemDef,
+    LegendTreeLayerDef,
     PolymorphicRelationDef,
     ProjectDef,
     RelationDef,
@@ -587,48 +590,39 @@ def set_layer_tree(project: QgsProject, project_def: ProjectDef | dict[str, Any]
 
     tree_root.clear()
 
-    layer_tree_items_mapping: dict[str, QgsLayerTreeGroup | QgsLayerTreeLayer] = {}
+    def insert_legend_node(
+        parent: QgsLayerTreeGroup,
+        legend_item_def: LegendTreeItemDef,
+    ) -> None:
+        if legend_item_def.legend_item_type == "group":
+            assert isinstance(legend_item_def, LegendTreeGroupDef)
 
-    for layer_tree_def in project_def.layer_tree:
-        item_type = layer_tree_def.type
-        item_name = layer_tree_def.name
-        parent_name = layer_tree_def.parent_id
-        is_checked = layer_tree_def.is_checked
-
-        if parent_name:
-            parent = layer_tree_items_mapping[parent_name]
-
-            if not parent:
-                raise MissingParentError(f"Parent group '{parent_name}' not found for layer tree item '{item_name}'")
-
-            assert isinstance(parent, QgsLayerTreeGroup)
-        else:
-            parent = tree_root
-
-        if item_type == "group":
-            tree_item = QgsLayerTreeGroup(item_name, is_checked)
-
+            tree_item = QgsLayerTreeGroup(legend_item_def.name, legend_item_def.is_checked)
             tree_item.setIsMutuallyExclusive(
-                layer_tree_def.is_mutually_exclusive,
-                layer_tree_def.mutually_exclusive_child_index,
+                legend_item_def.is_mutually_exclusive,
+                legend_item_def.mutually_exclusive_child_index,
             )
-        elif item_type == "layer":
-            layer = project.mapLayer(layer_tree_def.layer_id)
+            tree_item.setItemVisibilityChecked(legend_item_def.is_checked)
+            parent.insertChildNode(len(parent.children()), tree_item)
 
-            if not layer:
-                raise Qgis2JsonError(f"Layer '{item_name}' not found in project for layer tree item.")
+            for child_item_def in legend_item_def.children:
+                insert_legend_node(tree_item, child_item_def)
 
-            tree_item = QgsLayerTreeLayer(layer)
+            return
 
-        else:
-            raise NotImplementedError(f"Unsupported layer tree item type: {item_type}")
+        assert isinstance(legend_item_def, LegendTreeLayerDef)
 
-        tree_item.setItemVisibilityChecked(is_checked)
+        layer = project.mapLayer(legend_item_def.layer_id)
 
-        layer_tree_items_mapping[layer_tree_def.item_id] = tree_item
+        if not layer:
+            raise Qgis2JsonError(f"Layer '{legend_item_def.name}' not found in project for legend tree item.")
 
-        parent_children_count = len(parent.children())
-        parent.insertChildNode(parent_children_count, tree_item)
+        tree_item = QgsLayerTreeLayer(layer)
+        tree_item.setItemVisibilityChecked(legend_item_def.is_checked)
+        parent.insertChildNode(len(parent.children()), tree_item)
+
+    for child_item_def in project_def.legend_tree.children:
+        insert_legend_node(tree_root, child_item_def)
 
 
 def get_relation_strength(strength_name: RelationStrength) -> Qgis.RelationshipStrength:

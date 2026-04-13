@@ -288,50 +288,53 @@ def sample_project_def(sample_vector_layer_def):
                 "raster_datasets": [],
             }
         ],
-        "layer_tree": [
-            {
-                "item_id": "my_group_parent",
-                "is_checked": True,
-                "layer_id": "",
-                "name": "My group parent",
-                "parent_id": "",
-                "type": "group",
-            },
-            {
-                "item_id": "my_group_child",
-                "is_checked": True,
-                "layer_id": "",
-                "name": "My group child",
-                "parent_id": "my_group_parent",
-                "type": "group",
-            },
-            {
-                "item_id": "my_child",
-                "is_checked": True,
-                "layer_id": "d942d84e-bcbf-430b-bf5d-9b39caeabf71",
-                "name": "My test layer",
-                "parent_id": "my_group_child",
-                "type": "layer",
-            },
-            {
-                "item_id": "my_group_child_two",
-                "is_checked": False,
-                "is_mutually_exclusive": True,
-                "layer_id": "",
-                "name": "My test subgroup",
-                "parent_id": "my_group_child",
-                "type": "group",
-            },
-            {
-                "item_id": "my_second_parent",
-                "is_checked": True,
-                "is_mutually_exclusive": True,
-                "layer_id": "",
-                "name": "My second parent",
-                "parent_id": "",
-                "type": "group",
-            },
-        ],
+        "legend_tree": {
+            "item_id": "legend_root",
+            "is_checked": True,
+            "name": "",
+            "legend_item_type": "group",
+            "children": [
+                {
+                    "item_id": "my_group_parent",
+                    "is_checked": True,
+                    "name": "My group parent",
+                    "legend_item_type": "group",
+                    "children": [
+                        {
+                            "item_id": "my_group_child",
+                            "is_checked": True,
+                            "name": "My group child",
+                            "legend_item_type": "group",
+                            "children": [
+                                {
+                                    "item_id": "my_child",
+                                    "is_checked": True,
+                                    "layer_id": "d942d84e-bcbf-430b-bf5d-9b39caeabf71",
+                                    "name": "My test layer",
+                                    "legend_item_type": "layer",
+                                },
+                                {
+                                    "item_id": "my_group_child_two",
+                                    "is_checked": False,
+                                    "is_mutually_exclusive": True,
+                                    "name": "My test subgroup",
+                                    "legend_item_type": "group",
+                                    "children": [],
+                                },
+                            ],
+                        }
+                    ],
+                },
+                {
+                    "item_id": "my_second_parent",
+                    "is_checked": True,
+                    "is_mutually_exclusive": True,
+                    "name": "My second parent",
+                    "legend_item_type": "group",
+                    "children": [],
+                },
+            ],
+        },
         "relations": [],
         "polymorphic_relations": [],
     }
