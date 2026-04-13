@@ -60,7 +60,7 @@ def sample_field_def():
 
 
 @pytest.fixture
-@check_output("definitions/VectorLayer")
+@check_output("definitions/VectorDataset")
 def sample_vector_layer_def(sample_field_def):
     integer_field = {
         **sample_field_def,
