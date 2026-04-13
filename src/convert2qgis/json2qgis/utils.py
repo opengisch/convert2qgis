@@ -213,7 +213,7 @@ def get_layer_flags(flags: QgsMapLayer.LayerFlags, dataset_def: DatasetDef | dic
     return flags
 
 
-def get_layer_edit_form(
+def get_layer_edit_form(  # noqa: C901
     fields: QgsFields,
     dataset_def: VectorDatasetDef | dict[str, Any],
     form_config: QgsEditFormConfig | None = None,

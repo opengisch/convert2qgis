@@ -508,7 +508,6 @@ class XlsformConverter:
 
     def _get_field_def(self, sheet_row: ParsedSheetRow) -> WeakFieldDef:
         field_def = WeakFieldDef()
-        indices = self.survey_sheet.indices
         xlsform_type = get_xlsform_type(sheet_row["type"])
         field_name = str(sheet_row["name"]).strip()
         field_type = XLS_TYPES_MAP.get(xlsform_type, None)
@@ -519,6 +518,62 @@ class XlsformConverter:
             return WeakFieldDef()
 
         self._check_xlsform_type_compatibility(xlsform_type)
+
+        field_def.update(cast(WeakFieldDef, self._get_field_def_alias(sheet_row)))
+        field_def.update(self._get_field_constraints_config(sheet_row))
+
+        # you cannot define both `calculation` and `default` at the same time, in such case use only `calculation`
+        if sheet_row["calculation"] and sheet_row["default"]:
+            logger.warning("Both `calculation` and `default` are set; only calculation will be used")
+
+        # handle default value from either `calculation` or `default` column
+        if sheet_row["calculation"]:
+            default_value_expression = self.get_expression(sheet_row["calculation"], field_name).to_qgis()
+
+            field_def.update(
+                {
+                    "default_value": default_value_expression,
+                    "set_default_value_on_update": False,
+                }
+            )
+        elif sheet_row["default"]:
+            field_def.update(self._get_field_default_config(sheet_row))
+
+        return WeakFieldDef.from_data(
+            {
+                **field_def.to_dict(),
+                "name": field_name,
+                "type": field_type,
+            }
+        )
+
+    def _get_field_default_config(self, sheet_row: ParsedSheetRow) -> dict[str, Any]:
+        field_default_config = {}
+
+        if "${last-saved" not in sheet_row["default"]:
+            is_digit = sheet_row["default"].replace(".", "", 1).isdigit()
+
+            if is_digit:
+                default_value_expression = sheet_row["default"]
+            else:
+                # TODO @suricactus: handle escaping of quotes inside the string
+                default_value_expression = f"'{sheet_row['default']}'"
+
+            field_default_config.update(
+                {
+                    "default_value": default_value_expression,
+                    "set_default_value_on_update": False,
+                }
+            )
+        else:
+            # TODO @suricactus: handle last-saved functionality, skipping for now
+            pass
+
+        return field_default_config
+
+    def _get_field_constraints_config(self, sheet_row: ParsedSheetRow) -> dict[str, Any]:
+        field_name = str(sheet_row["name"]).strip()
+        indices = self.survey_sheet.indices
 
         constraint_expression = ""
         constraint_expression_description = ""
@@ -544,54 +599,13 @@ class XlsformConverter:
                 is_not_null = True
                 is_not_null_strength = "hard"
 
-        field_def.update(cast(WeakFieldDef, self._get_field_def_alias(sheet_row)))
-
-        # you cannot define both `calculation` and `default` at the same time, in such case use only `calculation`
-        if sheet_row["calculation"] and sheet_row["default"]:
-            logger.warning("Both `calculation` and `default` are set; only calculation will be used")
-
-        # handle default value from either `calculation` or `default` column
-        if sheet_row["calculation"]:
-            default_value_expression = self.get_expression(sheet_row["calculation"], field_name).to_qgis()
-
-            field_def.update(
-                {
-                    "default_value": default_value_expression,
-                    "set_default_value_on_update": False,
-                }
-            )
-        elif sheet_row["default"]:
-            if "${last-saved" not in sheet_row["default"]:
-                is_digit = sheet_row["default"].replace(".", "", 1).isdigit()
-
-                if is_digit:
-                    default_value_expression = sheet_row["default"]
-                else:
-                    # TODO @suricactus: handle escaping of quotes inside the string
-                    default_value_expression = f"'{sheet_row['default']}'"
-
-                field_def.update(
-                    {
-                        "default_value": default_value_expression,
-                        "set_default_value_on_update": False,
-                    }
-                )
-            else:
-                # TODO @suricactus: handle last-saved functionality, skipping for now
-                pass
-
-        return WeakFieldDef.from_data(
-            {
-                **field_def.to_dict(),
-                "name": field_name,
-                "type": field_type,
-                "is_not_null": is_not_null,
-                "is_not_null_strength": is_not_null_strength,
-                "constraint_expression": constraint_expression,
-                "constraint_expression_description": constraint_expression_description,
-                "constraint_expression_strength": constraint_expression_strength,
-            }
-        )
+        return {
+            "constraint_expression": constraint_expression,
+            "constraint_expression_description": constraint_expression_description,
+            "constraint_expression_strength": constraint_expression_strength,
+            "is_not_null": is_not_null,
+            "is_not_null_strength": is_not_null_strength,
+        }
 
     def _check_xlsform_type_compatibility(self, xlsform_type: str) -> None:
         if xlsform_type in ("barcode",):
@@ -810,7 +824,7 @@ class XlsformConverter:
             )
         )
 
-    def _parse_form_row(self, row: ParsedSheetRow) -> tuple[list[FieldDef], list[FormItemDef], GeometryType | None]:
+    def _parse_form_row(self, row: ParsedSheetRow) -> tuple[list[FieldDef], list[FormItemDef], GeometryType | None]:  # noqa: C901
         fields = []
         form_items = []
         geometry_type = None

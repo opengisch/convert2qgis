@@ -66,7 +66,7 @@ class Expression:
         else:
             self.ast = parse_expression(expression_str)
 
-    def _to_qgis(
+    def _to_qgis(  # noqa: C901
         self,
         use_current: bool = False,
         expression_type: QgisRenderType = QgisRenderType.EXPRESSION,
@@ -110,7 +110,7 @@ class Expression:
 
             raise AssertionError(f"Unexpected node type in template expression: {type(node)}")
 
-        def render(node: AstNode, seen: set[str]) -> tuple[str, int]:
+        def render(node: AstNode, seen: set[str]) -> tuple[str, int]:  # noqa: C901
             # regular render should never encounter Template nodes, but we add an assertion here just to be safe
             if isinstance(node, Template):
                 return " || ".join(render(arg, seen)[0] for arg in node.elements), 100

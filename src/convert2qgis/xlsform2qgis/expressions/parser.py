@@ -138,7 +138,7 @@ class _ExpressionParser:
         return cls(tokens, parser_type=ParserType.TEMPLATE)
 
     @staticmethod
-    def _validate_tokens(tokens: list[Token]) -> None:
+    def _validate_tokens(tokens: list[Token]) -> None:  # noqa: C901
         stack: list[Token] = []
         last_significant: Token | None = None
         total = len(tokens)
@@ -407,7 +407,7 @@ class _ExpressionParser:
         return elements
 
     @classmethod
-    def _validate_ast(cls, node: AstNode) -> None:
+    def _validate_ast(cls, node: AstNode) -> None:  # noqa: C901
         if isinstance(node, UnaryOp):
             if node.operand is None:
                 raise AssertionError("Invalid unary expression")

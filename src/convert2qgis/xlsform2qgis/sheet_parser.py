@@ -125,14 +125,7 @@ class ParsedSheet:
                     row[col] = None
                 else:
                     value = feat.attribute(self.indices[col])
-
-                    if isinstance(value, QVariant):
-                        if value.isNull():
-                            value = None
-                        else:
-                            value = value.value()
-
-                    row[col] = value
+                    row[col] = ParsedSheet._to_python_value(value)
 
             for col_name, col_idx in self.indices.items():
                 if col_idx == -1:
@@ -140,14 +133,20 @@ class ParsedSheet:
 
                 value = feat.attribute(col_idx)
 
-                if isinstance(value, QVariant):
-                    assert value.isNull()
-                    value = None
-
-                row[col_name] = value
+                row[col_name] = ParsedSheet._to_python_value(value)
 
             if not any(row.values()):
                 logger.debug(f"Skipping spreadsheet row with empty values at row index {idx} in sheet `{self.name}`!")
                 continue
 
             yield row
+
+    @staticmethod
+    def _to_python_value(value: Any) -> Any:
+        if isinstance(value, QVariant):
+            if value.isNull():
+                return None
+            else:
+                return value.value()
+
+        return value

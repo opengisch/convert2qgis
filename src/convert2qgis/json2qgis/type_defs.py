@@ -291,22 +291,7 @@ class FormItemDef(DataclassModelMixin):
 
     def to_dict(self) -> dict[str, Any]:
         if self.type in ("field", "relation"):
-            field_data: dict[str, Any] = {
-                "item_id": self.item_id,
-                "type": self.type,
-                "field_name": self.field_name,
-                "parent_id": self.parent_id,
-            }
-            if self.visibility_expression:
-                field_data["visibility_expression"] = self.visibility_expression
-            if self.show_label is not True:
-                field_data["show_label"] = self.show_label
-            if self.is_read_only:
-                field_data["is_read_only"] = self.is_read_only
-            if self.is_label_on_top:
-                field_data["is_label_on_top"] = self.is_label_on_top
-
-            return field_data
+            return self._to_dict_field_or_relation()
 
         container_data: dict[str, Any] = {
             "item_id": self.item_id,
@@ -326,6 +311,24 @@ class FormItemDef(DataclassModelMixin):
             container_data["is_markdown"] = self.is_markdown
 
         return container_data
+
+    def _to_dict_field_or_relation(self) -> dict[str, Any]:
+        field_data: dict[str, Any] = {
+            "item_id": self.item_id,
+            "type": self.type,
+            "field_name": self.field_name,
+            "parent_id": self.parent_id,
+        }
+        if self.visibility_expression:
+            field_data["visibility_expression"] = self.visibility_expression
+        if self.show_label is not True:
+            field_data["show_label"] = self.show_label
+        if self.is_read_only:
+            field_data["is_read_only"] = self.is_read_only
+        if self.is_label_on_top:
+            field_data["is_label_on_top"] = self.is_label_on_top
+
+        return field_data
 
 
 @dataclass
