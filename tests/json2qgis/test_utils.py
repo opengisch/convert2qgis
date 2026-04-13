@@ -931,7 +931,7 @@ class TestUtils:
         }
 
     def test_get_layer_flags_to_false(self, sample_vector_layer_def):
-        """Test getting layer flags from LayerDef."""
+        """Test getting layer flags from DatasetDef."""
 
         sample_vector_layer_def.update(
             {
@@ -952,7 +952,7 @@ class TestUtils:
         assert not flags & QgsMapLayer.LayerFlag.Private  # type: ignore
 
     def test_get_layer_flags_to_true(self, sample_vector_layer_def):
-        """Test getting layer flags from LayerDef."""
+        """Test getting layer flags from DatasetDef."""
 
         sample_vector_layer_def.update(
             {
@@ -1076,7 +1076,7 @@ class TestUtils:
         assert tabs[1].children()[1].name() == "<p>Hello <em>World</em></p>"
 
     def test_set_layer_fields(self, sample_vector_layer_def):
-        """Test setting layer fields from LayerDef."""
+        """Test setting layer fields from DatasetDef."""
 
         fields = create_fields(sample_vector_layer_def)
 

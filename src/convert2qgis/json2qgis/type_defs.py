@@ -337,7 +337,7 @@ class FormItemDef(DataclassModelMixin):
 
 
 @dataclass
-class WeakLayerDef(DataclassModelMixin):
+class WeakDatasetDef(DataclassModelMixin):
     layer_id: str | None = None
     name: str | None = None
     geometry_type: GeometryType | None = None
@@ -368,7 +368,7 @@ class WeakLayerDef(DataclassModelMixin):
 
 
 @dataclass
-class BaseLayerDef(DataclassModelMixin):
+class BaseDatasetDef(DataclassModelMixin):
     layer_id: str = ""
     name: str = ""
     layer_type: LayerType = "vector"
@@ -382,7 +382,7 @@ class BaseLayerDef(DataclassModelMixin):
 
 
 @dataclass
-class VectorLayerDef(BaseLayerDef):
+class VectorDatasetDef(BaseDatasetDef):
     layer_type: Literal["vector"] = "vector"
     geometry_type: GeometryType = "NoGeometry"
     datasource_format: str = VectorLayerDataprovider.GPKG
@@ -395,7 +395,7 @@ class VectorLayerDef(BaseLayerDef):
     display_expression: str = ""
 
     @classmethod
-    def _from_dict(cls, data: Mapping[str, Any]) -> "VectorLayerDef":
+    def _from_dict(cls, data: Mapping[str, Any]) -> "VectorDatasetDef":
         return cls(
             layer_id=data.get("layer_id", ""),
             name=data.get("name", ""),
@@ -424,13 +424,13 @@ class VectorLayerDef(BaseLayerDef):
 
 
 @dataclass
-class RasterLayerDef(BaseLayerDef):
+class RasterDatasetDef(BaseDatasetDef):
     layer_type: Literal["raster"] = "raster"
     datasource: str = ""
     datasource_format: str = "wms"
 
     @classmethod
-    def _from_dict(cls, data: Mapping[str, Any]) -> "RasterLayerDef":
+    def _from_dict(cls, data: Mapping[str, Any]) -> "RasterDatasetDef":
         return cls(
             layer_id=data.get("layer_id", ""),
             name=data.get("name", ""),
@@ -447,7 +447,7 @@ class RasterLayerDef(BaseLayerDef):
         )
 
 
-LayerDef = VectorLayerDef | RasterLayerDef
+DatasetDef = VectorDatasetDef | RasterDatasetDef
 
 
 @dataclass
@@ -461,23 +461,23 @@ class ProjectMetadataDef(DataclassModelMixin):
 
 @dataclass
 class DatasetGroupDef(DataclassModelMixin):
-    vector_datasets: list[VectorLayerDef] = field(default_factory=list)
-    raster_datasets: list[RasterLayerDef] = field(default_factory=list)
+    vector_datasets: list[VectorDatasetDef] = field(default_factory=list)
+    raster_datasets: list[RasterDatasetDef] = field(default_factory=list)
 
     @classmethod
     def _from_dict(cls, data: Mapping[str, Any]) -> "DatasetGroupDef":
         return cls(
             vector_datasets=[
-                VectorLayerDef.from_data(item)
+                VectorDatasetDef.from_data(item)
                 for item in data.get("vector_datasets", [])
             ],
             raster_datasets=[
-                RasterLayerDef.from_data(item)
+                RasterDatasetDef.from_data(item)
                 for item in data.get("raster_datasets", [])
             ],
         )
 
-    def iter_layers(self) -> Iterable[LayerDef]:
+    def iter_datasets(self) -> Iterable[DatasetDef]:
         yield from self.vector_datasets
         yield from self.raster_datasets
 
@@ -512,21 +512,25 @@ class ProjectDef(DataclassModelMixin):
         )
 
     @property
-    def all_datasets(self) -> list[LayerDef]:
-        return [layer for dataset in self.datasets for layer in dataset.iter_layers()]
+    def all_datasets(self) -> list[DatasetDef]:
+        return [
+            dataset
+            for dataset_group in self.datasets
+            for dataset in dataset_group.iter_datasets()
+        ]
 
 
-def layer_from_data(data: LayerDef | Mapping[str, Any]) -> LayerDef:
-    if isinstance(data, VectorLayerDef):
+def dataset_from_data(data: DatasetDef | Mapping[str, Any]) -> DatasetDef:
+    if isinstance(data, VectorDatasetDef):
         return data
-    if isinstance(data, RasterLayerDef):
+    if isinstance(data, RasterDatasetDef):
         return data
 
     layer_type = data.get("layer_type")
     if layer_type == "vector":
-        return VectorLayerDef.from_data(data)
+        return VectorDatasetDef.from_data(data)
     if layer_type == "raster":
-        return RasterLayerDef.from_data(data)
+        return RasterDatasetDef.from_data(data)
 
     raise NotImplementedError(f"Unsupported layer type: {layer_type}")
 

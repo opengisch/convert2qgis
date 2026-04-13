@@ -25,12 +25,12 @@ from convert2qgis.json2qgis.errors import (
     UnknownVectorLayerDataproviderError,
 )
 from convert2qgis.json2qgis.type_defs import (
-    LayerDef,
+    DatasetDef,
     PathOrStr,
     ProjectDef,
-    RasterLayerDef,
+    RasterDatasetDef,
+    VectorDatasetDef,
     VectorLayerDataprovider,
-    VectorLayerDef,
 )
 from convert2qgis.json2qgis.utils import (
     create_fields,
@@ -89,8 +89,8 @@ class ProjectCreator:
         return self._create_project()
 
     def _create_project(self) -> QgsProject:
-        for layer_def in self.definition.all_datasets:
-            self._create_layer(layer_def)
+        for dataset_def in self.definition.all_datasets:
+            self._create_layer(dataset_def)
 
         set_layer_tree(self._project, self.definition)
 
@@ -98,12 +98,12 @@ class ProjectCreator:
 
         self._set_relations()
 
-        for layer_def in self.definition.all_datasets:
-            if layer_def.layer_type != "vector":
+        for dataset_def in self.definition.all_datasets:
+            if dataset_def.layer_type != "vector":
                 continue
 
-            assert isinstance(layer_def, VectorLayerDef)
-            layer = self._project.mapLayer(layer_def.layer_id)
+            assert isinstance(dataset_def, VectorDatasetDef)
+            layer = self._project.mapLayer(dataset_def.layer_id)
 
             assert layer
             assert isinstance(layer, QgsVectorLayer)
@@ -111,7 +111,7 @@ class ProjectCreator:
             layer.setEditFormConfig(
                 get_layer_edit_form(
                     layer.fields(),
-                    layer_def,
+                    dataset_def,
                     layer.editFormConfig(),
                 ),
             )
@@ -194,11 +194,11 @@ class ProjectCreator:
 
         map_settings.writeXml(map_canvas_node, document)
 
-    def _create_layer(self, layer_def: LayerDef) -> None:
-        layer_type = layer_def.layer_type
+    def _create_layer(self, dataset_def: DatasetDef) -> None:
+        layer_type = dataset_def.layer_type
         if layer_type == "vector":
-            assert isinstance(layer_def, VectorLayerDef)
-            layer = self._create_vector_layer(layer_def)
+            assert isinstance(dataset_def, VectorDatasetDef)
+            layer = self._create_vector_layer(dataset_def)
 
             if layer.geometryType() not in (
                 Qgis.GeometryType.Unknown,
@@ -207,31 +207,31 @@ class ProjectCreator:
                 self._has_geometry = True
 
         elif layer_type == "raster":
-            assert isinstance(layer_def, RasterLayerDef)
-            layer = self._create_raster_layer(layer_def)
+            assert isinstance(dataset_def, RasterDatasetDef)
+            layer = self._create_raster_layer(dataset_def)
         # Additional layer types can be handled here
         elif layer_type == "mesh":
-            layer = self._create_mesh_layer(layer_def)
+            layer = self._create_mesh_layer(dataset_def)
         elif layer_type == "vector_tile":
-            layer = self._create_vector_tile_layer(layer_def)
+            layer = self._create_vector_tile_layer(dataset_def)
         elif layer_type == "point_cloud":
-            layer = self._create_point_cloud_layer(layer_def)
+            layer = self._create_point_cloud_layer(dataset_def)
         else:
             raise NotImplementedError(f"Unsupported layer type: {layer_type}")
 
         try:
-            crs = QgsCoordinateReferenceSystem(layer_def.crs)
+            crs = QgsCoordinateReferenceSystem(dataset_def.crs)
         except Exception as e:
             raise UnknownCrsSystem(f"Failed to create CRS: {e}")
 
         if not crs.isValid():
-            raise UnknownCrsSystem(f"Invalid CRS: {layer_def.crs}")
+            raise UnknownCrsSystem(f"Invalid CRS: {dataset_def.crs}")
 
-        if not layer.setId(layer_def.layer_id):
-            raise Qgis2JsonError(f"Failed to set layer ID: {layer_def.layer_id}")
+        if not layer.setId(dataset_def.layer_id):
+            raise Qgis2JsonError(f"Failed to set layer ID: {dataset_def.layer_id}")
 
         layer.setCrs(crs)
-        layer.setFlags(get_layer_flags(layer.flags(), layer_def))
+        layer.setFlags(get_layer_flags(layer.flags(), dataset_def))
 
         self._project.addMapLayer(layer, False)
 
@@ -243,26 +243,26 @@ class ProjectCreator:
 
         return geometry_type
 
-    def _create_vector_layer(self, layer_def: VectorLayerDef) -> QgsVectorLayer:
-        geometry_type = self._get_geometry_type(layer_def.geometry_type)
-        source = f"{geometry_type}?crs={layer_def.crs}"
+    def _create_vector_layer(self, dataset_def: VectorDatasetDef) -> QgsVectorLayer:
+        geometry_type = self._get_geometry_type(dataset_def.geometry_type)
+        source = f"{geometry_type}?crs={dataset_def.crs}"
 
-        layer = QgsVectorLayer(source, layer_def.name, "memory")
+        layer = QgsVectorLayer(source, dataset_def.name, "memory")
 
         if not layer.isValid():
-            raise Qgis2JsonError(f"Vector layer invalid: {layer_def.name}")
+            raise Qgis2JsonError(f"Vector layer invalid: {dataset_def.name}")
 
-        self._set_fields(layer, layer_def)
+        self._set_fields(layer, dataset_def)
 
         try:
-            driver_name = VectorLayerDataprovider(layer_def.datasource_format)
+            driver_name = VectorLayerDataprovider(dataset_def.datasource_format)
             layer_provider_lib = "ogr"
         except ValueError:
             raise UnknownVectorLayerDataproviderError(
-                f"Unknown vector layer data provider: {layer_def.datasource_format}"
+                f"Unknown vector layer data provider: {dataset_def.datasource_format}"
             )
 
-        normalized_name = normalize_name(layer_def.name)
+        normalized_name = normalize_name(dataset_def.name)
 
         options = QgsVectorFileWriter.SaveVectorOptions()
         options.layerName = normalized_name
@@ -285,51 +285,51 @@ class ProjectCreator:
                 f"Error writing vector layer: {write_result} {error_message}"
             )
 
-        new_layer = QgsVectorLayer(new_file, layer_def.name, layer_provider_lib)
+        new_layer = QgsVectorLayer(new_file, dataset_def.name, layer_provider_lib)
 
-        set_layer_fields(new_layer, layer_def)
+        set_layer_fields(new_layer, dataset_def)
 
-        if layer_def.data:
-            self._add_vector_layer_data(new_layer, layer_def)
+        if dataset_def.data:
+            self._add_vector_layer_data(new_layer, dataset_def)
 
         new_layer.setReadOnly(
-            layer_def.is_read_only,
+            dataset_def.is_read_only,
         )
 
         return new_layer
 
-    def _set_fields(self, layer: QgsVectorLayer, layer_def: VectorLayerDef) -> None:
+    def _set_fields(self, layer: QgsVectorLayer, dataset_def: VectorDatasetDef) -> None:
         layer_data_provider = layer.dataProvider()
 
         if layer_data_provider is None:
             raise UnknownVectorLayerDataproviderError(
-                f"Failed to get data provider for layer: {layer_def.name}"
+                f"Failed to get data provider for layer: {dataset_def.name}"
             )
 
-        fields = create_fields(layer_def)
+        fields = create_fields(dataset_def)
 
         layer_data_provider.addAttributes(fields)
         layer.updateFields()
 
     def _add_vector_layer_data(
-        self, layer: QgsVectorLayer, layer_def: VectorLayerDef
+        self, layer: QgsVectorLayer, dataset_def: VectorDatasetDef
     ) -> None:
         layer.startEditing()
         layer_data_provider = layer.dataProvider()
 
         if not bool(layer_data_provider) or not layer_data_provider.isValid():
             raise UnknownVectorLayerDataproviderError(
-                f"Failed to get data provider for layer 1: {layer_def.name}"
+                f"Failed to get data provider for layer 1: {dataset_def.name}"
             )
 
         if layer.geometryType() != Qgis.GeometryType.Null:
             raise NotImplementedError(
-                f"Cannot edit geometry layer: {layer_def.name} has geometry {layer.geometryType()}"
+                f"Cannot edit geometry layer: {dataset_def.name} has geometry {layer.geometryType()}"
             )
 
-        layer_data = layer_def.data
+        layer_data = dataset_def.data
         if not layer_data:
-            logger.debug(f"No feature data to be added to layer {layer_def.name}!")
+            logger.debug(f"No feature data to be added to layer {dataset_def.name}!")
 
             return
 
@@ -355,22 +355,22 @@ class ProjectCreator:
             relation = create_relation(relation_def)
             relation_manager.addRelation(relation)
 
-    def _create_raster_layer(self, layer: RasterLayerDef) -> QgsMapLayer:
+    def _create_raster_layer(self, dataset: RasterDatasetDef) -> QgsMapLayer:
         # Implementation for creating a raster layer
         return QgsRasterLayer(
-            layer.datasource,
-            layer.name,
-            layer.datasource_format,
+            dataset.datasource,
+            dataset.name,
+            dataset.datasource_format,
         )
 
-    def _create_mesh_layer(self, layer: LayerDef) -> QgsMapLayer:
+    def _create_mesh_layer(self, dataset: DatasetDef) -> QgsMapLayer:
         # Implementation for creating a mesh layer
         raise NotImplementedError("Mesh layer creation not implemented yet.")
 
-    def _create_vector_tile_layer(self, layer: LayerDef) -> QgsMapLayer:
+    def _create_vector_tile_layer(self, dataset: DatasetDef) -> QgsMapLayer:
         # Implementation for creating a vector tile layer
         raise NotImplementedError("Vector tile layer creation not implemented yet.")
 
-    def _create_point_cloud_layer(self, layer: LayerDef) -> QgsMapLayer:
+    def _create_point_cloud_layer(self, dataset: DatasetDef) -> QgsMapLayer:
         # Implementation for creating a point cloud layer
         raise NotImplementedError("Point cloud layer creation not implemented yet.")
