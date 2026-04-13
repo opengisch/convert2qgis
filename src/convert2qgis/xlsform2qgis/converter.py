@@ -1066,6 +1066,17 @@ class XlsformConverter:
                     ),
                 )
 
+            data = []
+            for list_choice in list_choices:
+                # Drop the `list_name` and `additional_columns` keys from the feature attributes
+                data.append(
+                    {
+                        key: list_choice.to_dict()[key]
+                        for key in list_choice.to_dict().keys()
+                        if key not in ("list_name", "additional_columns")
+                    }
+                )
+
             choices_datasets.append(
                 generate_vector_dataset_def(
                     layer_id=layer_id,
@@ -1077,7 +1088,7 @@ class XlsformConverter:
                         "QFieldSync/cloud_action": "no_action",
                         "QFieldSync/action": "copy",
                     },
-                    data=list_choices,
+                    data=data,
                 )
             )
 
