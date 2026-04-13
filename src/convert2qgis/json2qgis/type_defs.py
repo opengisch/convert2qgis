@@ -42,9 +42,12 @@ def _serialize(value: Any) -> Any:
 
 
 class DataclassModelMixin:
+    __SKIP_FIELDS__: set[str] = set()
+    """List of field names to skip when serializing to dict or comparing for equality. This is useful for fields that are not part of the actual data model, but are used for internal purposes."""
+
     def _iter_items(self) -> Iterable[tuple[str, Any]]:
         for key, value in self.__dict__.items():
-            if key.startswith("_") or value is None:
+            if key.startswith("_") or value is None or key in self.__SKIP_FIELDS__:
                 continue
             yield key, value
 
@@ -502,8 +505,13 @@ def layer_from_data(data: LayerDef | Mapping[str, Any]) -> LayerDef:
 # we might have more fields in the sheet than we actually use, so we want them in the ChoicesDef
 @dataclass(eq=False)
 class ChoicesDef(DataclassModelMixin):
-    name: str = ""
-    label: str = ""
+    __SKIP_FIELDS__ = {"additional_columns"}
+
+    name: str
+    label: str
+    list_name: str
+
+    additional_columns: dict[str, str] = field(default_factory=dict)
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, ChoicesDef):

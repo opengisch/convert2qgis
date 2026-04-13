@@ -96,24 +96,29 @@ class TestConverter:
                 {
                     "name": "",
                     "label": "",
+                    "list_name": "list_001",
                 },
                 {
                     "name": "value_001_001",
                     "label": "label_001_001",
+                    "list_name": "list_001",
                 },
                 {
                     "name": "value_001_002",
                     "label": "label_001_002",
+                    "list_name": "list_001",
                 },
             ],
             "list_002": [
                 {
                     "name": "",
                     "label": "",
+                    "list_name": "list_002",
                 },
                 {
                     "name": "value_002_001",
                     "label": "label_002_001",
+                    "list_name": "list_002",
                 },
             ],
         }

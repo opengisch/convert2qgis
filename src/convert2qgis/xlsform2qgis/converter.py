@@ -964,43 +964,33 @@ class XlsformConverter:
     def _get_choices_columns(self, list_choices: list[ChoicesDef]) -> list[str]:
         # The additional columns are most likely related to a single choice group,
         # so we need to iterate over all rows for the given choice group and collect the columns that are non-empty.
-        columns_set = set()
+        columns_set: set[str] = set(("name", "label", "list_name"))
         for list_choices_row in list_choices:
-            for col_name, col_value in list_choices_row.to_dict().items():
-                if col_name in columns_set:
-                    continue
+            for additional_column in list_choices_row.additional_columns.keys():
+                columns_set.add(additional_column)
 
-                if col_value is None:
-                    continue
-
-                columns_set.add(col_name)
-
-        columns_ordered = ["name", "label"] + sorted(
-            col_name for col_name in columns_set if col_name not in {"name", "label"}
-        )
-
-        assert "name" in columns_set
-        assert "label" in columns_set
+        columns_ordered = sorted(columns_set)
 
         return columns_ordered
 
     def _get_choices_record(
-        self, columns: list[str], raw_choice_record: ChoicesDef | None
+        self,
+        columns: list[str],
+        raw_choice_record: ChoicesDef | None,
     ) -> ChoicesDef:
-        record = ChoicesDef()
+        record_data: dict[str, Any] = {
+            "additional_columns": {},
+        }
 
         for column in columns:
-            if raw_choice_record is None:
-                if column in ("name", "label"):
-                    value = ""
-                else:
-                    value = None
+            value = getattr(raw_choice_record, column, None)
+
+            if column in ("name", "label", "list_name"):
+                record_data[column] = value
             else:
-                value = getattr(raw_choice_record, column, None)
+                record_data["additional_columns"][column] = value
 
-            setattr(record, column, value)
-
-        return record
+        return ChoicesDef(**record_data)
 
     def _get_choices_by_list(self) -> dict[str, list[ChoicesDef]]:
         assert self.choices_sheet
@@ -1023,9 +1013,10 @@ class XlsformConverter:
             if last_list_name is not None and last_list_name != row["list_name"]:
                 assert last_list_name not in choices
 
-            choice_data = ChoicesDef(
+            choice = ChoicesDef(
                 name=str(row["name"]).strip(),
                 label=self._get_label(row),
+                list_name=row["list_name"],
             )
 
             for col_name, col_value in row.items():
@@ -1039,18 +1030,20 @@ class XlsformConverter:
 
                     continue
 
-                setattr(choice_data, col_name, col_value)
+                choice.additional_columns[col_name] = col_value
 
-            choices[row["list_name"]].append(choice_data)
+            choices[row["list_name"]].append(choice)
 
-        cleaned_choices_by_list = {}
+        cleaned_choices_by_list: dict[str, list[ChoicesDef]] = {}
 
         for list_name, raw_choice_records in choices.items():
             columns = self._get_choices_columns(raw_choice_records)
 
             cleaned_choices = [
                 # We always add an empty option
-                self._get_choices_record(columns, None),
+                self._get_choices_record(
+                    columns, ChoicesDef(name="", label="", list_name=list_name)
+                ),
             ]
 
             for raw_choice_record in raw_choice_records:
@@ -1072,6 +1065,9 @@ class XlsformConverter:
 
             fields = []
             for col_name in list_choices[0].to_dict().keys():
+                if col_name in ("list_name", "additional_columns"):
+                    continue
+
                 fields.append(
                     generate_field_def(
                         name=col_name,
