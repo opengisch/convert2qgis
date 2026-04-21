@@ -134,9 +134,9 @@ class ProjectCreator:
         self._project.setMetadata(metadata)
         self._project.writeProject.connect(self._process_project_write)
 
-        project_filename = self._output_dir.joinpath(f"{normalize_name(project_title)}.qgs")
+        project_filename = f"{normalize_name(project_title)}.qgs"
         if not self._project.write(str(project_filename)):
-            logger.error(f"Failed to write project to {project_filename}")
+            logger.error(f'Failed to write project to "{project_filename}": {self._project.error()}')
 
         return self._project
 

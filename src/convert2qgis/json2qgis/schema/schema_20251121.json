@@ -234,6 +234,7 @@
       },
       "required": [
         "datasets",
+        "project",
         "relations",
         "polymorphic_relations",
         "legend_tree",
@@ -247,13 +248,13 @@
       "properties": {
         "raster_datasets": {
           "items": {
-            "$ref": "#/definitions/RasterLayer"
+            "$ref": "#/definitions/RasterDataset"
           },
           "type": "array"
         },
         "vector_datasets": {
           "items": {
-            "$ref": "#/definitions/VectorLayer"
+            "$ref": "#/definitions/VectorDataset"
           },
           "type": "array"
         }
@@ -264,7 +265,7 @@
       ],
       "type": "object"
     },
-    "VectorLayer": {
+    "VectorDataset": {
       "additionalProperties": false,
       "properties": {
         "crs": {
@@ -357,10 +358,10 @@
         "name",
         "layer_type"
       ],
-      "title": "Vector Layer",
+      "title": "Vector Dataset",
       "type": "object"
     },
-    "RasterLayer": {
+    "RasterDataset": {
       "additionalProperties": false,
       "properties": {
         "crs": {
@@ -410,7 +411,7 @@
         "name",
         "layer_type"
       ],
-      "title": "Raster Layer",
+      "title": "Raster Dataset",
       "type": "object"
     },
     "LegendTreeItemBase": {
@@ -446,7 +447,8 @@
               "type": "string",
               "const": "layer"
             }
-          }
+          },
+          "required": ["layer_id"]
         }
       ]
     },
@@ -473,7 +475,8 @@
               "type": "string",
               "const": "group"
             }
-          }
+          },
+          "required": ["children"]
         }
       ]
     },
