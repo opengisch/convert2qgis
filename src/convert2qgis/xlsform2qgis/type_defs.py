@@ -49,7 +49,7 @@ class ConverterSettings(TypedDict, total=False):
     """EPSG code of the project crs"""
 
     extent: str
-    """WKT coordinates of the extent - xmin, ymin, xmax,ymax"""
+    """The project extent of the output project as a list of coordinates (xmin, ymin, xmax, ymax) in project CRS."""
 
     author: str
     """Name of the author of the project generated from the XLSForm definition."""

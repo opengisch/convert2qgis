@@ -259,7 +259,7 @@ class XlsformConverter:
     """The project author of the output project."""
 
     _project_extent: str
-    """The project extent of the output project."""
+    """The project extent of the output project as a list of coordinates (xmin, ymin, xmax, ymax) in project CRS."""
 
     _layer_ids: list[str]
     """Stack to keep track of the current layer ids while parsing the survey sheet, to be able to assign fields and form items to the correct layer. Whenever a new layer is defined, its id is pushed to the stack, and whenever a layer definition ends, it is popped from the stack."""
@@ -1098,7 +1098,7 @@ class XlsformConverter:
         if self._project_extent:
             return self._project_extent
 
-        return "-9.88, 33.41, 40.97, 61.11"
+        return ""
 
     def _get_field_settings_max_pixels(self, row, previous_max_pixels: int | None) -> int | None:
         # the current image field does not have parameters set, return the previous value
