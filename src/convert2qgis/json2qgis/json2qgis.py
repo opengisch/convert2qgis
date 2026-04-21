@@ -166,18 +166,20 @@ class ProjectCreator:
         map_settings.setOutputSize(QSize(500, 500))
 
         extent_coords = self.definition.project.extent
-        if extent_coords:
+        if extent_coords.strip():
             logger.info(f'Attempting to set project extent to "{extent_coords}"')
 
             try:
-                p1_coords, p2_coords = extent_coords.split(",")
-                p1_x, p1_y = p1_coords.strip().split(" ")
-                p2_x, p2_y = p2_coords.strip().split(" ")
-                p1, p2 = (
-                    QgsPointXY(float(p1_x), float(p1_y)),
-                    QgsPointXY(float(p2_x), float(p2_y)),
-                )
-                extent = QgsRectangle(p1, p2)
+                coords = extent_coords.split(",")
+
+                if len(coords) != 4:
+                    raise ValueError(
+                        f'Invalid number of coordinates: expected 4, got {len(coords)} in "{extent_coords}"'
+                    )
+
+                p1_x, p1_y, p2_x, p2_y = map(float, coords)
+
+                extent = QgsRectangle(QgsPointXY(p1_x, p1_y), QgsPointXY(p2_x, p2_y))
 
                 if extent.isEmpty() or not extent.isFinite():
                     raise Exception(f"Invalid WKT extent: {extent_coords}")

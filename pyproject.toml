@@ -55,7 +55,7 @@ dev = [
 
 [project.scripts]
 json2qgis = "convert2qgis.json2qgis.cli:main"
-xlsform2qgis = "convert2qgis.xlsform2qgis.converter:main_cli"
+xlsform2qgis = "convert2qgis.xlsform2qgis.converter:main"
 
 
 [tool.coverage.report]

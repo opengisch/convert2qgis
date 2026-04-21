@@ -53,7 +53,7 @@ from convert2qgis.xlsform2qgis.expressions.expression import (
     ParserType,
 )
 from convert2qgis.xlsform2qgis.expressions.parser import ParseError
-from convert2qgis.xlsform2qgis.qgis_utils import set_survey_features
+from convert2qgis.xlsform2qgis.qgis_utils import set_survey_features, start_app
 from convert2qgis.xlsform2qgis.sheet_parser import ParsedSheet, ParsedSheetRow
 from convert2qgis.xlsform2qgis.type_defs import (
     ConverterSettings,
@@ -259,7 +259,7 @@ class XlsformConverter:
     """The project author of the output project."""
 
     _project_extent: str
-    """The project extent of the output project."""
+    """The project extent of the output project as a list of coordinates (xmin, ymin, xmax, ymax) in project CRS."""
 
     _layer_ids: list[str]
     """Stack to keep track of the current layer ids while parsing the survey sheet, to be able to assign fields and form items to the correct layer. Whenever a new layer is defined, its id is pushed to the stack, and whenever a layer definition ends, it is popped from the stack."""
@@ -286,7 +286,7 @@ class XlsformConverter:
         # settings
         self._form_group_type = settings.get("form_group_type") or "group_box"
         self._root_form_group_type = settings.get("root_form_group_type") or "tab"
-        self._project_crs = settings.get("crs") or "EPSG:3867"
+        self._project_crs = settings.get("crs") or "EPSG:3857"
         self._project_author = settings.get("author") or ""
         self._project_extent = settings.get("extent", "").strip() or ""
         self._xlsform_settings = {
@@ -1066,6 +1066,17 @@ class XlsformConverter:
                     ),
                 )
 
+            data = []
+            for list_choice in list_choices:
+                # Drop the `list_name` and `additional_columns` keys from the feature attributes
+                data.append(
+                    {
+                        key: list_choice.to_dict()[key]
+                        for key in list_choice.to_dict().keys()
+                        if key not in ("list_name", "additional_columns")
+                    }
+                )
+
             choices_datasets.append(
                 generate_vector_dataset_def(
                     layer_id=layer_id,
@@ -1077,7 +1088,7 @@ class XlsformConverter:
                         "QFieldSync/cloud_action": "no_action",
                         "QFieldSync/action": "copy",
                     },
-                    data=list_choices,
+                    data=data,
                 )
             )
 
@@ -1087,7 +1098,7 @@ class XlsformConverter:
         if self._project_extent:
             return self._project_extent
 
-        return "-9.88, 33.41, 40.97, 61.11"
+        return ""
 
     def _get_field_settings_max_pixels(self, row, previous_max_pixels: int | None) -> int | None:
         # the current image field does not have parameters set, return the previous value
@@ -1139,6 +1150,8 @@ def main():
     )
 
     args = parser.parse_args()
+
+    start_app()
 
     convert_xlsform(
         args.input_xlsform,

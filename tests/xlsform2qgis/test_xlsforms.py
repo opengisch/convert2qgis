@@ -146,6 +146,17 @@ class TestConverter:
 
         choices_by_list = converter._get_choices_by_list()
         choices_datasets = converter._get_choices_datasets()
+        choices_data_by_list = {
+            list_name: [
+                {
+                    key: value
+                    for key, value in choice.to_dict().items()
+                    if key not in ("list_name", "additional_columns")
+                }
+                for choice in choices
+            ]
+            for list_name, choices in choices_by_list.items()
+        }
 
         assert choices_datasets == [
             generate_vector_dataset_def(
@@ -159,7 +170,7 @@ class TestConverter:
                         "QFieldSync/cloud_action": "no_action",
                     },
                     "is_private": True,
-                    "data": choices_by_list.get("list_001", []),
+                    "data": choices_data_by_list.get("list_001", []),
                     "fields": [
                         generate_field_def(
                             **{
@@ -191,7 +202,7 @@ class TestConverter:
                         "QFieldSync/cloud_action": "no_action",
                     },
                     "is_private": True,
-                    "data": choices_by_list.get("list_002", []),
+                    "data": choices_data_by_list.get("list_002", []),
                     "fields": [
                         generate_field_def(
                             **{
