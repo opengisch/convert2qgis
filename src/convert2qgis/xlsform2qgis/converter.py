@@ -699,6 +699,7 @@ class XlsformConverter:
                 custom_properties={
                     "qfieldsync/maximumImageWidthHeight": 0,
                     "qfieldsync/initialMapMode": "digitize",
+                    "qfieldsync/featureFormWizardModeEnabled": True,
                 },
                 crs=self._project_crs,
                 author=self._project_author,
