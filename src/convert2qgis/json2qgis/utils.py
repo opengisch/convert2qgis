@@ -22,6 +22,7 @@ from qgis.core import (
     QgsLayerTreeGroup,
     QgsLayerTreeLayer,
     QgsMapLayer,
+    QgsObjectCustomProperties,
     QgsOptionalExpression,
     QgsPolymorphicRelation,
     QgsProject,
@@ -698,3 +699,12 @@ def set_project_custom_properties(project: QgsProject, custom_properties: dict[s
             project.writeEntryDouble(scope, key, value)
         else:
             project.writeEntry(scope, key, str(value))
+
+
+def set_layer_custom_properties(layer: QgsMapLayer, custom_properties: dict[str, Any]) -> None:
+    properties = QgsObjectCustomProperties()
+
+    for key, value in custom_properties.items():
+        properties.setValue(key, value)
+
+    layer.setCustomProperties(properties)

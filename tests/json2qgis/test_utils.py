@@ -25,6 +25,7 @@ from convert2qgis.json2qgis.utils import (
     set_field_constraints,
     set_field_default_value,
     set_field_widget,
+    set_layer_custom_properties,
     set_layer_fields,
     set_layer_tree,
     set_project_custom_properties,
@@ -1253,6 +1254,37 @@ class TestUtils:
 
         with pytest.raises(Exception, match='Invalid custom property "missing_scope"'):
             set_project_custom_properties(project, {"missing_scope": "value"})
+
+    def test_set_layer_custom_properties(self):
+        """Test setting layer custom properties."""
+        layer = QgsVectorLayer("Point?crs=EPSG:4326", "test_layer", "memory")
+
+        set_layer_custom_properties(
+            layer,
+            {
+                "bool_key": True,
+                "int_key": 42,
+                "float_key": 3.14,
+                "string_key": "value",
+                "none_key": None,
+            },
+        )
+
+        assert layer.customProperty("bool_key") is True
+        assert layer.customProperty("int_key") == 42
+        assert layer.customProperty("float_key") == 3.14
+        assert layer.customProperty("string_key") == "value"
+        assert layer.customProperty("none_key") is None
+
+    def test_set_layer_custom_properties_replaces_existing_properties(self):
+        """Test setting layer custom properties replaces previous values."""
+        layer = QgsVectorLayer("Point?crs=EPSG:4326", "test_layer", "memory")
+        layer.setCustomProperty("stale_key", "stale_value")
+
+        set_layer_custom_properties(layer, {"fresh_key": "fresh_value"})
+
+        assert layer.customProperty("fresh_key") == "fresh_value"
+        assert layer.customProperty("stale_key") is None
 
     def test_create_relation(self, project, sample_relation_def):
         """Test creating relation."""

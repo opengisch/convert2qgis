@@ -39,6 +39,7 @@ from convert2qgis.json2qgis.utils import (
     get_layer_flags,
     get_schema_validator,
     normalize_name,
+    set_layer_custom_properties,
     set_layer_fields,
     set_layer_tree,
     set_project_custom_properties,
@@ -198,7 +199,7 @@ class ProjectCreator:
 
         map_settings.writeXml(map_canvas_node, document)
 
-    def _create_layer(self, dataset_def: DatasetDef) -> None:
+    def _create_layer(self, dataset_def: DatasetDef) -> None:  # noqa
         layer_type = dataset_def.layer_type
         if layer_type == "vector":
             assert isinstance(dataset_def, VectorDatasetDef)
@@ -236,6 +237,11 @@ class ProjectCreator:
 
         layer.setCrs(crs)
         layer.setFlags(get_layer_flags(layer.flags(), dataset_def))
+
+        if dataset_def.custom_properties:
+            logger.info(f'Set custom properties for layer "{dataset_def.name}"...')
+
+            set_layer_custom_properties(layer, dataset_def.custom_properties)
 
         self._project.addMapLayer(layer, False)
 
