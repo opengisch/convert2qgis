@@ -21,7 +21,6 @@ from qgis.PyQt.QtXml import QDomDocument
 
 from convert2qgis.json2qgis.errors import (
     Qgis2JsonError,
-    UnknownCrsSystem,
     UnknownVectorLayerDataproviderError,
 )
 from convert2qgis.json2qgis.type_defs import (
@@ -39,8 +38,11 @@ from convert2qgis.json2qgis.utils import (
     get_layer_flags,
     get_schema_validator,
     normalize_name,
+    set_layer_custom_properties,
     set_layer_fields,
     set_layer_tree,
+    set_project_custom_properties,
+    str_to_crs,
 )
 
 try:
@@ -89,14 +91,27 @@ class ProjectCreator:
         return self._create_project()
 
     def _create_project(self) -> QgsProject:
+        project_title = self.definition.project.title or "xlsform_project"
+
+        logger.info(f"Creating project with title: {project_title}")
+        logger.info("Creating %d layers...", len(self.definition.all_datasets))
+
         for dataset_def in self.definition.all_datasets:
             self._create_layer(dataset_def)
 
+        logger.info("Set layer tree structure...")
+
         set_layer_tree(self._project, self.definition)
+
+        logger.info("Set project CRS to %s", self._get_project_crs().authid())
 
         self._project.setCrs(self._get_project_crs())
 
+        logger.info("Set project relations...")
+
         self._set_relations()
+
+        logger.info("Set layer form configurations...")
 
         for dataset_def in self.definition.all_datasets:
             if dataset_def.layer_type != "vector":
@@ -116,12 +131,12 @@ class ProjectCreator:
                 ),
             )
 
-        project_title = self.definition.project.title or "xlsform_project"
-
         metadata = self._project.metadata()
         metadata.setAuthor(self.definition.project.author)
 
         if self._project.crs().authid() == "EPSG:3857":
+            logger.debug("Project CRS is EPSG:3857, set coordinate display to WGS84 for better user experience!")
+
             display_settings = self._project.displaySettings()
 
             assert display_settings
@@ -130,22 +145,30 @@ class ProjectCreator:
             display_settings.setCoordinateType(Qgis.CoordinateDisplayType.CustomCrs)
             display_settings.setCoordinateCustomCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
 
+        logger.info("Set project properties...")
+
         self._project.setTitle(project_title)
         self._project.setMetadata(metadata)
+
+        if self.definition.project.custom_properties:
+            logger.info("Set project custom properties...")
+
+            set_project_custom_properties(self._project, self.definition.project.custom_properties)
+
+        # NOTE: Connect to the `writeProject` signal to set the project extent before the project is written to disk.
         self._project.writeProject.connect(self._process_project_write)
 
         project_filename = f"{normalize_name(project_title)}.qgs"
+
+        logger.info(f'Writing project to "{project_filename}"...')
+
         if not self._project.write(str(project_filename)):
             logger.error(f'Failed to write project to "{project_filename}": {self._project.error()}')
 
         return self._project
 
     def _get_project_crs(self) -> QgsCoordinateReferenceSystem:
-        crs = QgsCoordinateReferenceSystem(self.definition.project.crs)
-        if not crs.isValid():
-            crs = QgsCoordinateReferenceSystem("EPSG:3857")
-
-        return crs
+        return str_to_crs(self.definition.project.crs, "EPSG:3857")
 
     def _process_project_write(self, document: QDomDocument) -> None:
         nl = document.elementsByTagName("qgis")
@@ -215,19 +238,25 @@ class ProjectCreator:
         else:
             raise NotImplementedError(f"Unsupported layer type: {layer_type}")
 
-        try:
-            crs = QgsCoordinateReferenceSystem(dataset_def.crs)
-        except Exception as err:
-            raise UnknownCrsSystem(f"Failed to create CRS: {err}") from err
+        crs = str_to_crs(dataset_def.crs)
 
-        if not crs.isValid():
-            raise UnknownCrsSystem(f"Invalid CRS: {dataset_def.crs}")
+        logger.info('Set layer CRS to "%s"...', crs.authid())
+
+        layer.setCrs(crs)
+
+        logger.info('Set layer ID to "%s"...', dataset_def.layer_id)
 
         if not layer.setId(dataset_def.layer_id):
             raise Qgis2JsonError(f"Failed to set layer ID: {dataset_def.layer_id}")
 
-        layer.setCrs(crs)
+        logger.info("Set layer flags...")
+
         layer.setFlags(get_layer_flags(layer.flags(), dataset_def))
+
+        if dataset_def.custom_properties:
+            logger.info('Set custom properties for layer "%s"...', dataset_def.name)
+
+            set_layer_custom_properties(layer, dataset_def.custom_properties)
 
         self._project.addMapLayer(layer, False)
 
