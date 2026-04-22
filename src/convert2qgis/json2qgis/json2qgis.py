@@ -21,7 +21,6 @@ from qgis.PyQt.QtXml import QDomDocument
 
 from convert2qgis.json2qgis.errors import (
     Qgis2JsonError,
-    UnknownCrsSystem,
     UnknownVectorLayerDataproviderError,
 )
 from convert2qgis.json2qgis.type_defs import (
@@ -214,7 +213,7 @@ class ProjectCreator:
 
         map_settings.writeXml(map_canvas_node, document)
 
-    def _create_layer(self, dataset_def: DatasetDef) -> None:  # noqa
+    def _create_layer(self, dataset_def: DatasetDef) -> None:
         layer_type = dataset_def.layer_type
         if layer_type == "vector":
             assert isinstance(dataset_def, VectorDatasetDef)
@@ -239,18 +238,19 @@ class ProjectCreator:
         else:
             raise NotImplementedError(f"Unsupported layer type: {layer_type}")
 
-        try:
-            crs = QgsCoordinateReferenceSystem(dataset_def.crs)
-        except Exception as err:
-            raise UnknownCrsSystem(f"Failed to create CRS: {err}") from err
+        crs = str_to_crs(dataset_def.crs)
 
-        if not crs.isValid():
-            raise UnknownCrsSystem(f"Invalid CRS: {dataset_def.crs}")
+        logger.info('Set layer CRS to "%s"...', crs.authid())
+
+        layer.setCrs(crs)
+
+        logger.info('Set layer ID to "%s"...', dataset_def.layer_id)
 
         if not layer.setId(dataset_def.layer_id):
             raise Qgis2JsonError(f"Failed to set layer ID: {dataset_def.layer_id}")
 
-        layer.setCrs(crs)
+        logger.info("Set layer flags...")
+
         layer.setFlags(get_layer_flags(layer.flags(), dataset_def))
 
         if dataset_def.custom_properties:
