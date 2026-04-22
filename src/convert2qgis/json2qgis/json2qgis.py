@@ -43,6 +43,7 @@ from convert2qgis.json2qgis.utils import (
     set_layer_fields,
     set_layer_tree,
     set_project_custom_properties,
+    str_to_crs,
 )
 
 try:
@@ -168,11 +169,7 @@ class ProjectCreator:
         return self._project
 
     def _get_project_crs(self) -> QgsCoordinateReferenceSystem:
-        crs = QgsCoordinateReferenceSystem(self.definition.project.crs)
-        if not crs.isValid():
-            crs = QgsCoordinateReferenceSystem("EPSG:3857")
-
-        return crs
+        return str_to_crs(self.definition.project.crs, "EPSG:3857")
 
     def _process_project_write(self, document: QDomDocument) -> None:
         nl = document.elementsByTagName("qgis")

@@ -11,6 +11,7 @@ from qgis.core import (
 )
 from qgis.PyQt.QtCore import QMetaType
 
+from convert2qgis.json2qgis.errors import UnknownCrsSystem
 from convert2qgis.json2qgis.utils import (
     check_output,
     create_field,
@@ -29,6 +30,7 @@ from convert2qgis.json2qgis.utils import (
     set_layer_fields,
     set_layer_tree,
     set_project_custom_properties,
+    str_to_crs,
 )
 
 
@@ -1285,6 +1287,25 @@ class TestUtils:
 
         assert layer.customProperty("fresh_key") == "fresh_value"
         assert layer.customProperty("stale_key") is None
+
+    def test_str_to_crs(self):
+        """Test converting a CRS string to a QGIS CRS."""
+        crs = str_to_crs("EPSG:4326")
+
+        assert crs.isValid()
+        assert crs.authid() == "EPSG:4326"
+
+    def test_str_to_crs_with_fallback(self):
+        """Test converting an invalid CRS string falls back to the fallback CRS."""
+        crs = str_to_crs("INVALID:CRS", fallback_crs="EPSG:3857")
+
+        assert crs.isValid()
+        assert crs.authid() == "EPSG:3857"
+
+    def test_str_to_crs_invalid(self):
+        """Test converting an invalid CRS string without fallback raises."""
+        with pytest.raises(UnknownCrsSystem, match="Invalid CRS: INVALID:CRS"):
+            str_to_crs("INVALID:CRS")
 
     def test_create_relation(self, project, sample_relation_def):
         """Test creating relation."""

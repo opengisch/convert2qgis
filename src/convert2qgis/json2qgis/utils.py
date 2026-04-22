@@ -12,6 +12,7 @@ from qgis.core import (
     QgsAttributeEditorField,
     QgsAttributeEditorRelation,
     QgsAttributeEditorTextElement,
+    QgsCoordinateReferenceSystem,
     QgsDefaultValue,
     QgsEditFormConfig,
     QgsEditorWidgetSetup,
@@ -34,7 +35,7 @@ from qgis.core import (
 from qgis.PyQt.QtCore import QMetaType
 from qgis.PyQt.QtGui import QColor
 
-from convert2qgis.json2qgis.errors import MissingParentError, Qgis2JsonError
+from convert2qgis.json2qgis.errors import MissingParentError, Qgis2JsonError, UnknownCrsSystem
 from convert2qgis.json2qgis.type_defs import (
     DatasetDef,
     FieldDef,
@@ -708,3 +709,42 @@ def set_layer_custom_properties(layer: QgsMapLayer, custom_properties: dict[str,
         properties.setValue(key, value)
 
     layer.setCustomProperties(properties)
+
+
+def str_to_crs(crs_def: str, fallback_crs: str | None = None) -> QgsCoordinateReferenceSystem:
+    """Converts a CRS definition string to a `QgsCoordinateReferenceSystem` object.
+
+    If the provided CRS definition is invalid and a fallback CRS is provided, it will attempt to use the fallback CRS definition instead.
+
+    Otherswise, an `UnknownCrsSystem` error will be raised.
+
+    Args:
+        crs_def: The CRS definition string. E.g. "EPSG:4326" or a WKT string.
+        fallback_crs: An optional fallback CRS definition string to use if the primary CRS definition is invalid.
+
+    Raises:
+        UnknownCrsSystem: If both the primary and fallback CRS definitions are invalid.
+    """
+    try:
+        crs = QgsCoordinateReferenceSystem(crs_def)
+    except Exception as err:
+        if fallback_crs:
+            logger.warning(
+                f"Failed to create CRS from definition '{crs_def}', attempting to use fallback CRS definition '{fallback_crs}'... Error: {err}"
+            )
+
+            return str_to_crs(fallback_crs)
+        else:
+            raise UnknownCrsSystem(f"Failed to create CRS: {err}") from err
+
+    if not crs.isValid():
+        if fallback_crs:
+            logger.warning(
+                f"CRS created from definition '{crs_def}' is invalid, attempting to use fallback CRS definition '{fallback_crs}'..."
+            )
+
+            return str_to_crs(fallback_crs)
+        else:
+            raise UnknownCrsSystem(f"Invalid CRS: {crs_def}")
+
+    return crs
