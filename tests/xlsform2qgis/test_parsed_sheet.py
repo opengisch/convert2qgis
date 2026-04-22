@@ -3,7 +3,7 @@ from collections.abc import Callable
 from qgis.PyQt.QtCore import QVariant
 
 import convert2qgis.xlsform2qgis.sheet_parser as sheet_parser_module
-from convert2qgis.xlsform2qgis.converter import ParsedSheet
+from convert2qgis.xlsform2qgis.xlsform2qgis import ParsedSheet
 
 
 class _FakeQgsFields:
