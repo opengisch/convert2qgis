@@ -27,6 +27,7 @@ from convert2qgis.json2qgis.utils import (
     set_field_widget,
     set_layer_fields,
     set_layer_tree,
+    set_project_custom_properties,
 )
 
 
@@ -1224,6 +1225,34 @@ class TestUtils:
         assert test_layer.isVisible() is True
         assert test_layer.name() == "My test layer"
         assert test_layer == group_child.findLayer("d942d84e-bcbf-430b-bf5d-9b39caeabf71")
+
+    def test_set_project_custom_properties(self, project):
+        """Test setting project custom properties."""
+        project.clear()
+
+        set_project_custom_properties(
+            project,
+            {
+                "bool_scope/bool_key": True,
+                "int_scope/int_key": 42,
+                "float_scope/float_key": 3.14,
+                "string_scope/string_key": "value",
+                "fallback_scope/none_key": None,
+            },
+        )
+
+        assert project.readBoolEntry("bool_scope", "bool_key", False) == (True, True)
+        assert project.readNumEntry("int_scope", "int_key", 0) == (42, True)
+        assert project.readDoubleEntry("float_scope", "float_key", 0.0) == (3.14, True)
+        assert project.readEntry("string_scope", "string_key", "") == ("value", True)
+        assert project.readEntry("fallback_scope", "none_key", "") == ("None", True)
+
+    def test_set_project_custom_properties_invalid_key(self, project):
+        """Test setting project custom properties with an invalid key."""
+        project.clear()
+
+        with pytest.raises(Exception, match='Invalid custom property "missing_scope"'):
+            set_project_custom_properties(project, {"missing_scope": "value"})
 
     def test_create_relation(self, project, sample_relation_def):
         """Test creating relation."""

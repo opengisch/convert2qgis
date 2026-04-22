@@ -678,3 +678,23 @@ def create_polymorphic_relation(
         )
 
     return relation
+
+
+def set_project_custom_properties(project: QgsProject, custom_properties: dict[str, Any]) -> None:
+    for key_with_scope, value in custom_properties.items():
+        key_parts = key_with_scope.split("/")
+
+        if len(key_parts) != 2:
+            raise Exception(f'Invalid custom property "{key_with_scope}", expected format "scope/key".')
+
+        scope, key = key_parts
+
+        if isinstance(value, bool):
+            project.writeEntryBool(scope, key, value)
+        # all integers are also floats, so we need to check for int before float
+        elif isinstance(value, int):
+            project.writeEntry(scope, key, value)
+        elif isinstance(value, float):
+            project.writeEntryDouble(scope, key, value)
+        else:
+            project.writeEntry(scope, key, str(value))

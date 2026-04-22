@@ -41,6 +41,7 @@ from convert2qgis.json2qgis.utils import (
     normalize_name,
     set_layer_fields,
     set_layer_tree,
+    set_project_custom_properties,
 )
 
 try:
@@ -132,6 +133,13 @@ class ProjectCreator:
 
         self._project.setTitle(project_title)
         self._project.setMetadata(metadata)
+
+        if self.definition.project.custom_properties:
+            logger.info("Set project custom properties...")
+
+            set_project_custom_properties(self._project, self.definition.project.custom_properties)
+
+        # NOTE: Connect to the `writeProject` signal to set the project extent before the project is written to disk.
         self._project.writeProject.connect(self._process_project_write)
 
         project_filename = f"{normalize_name(project_title)}.qgs"
