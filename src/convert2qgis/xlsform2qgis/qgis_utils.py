@@ -221,7 +221,7 @@ def transform_bounding_box(
 
 def set_project_extent(project: QgsProject, input_extent: QgsRectangle, feedback) -> QgsRectangle:
     """Sets project extent to given `input_extent`."""
-    project_extent = QgsRectangle()
+    project_extent = QgsRectangle(input_extent)
 
     if not input_extent.isEmpty():
         if (
