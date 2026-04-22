@@ -10,13 +10,13 @@ from convert2qgis.json2qgis.generate import (
     generate_vector_dataset_def,
 )
 from convert2qgis.json2qgis.type_defs import VectorDatasetDef
-from convert2qgis.xlsform2qgis.converter import (
+from convert2qgis.xlsform2qgis.expressions.parser import SUPPORTED_FUNCTIONS
+from convert2qgis.xlsform2qgis.xlsform2qgis import (
     ParsedSheetRow,
     XlsformConverter,
     generate_uuid_field_def,
     parse_xlsform_sheets,
 )
-from convert2qgis.xlsform2qgis.expressions.parser import SUPPORTED_FUNCTIONS
 
 
 def format_selected_expr(field_name: str, value: str) -> str:

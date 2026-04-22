@@ -30,7 +30,7 @@ from convert2qgis.xlsform2qgis.type_defs import (
 )
 
 if TYPE_CHECKING:
-    from convert2qgis.xlsform2qgis.converter import XlsformConverter
+    from convert2qgis.xlsform2qgis.xlsform2qgis import XlsformConverter
 
 
 @dataclass
