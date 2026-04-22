@@ -964,7 +964,8 @@ class XlsformConverter:
         columns_set: set[str] = set(("name", "label", "list_name"))
         for list_choices_row in list_choices:
             for additional_column in list_choices_row.additional_columns.keys():
-                columns_set.add(additional_column)
+                if list_choices_row.additional_columns[additional_column] is not None:
+                    columns_set.add(additional_column)
 
         columns_ordered = sorted(columns_set)
 
@@ -980,11 +981,15 @@ class XlsformConverter:
         }
 
         for column in columns:
-            value = getattr(raw_choice_record, column, None)
-
             if column in ("name", "label", "list_name"):
+                value = getattr(raw_choice_record, column, None)
                 record_data[column] = value
             else:
+                if raw_choice_record is None:
+                    value = None
+                else:
+                    value = raw_choice_record.additional_columns.get(column, None)
+
                 record_data["additional_columns"][column] = value
 
         return ChoicesDef(**record_data)
