@@ -225,6 +225,35 @@ class TestConverter:
             ),
         ]
 
+    def test_get_choices_datasets_flattens_additional_columns(self, converter):
+        converter.choices_sheet.__iter__.return_value = to_parsed_sheet_rows(
+            [
+                {
+                    "list_name": "list_001",
+                    "name": "value_001_001",
+                    "label": "label_001_001",
+                    "external_id": "external_001_001",
+                },
+                {
+                    "list_name": "list_001",
+                    "name": "value_001_002",
+                    "label": "label_001_002",
+                    "external_id": "external_001_002",
+                },
+            ]
+        )
+
+        [choices_dataset] = converter._get_choices_datasets()
+
+        assert [field.name for field in choices_dataset.fields] == [
+            "name",
+            "label",
+            "external_id",
+        ]
+        assert all("external_id" in record for record in choices_dataset.data)
+        assert all("list_name" not in record for record in choices_dataset.data)
+        assert all("additional_columns" not in record for record in choices_dataset.data)
+
     def test_xlsform_form_group_type_default(self):
         survey_sheet = MagicMock()
         choices_sheet = MagicMock()

@@ -1066,17 +1066,26 @@ class XlsformConverter:
                         widget_type="TextEdit",
                     ),
                 )
+            for col_name in list_choices[0].additional_columns.keys():
+                fields.append(
+                    generate_field_def(
+                        name=col_name,
+                        type="string",
+                        widget_type="TextEdit",
+                    ),
+                )
 
             data = []
             for list_choice in list_choices:
                 # Drop the `list_name` and `additional_columns` keys from the feature attributes
-                data.append(
-                    {
-                        key: list_choice.to_dict()[key]
-                        for key in list_choice.to_dict().keys()
-                        if key not in ("list_name", "additional_columns")
-                    }
-                )
+                record = {
+                    key: list_choice.to_dict()[key]
+                    for key in list_choice.to_dict().keys()
+                    if key not in ("list_name", "additional_columns")
+                }
+                record.update(list_choice.additional_columns)
+
+                data.append(record)
 
             choices_datasets.append(
                 generate_vector_dataset_def(
