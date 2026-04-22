@@ -216,7 +216,7 @@ def convert_xlsform_to_qgis_project(
     creator = ProjectCreator(project_json)
     project = creator.build(output_dir)
 
-    if survey_features is not None and survey_features.featuresCount() >= 1:
+    if survey_features is not None and survey_features.featureCount() >= 1:
         set_survey_features(project, survey_features)
 
     return project
