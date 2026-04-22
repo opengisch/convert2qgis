@@ -214,7 +214,7 @@ def transform_bounding_box(
     try:
         return transform.transformBoundingBox(extent)
     except QgsCsException as err:
-        logger.warning(obj.tr("Failed to transform Survey layer extent to project CFS: {}").format(err))
+        logger.warning(obj.tr("Failed to transform Survey layer extent to project CRS: {}").format(err))
 
         return QgsRectangle()
 
