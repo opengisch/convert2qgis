@@ -80,15 +80,20 @@ class ProjectCreator:
     def build(self, output_dir: PathOrStr) -> QgsProject:
         self._output_dir = Path(output_dir)
 
-        self._output_dir.mkdir(parents=True, exist_ok=True)
-
         if self._output_dir.is_file():
             raise Qgis2JsonError(f"Output directory is a file: {self._output_dir}")
 
-        # TODO: ugly hack as hell, otherwise the `QgsVectorFileWriter` writes wrong paths
-        os.chdir(self._output_dir)
+        self._output_dir.mkdir(parents=True, exist_ok=True)
 
-        return self._create_project()
+        previous_cwd = os.getcwd()
+
+        try:
+            # TODO: ugly hack as hell, otherwise the `QgsVectorFileWriter` writes wrong paths
+            os.chdir(self._output_dir)
+
+            return self._create_project()
+        finally:
+            os.chdir(previous_cwd)
 
     def _create_project(self) -> QgsProject:
         project_title = self.definition.project.title or "xlsform_project"

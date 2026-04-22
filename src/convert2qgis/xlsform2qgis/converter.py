@@ -994,9 +994,9 @@ class XlsformConverter:
 
         choices: dict[str, list[ChoicesDef]] = defaultdict(list)
 
-        for idx, row in enumerate(self.choices_sheet, 1):
-            last_list_name = None
+        last_list_name = None
 
+        for idx, row in enumerate(self.choices_sheet, 1):
             if not row["list_name"]:
                 logger.debug(f"Skipping row with empty `list_name` in choices at row {idx}!")
 
