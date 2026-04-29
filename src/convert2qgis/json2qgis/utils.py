@@ -35,10 +35,11 @@ from qgis.core import (
 from qgis.PyQt.QtCore import QMetaType
 from qgis.PyQt.QtGui import QColor
 
-from convert2qgis.json2qgis.errors import MissingParentError, Qgis2JsonError, UnknownCrsSystem
+from convert2qgis.json2qgis.errors import Qgis2JsonError, UnknownCrsSystem
 from convert2qgis.json2qgis.type_defs import (
     DatasetDef,
     FieldDef,
+    FormItemDef,
     LegendTreeGroupDef,
     LegendTreeItemDef,
     LegendTreeLayerDef,
@@ -231,21 +232,12 @@ def get_layer_edit_form(  # noqa: C901
     form_config.setLayout(Qgis.AttributeFormLayout.DragAndDrop)
     form_config.clearTabs()
 
-    containers_mapping: dict[str, QgsAttributeEditorContainer] = {}
-
-    for form_item_def in dataset_def.form_config:
+    def add_form_item(  # noqa: C901
+        form_item_def: FormItemDef,
+        parent: QgsAttributeEditorContainer,
+    ) -> QgsAttributeEditorContainer | None:
         item_type = form_item_def.type
         item_label = form_item_def.label
-        item_parent_id = form_item_def.parent_id
-
-        parent = None
-        if item_parent_id:
-            parent = containers_mapping.get(item_parent_id)
-
-            if not parent:
-                raise MissingParentError(f"Parent with ID '{item_parent_id}' not found for form item '{item_label}'")
-        else:
-            parent = form_config.invisibleRootContainer()
 
         if item_type == "field":
             assert form_item_def.field_name is not None
@@ -267,8 +259,7 @@ def get_layer_edit_form(  # noqa: C901
 
                 parent_container.addChildElement(container)
 
-                if parent:
-                    parent.addChildElement(parent_container)
+                parent.addChildElement(parent_container)
             else:
                 container = QgsAttributeEditorField(
                     form_item_def.field_name,
@@ -276,8 +267,7 @@ def get_layer_edit_form(  # noqa: C901
                     parent,
                 )
 
-                if parent:
-                    parent.addChildElement(container)
+                parent.addChildElement(container)
 
             if form_item_def.is_read_only:
                 form_config.setReadOnly(field_idx, True)
@@ -287,9 +277,9 @@ def get_layer_edit_form(  # noqa: C901
 
             container.setShowLabel(form_item_def.show_label)
 
-            continue
+            return None
 
-        elif item_type == "relation":
+        if item_type == "relation":
             assert form_item_def.field_name is not None
             if form_item_def.visibility_expression:
                 parent_container = QgsAttributeEditorContainer("", parent)
@@ -304,8 +294,7 @@ def get_layer_edit_form(  # noqa: C901
 
                 parent_container.addChildElement(container)
 
-                if parent:
-                    parent.addChildElement(parent_container)
+                parent.addChildElement(parent_container)
             else:
                 container = QgsAttributeEditorRelation(
                     form_item_def.field_name,
@@ -313,12 +302,11 @@ def get_layer_edit_form(  # noqa: C901
                     parent,
                 )
 
-                if parent:
-                    parent.addChildElement(container)
+                parent.addChildElement(container)
 
-            continue
+            return None
 
-        elif item_type == "text":
+        if item_type == "text":
             if form_item_def.is_markdown:
                 if markdown:
                     item_label = markdown.markdown(item_label)
@@ -329,13 +317,12 @@ def get_layer_edit_form(  # noqa: C901
 
             container = QgsAttributeEditorTextElement(item_label, parent)
 
-            if parent:
-                parent.addChildElement(container)
+            parent.addChildElement(container)
 
             container.setText(item_label)
             container.setShowLabel(False)
 
-            continue
+            return None
 
         container = QgsAttributeEditorContainer(item_label, parent)
         container.setType(get_attribute_form_container_type(item_type))
@@ -349,14 +336,20 @@ def get_layer_edit_form(  # noqa: C901
         container.setCollapsed(form_item_def.is_collapsed)
         container.setColumnCount(form_item_def.column_count)
 
-        if parent:
-            parent.addChildElement(container)
+        parent.addChildElement(container)
 
-        containers_mapping[form_item_def.item_id] = container
+        for child_item_def in form_item_def.children:
+            add_form_item(child_item_def, container)
 
-    for container in containers_mapping.values():
-        if container.parent() is None:
-            form_config.addTab(container)
+        return container
+
+    root_container = form_config.invisibleRootContainer()
+
+    if not root_container:
+        raise AssertionError("Failed to get root container for edit form configuration.")
+
+    for form_item_def in dataset_def.form_config:
+        add_form_item(form_item_def, root_container)
 
     for field_def in dataset_def.fields:
         field_idx = fields.indexOf(field_def.name)

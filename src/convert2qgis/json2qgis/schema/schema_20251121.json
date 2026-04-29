@@ -121,7 +121,7 @@
     },
     "FormConfig": {
       "items": {
-        "$ref": "#/definitions/FormItem"
+        "$ref": "#/definitions/FormItemContainer"
       },
       "type": "array"
     },
@@ -158,18 +158,21 @@
         "label": {
           "type": "string"
         },
-        "parent_id": {
-          "type": ["string", "null"]
-        },
         "type": {
           "enum": ["tab", "group_box"],
           "type": "string"
         },
         "visibility_expression": {
           "type": "string"
+        },
+        "children": {
+          "items": {
+            "$ref": "#/definitions/FormItem"
+          },
+          "type": "array"
         }
       },
-      "required": ["item_id", "parent_id", "type", "label"],
+      "required": ["item_id", "type", "label"],
       "title": "Form Item Container",
       "type": "object"
     },
@@ -190,10 +193,6 @@
           "minLength": 1,
           "type": "string"
         },
-        "parent_id": {
-          "minLength": 1,
-          "type": ["string", "null"]
-        },
         "show_label": {
           "type": "boolean"
         },
@@ -205,7 +204,7 @@
           "type": "string"
         }
       },
-      "required": ["item_id", "parent_id", "type", "field_name"],
+      "required": ["item_id", "type", "field_name"],
       "title": "Form Item Field",
       "type": "object"
     },
@@ -214,9 +213,6 @@
       "properties": {
         "item_id": {
           "type": "string"
-        },
-        "parent_id": {
-          "type": ["string", "null"]
         },
         "show_label": {
           "type": "boolean"
@@ -238,7 +234,7 @@
           "type": "string"
         }
       },
-      "required": ["item_id", "parent_id", "type", "label"],
+      "required": ["item_id", "type", "label"],
       "title": "Form Item Text",
       "type": "object"
     },
