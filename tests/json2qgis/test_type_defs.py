@@ -1,5 +1,8 @@
 from typing import cast
 
+import pytest
+
+from convert2qgis.json2qgis.errors import Qgis2JsonError
 from convert2qgis.json2qgis.generate import (
     generate_field_def,
     generate_form_item_def,
@@ -178,3 +181,26 @@ def test_project_creator_accepts_dataclass_input() -> None:
     creator = ProjectCreator(project_def)
 
     assert creator.definition is project_def
+
+
+def test_project_creator_validates_raw_dict_before_defaults() -> None:
+    pytest.importorskip("fastjsonschema")
+
+    project_dict = build_project_dict()
+
+    # Make the project definition invalid by removing a required property
+    del project_dict["project"]["title"]
+
+    with pytest.raises(Qgis2JsonError):
+        ProjectCreator(project_dict)
+
+
+def test_project_creator_validates_raw_dict_before_dropping_unknown_properties() -> None:
+    pytest.importorskip("fastjsonschema")
+
+    project_dict = build_project_dict()
+    # Make the project definition invalid by adding unknown property
+    project_dict["datasets"][0]["vector_datasets"][0]["unknown_property"] = "should fail"
+
+    with pytest.raises(Qgis2JsonError):
+        ProjectCreator(project_dict)

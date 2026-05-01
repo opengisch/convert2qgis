@@ -64,14 +64,17 @@ class ProjectCreator:
     """Whether any of the project vector layers has a geometry type."""
 
     def __init__(self, definition: ProjectDef | dict[str, Any]) -> None:
-        normalized_definition = ProjectDef.from_data(definition)
-
         # validate the project definition against the JSON schema if a schema validator is available
         if fastjsonschema:
             try:
-                schema_validator(normalized_definition.to_dict())
+                if isinstance(definition, ProjectDef):
+                    schema_validator(definition.to_dict())
+                else:
+                    schema_validator(definition)
             except fastjsonschema.JsonSchemaException as err:
                 raise Qgis2JsonError(f'{err} with data "{getattr(err, "value", None)}"') from err
+
+        normalized_definition = ProjectDef.from_data(definition)
 
         self._project = QgsProject()
         self.definition = normalized_definition
