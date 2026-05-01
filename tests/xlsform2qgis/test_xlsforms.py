@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import cast
 from unittest.mock import MagicMock
@@ -10,6 +11,7 @@ from convert2qgis.json2qgis.generate import (
     generate_vector_dataset_def,
 )
 from convert2qgis.json2qgis.type_defs import VectorDatasetDef
+from convert2qgis.xlsform2qgis import xlsform2qgis as xlsform2qgis_module
 from convert2qgis.xlsform2qgis.expressions.parser import SUPPORTED_FUNCTIONS
 from convert2qgis.xlsform2qgis.xlsform2qgis import (
     ParsedSheetRow,
@@ -68,6 +70,35 @@ def converter():
 
 
 class TestConverter:
+    def test_convert_xlsform_writes_json_without_output_dir(self, tmp_path, monkeypatch):
+        project_json = {
+            "version": "1.0",
+            "project": {"title": "Survey"},
+            "datasets": [],
+            "legend_tree": {},
+            "relations": [],
+            "polymorphic_relations": [],
+        }
+        json_filename = tmp_path / "nested" / "survey.json"
+
+        monkeypatch.setattr(
+            xlsform2qgis_module,
+            "parse_xlsform_sheets",
+            lambda *args, **kwargs: (MagicMock(), MagicMock(), MagicMock()),
+        )
+        converter = MagicMock()
+        converter.is_valid.return_value = True
+        converter.to_json.return_value = project_json
+        monkeypatch.setattr(xlsform2qgis_module, "XlsformConverter", lambda *args, **kwargs: converter)
+
+        result = xlsform2qgis_module.convert_xlsform(
+            "survey.xlsx",
+            json_filename=json_filename,
+        )
+
+        assert result == project_json
+        assert json.loads(json_filename.read_text()) == project_json
+
     def test_get_choices_by_list(self, converter: XlsformConverter):
         converter.choices_sheet.__iter__.return_value = to_parsed_sheet_rows(  # type: ignore
             [

@@ -162,9 +162,20 @@ def convert_xlsform(
             xlsform_filename,
             settings=settings,
             skip_failed_expressions=skip_failed_expressions,
+            json_filename=json_filename,
         )
 
     raise ValueError("Either `output_dir` or `json_filename` must be provided!")
+
+
+def write_project_json(project_json: dict[str, Any], json_filename: PathOrStr) -> None:
+    logger.info("Writing intermediate JSON representation to file: {}".format(json_filename))
+
+    json_filename = Path(json_filename)
+    json_filename.parent.mkdir(parents=True, exist_ok=True)
+
+    with json_filename.open("w") as json_file:
+        json.dump(project_json, json_file, sort_keys=True, indent=2)
 
 
 def convert_xlsform_to_json(
@@ -172,6 +183,7 @@ def convert_xlsform_to_json(
     *,
     settings: ConverterSettings | None = None,
     skip_failed_expressions: bool = False,
+    json_filename: PathOrStr | None = None,
 ) -> dict[str, Any]:
     survey_sheet, choices_sheet, settings_sheet = parse_xlsform_sheets(xlsform_filename)
 
@@ -186,7 +198,12 @@ def convert_xlsform_to_json(
     if not converter.is_valid():
         raise ValueError("Invalid XLSForm file!")
 
-    return converter.to_json()
+    project_json = converter.to_json()
+
+    if json_filename:
+        write_project_json(project_json, json_filename)
+
+    return project_json
 
 
 def convert_xlsform_to_qgis_project(
@@ -202,16 +219,8 @@ def convert_xlsform_to_qgis_project(
         xlsform_filename,
         settings=settings,
         skip_failed_expressions=skip_failed_expressions,
+        json_filename=json_filename,
     )
-
-    if json_filename:
-        logger.info("Writing intermediate JSON representation to file: {}".format(json_filename))
-
-        json_filename = Path(json_filename)
-        json_filename.parent.mkdir(parents=True, exist_ok=True)
-
-        with json_filename.open("w") as json_file:
-            json.dump(project_json, json_file, sort_keys=True, indent=2)
 
     creator = ProjectCreator(project_json)
     project = creator.build(output_dir)
