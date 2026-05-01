@@ -36,9 +36,16 @@ def build_project_dict() -> dict:
             ],
             form_config=[
                 generate_form_item_def(
-                    item_id="form_1",
-                    type="field",
-                    field_name="uuid",
+                    item_id="tab_1",
+                    type="tab",
+                    label="Survey",
+                    children=[
+                        generate_form_item_def(
+                            item_id="form_1",
+                            type="field",
+                            field_name="uuid",
+                        )
+                    ],
                 )
             ],
             primary_key="uuid",
@@ -114,9 +121,16 @@ def test_vector_layer_round_trip() -> None:
         ],
         form_config=[
             generate_form_item_def(
-                item_id="form_1",
-                type="field",
-                field_name="uuid",
+                item_id="tab_1",
+                type="tab",
+                label="Survey",
+                children=[
+                    generate_form_item_def(
+                        item_id="form_1",
+                        type="field",
+                        field_name="uuid",
+                    )
+                ],
             )
         ],
         primary_key="uuid",

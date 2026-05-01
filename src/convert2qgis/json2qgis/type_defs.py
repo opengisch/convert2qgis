@@ -281,7 +281,7 @@ class WeakFormItemDef(DataclassModelMixin):
     type: FormItemTypes | None = None
     field_name: str | None = None
     label: str | None = None
-    parent_id: str | None = None
+    children: list["FormItemDef"] | None = None
     visibility_expression: str | None = None
     background_color: str | None = None
     is_collapsed: bool | None = None
@@ -305,7 +305,7 @@ class FormItemDef(DataclassModelMixin):
     type: FormItemTypes = "group_box"
     field_name: str | None = None
     label: str = ""
-    parent_id: str | None = None
+    children: list["FormItemDef"] = field(default_factory=list)
     visibility_expression: str = ""
     background_color: str = ""
     is_collapsed: bool = False
@@ -319,11 +319,20 @@ class FormItemDef(DataclassModelMixin):
         if self.type in ("field", "relation"):
             return self._to_dict_field_or_relation()
 
+        elif self.type == "text":
+            return self._to_dict_text()
+
+        elif self.type in ("group_box", "tab", "row"):
+            return self._to_dict_container()
+        else:
+            raise NotImplementedError(f"Unsupported form item type: {self.type}")
+
+    def _to_dict_container(self) -> dict[str, Any]:
         container_data: dict[str, Any] = {
             "item_id": self.item_id,
             "type": self.type,
             "label": self.label,
-            "parent_id": self.parent_id,
+            "children": _serialize(self.children),
         }
         if self.visibility_expression:
             container_data["visibility_expression"] = self.visibility_expression
@@ -343,7 +352,6 @@ class FormItemDef(DataclassModelMixin):
             "item_id": self.item_id,
             "type": self.type,
             "field_name": self.field_name,
-            "parent_id": self.parent_id,
         }
         if self.visibility_expression:
             field_data["visibility_expression"] = self.visibility_expression
@@ -355,6 +363,46 @@ class FormItemDef(DataclassModelMixin):
             field_data["is_label_on_top"] = self.is_label_on_top
 
         return field_data
+
+    def _to_dict_text(self) -> dict[str, Any]:
+        text_data: dict[str, Any] = {
+            "item_id": self.item_id,
+            "type": self.type,
+            "label": self.label,
+        }
+        if self.visibility_expression:
+            text_data["visibility_expression"] = self.visibility_expression
+        if self.show_label is not True:
+            text_data["show_label"] = self.show_label
+        if self.is_markdown:
+            text_data["is_markdown"] = self.is_markdown
+
+        return text_data
+
+    @classmethod
+    def _from_dict(cls, data: Mapping[str, Any]) -> "FormItemDef":
+        item_type = data.get("type", "group_box")
+
+        children = []
+        if item_type in ("group_box", "tab", "row"):
+            for item in data.get("children", []):
+                children.append(FormItemDef.from_data(item))
+
+        return cls(
+            item_id=data.get("item_id", ""),
+            type=item_type,
+            field_name=data.get("field_name"),
+            label=data.get("label", ""),
+            children=children,
+            visibility_expression=data.get("visibility_expression", ""),
+            background_color=data.get("background_color", ""),
+            is_collapsed=data.get("is_collapsed", False),
+            column_count=data.get("column_count", 1),
+            is_markdown=data.get("is_markdown", False),
+            show_label=data.get("show_label", True),
+            is_read_only=data.get("is_read_only", False),
+            is_label_on_top=data.get("is_label_on_top", False),
+        )
 
 
 @dataclass

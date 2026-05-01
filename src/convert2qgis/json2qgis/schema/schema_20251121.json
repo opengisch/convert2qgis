@@ -121,84 +121,121 @@
     },
     "FormConfig": {
       "items": {
-        "$ref": "#/definitions/FormItem"
+        "$ref": "#/definitions/FormItemContainer"
       },
       "type": "array"
     },
     "FormItem": {
       "oneOf": [
         {
-          "additionalProperties": false,
-          "properties": {
-            "field_name": {
-              "minLength": 1,
-              "type": "string"
-            },
-            "is_label_on_top": {
-              "type": "boolean"
-            },
-            "is_read_only": {
-              "type": "boolean"
-            },
-            "item_id": {
-              "minLength": 1,
-              "type": "string"
-            },
-            "parent_id": {
-              "minLength": 1,
-              "type": ["string", "null"]
-            },
-            "show_label": {
-              "type": "boolean"
-            },
-            "type": {
-              "enum": ["field", "relation"],
-              "type": "string"
-            },
-            "visibility_expression": {
-              "type": "string"
-            }
-          },
-          "required": ["item_id", "parent_id", "type", "field_name"],
-          "type": "object"
+          "$ref": "#/definitions/FormItemContainer"
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "background_color": {
-              "type": "string"
-            },
-            "column_count": {
-              "type": "integer"
-            },
-            "is_collapsed": {
-              "type": "boolean"
-            },
-            "is_markdown": {
-              "type": "boolean"
-            },
-            "item_id": {
-              "type": "string"
-            },
-            "label": {
-              "type": "string"
-            },
-            "parent_id": {
-              "type": ["string", "null"]
-            },
-            "type": {
-              "enum": ["tab", "group_box", "text"],
-              "type": "string"
-            },
-            "visibility_expression": {
-              "type": "string"
-            }
-          },
-          "required": ["item_id", "parent_id", "type", "label"],
-          "type": "object"
+          "$ref": "#/definitions/FormItemField"
+        },
+        {
+          "$ref": "#/definitions/FormItemText"
         }
       ],
       "title": "Item",
+      "type": "object"
+    },
+    "FormItemContainer": {
+      "additionalProperties": false,
+      "properties": {
+        "background_color": {
+          "type": "string"
+        },
+        "column_count": {
+          "type": "integer"
+        },
+        "is_collapsed": {
+          "type": "boolean"
+        },
+        "item_id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "type": {
+          "enum": ["tab", "group_box"],
+          "type": "string"
+        },
+        "visibility_expression": {
+          "type": "string"
+        },
+        "children": {
+          "items": {
+            "$ref": "#/definitions/FormItem"
+          },
+          "type": "array"
+        }
+      },
+      "required": ["item_id", "type", "label"],
+      "title": "Form Item Container",
+      "type": "object"
+    },
+    "FormItemField": {
+      "additionalProperties": false,
+      "properties": {
+        "field_name": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "is_label_on_top": {
+          "type": "boolean"
+        },
+        "is_read_only": {
+          "type": "boolean"
+        },
+        "item_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "show_label": {
+          "type": "boolean"
+        },
+        "type": {
+          "enum": ["field", "relation"],
+          "type": "string"
+        },
+        "visibility_expression": {
+          "type": "string"
+        }
+      },
+      "required": ["item_id", "type", "field_name"],
+      "title": "Form Item Field",
+      "type": "object"
+    },
+    "FormItemText": {
+      "additionalProperties": false,
+      "properties": {
+        "item_id": {
+          "type": "string"
+        },
+        "show_label": {
+          "type": "boolean"
+        },
+        "is_markdown": {
+          "type": "boolean"
+        },
+        "type": {
+          "enum": ["text"],
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "visibility_expression": {
+          "type": "string"
+        }
+      },
+      "required": ["item_id", "type", "label"],
+      "title": "Form Item Text",
       "type": "object"
     },
     "Json2qgisSchema": {
@@ -259,10 +296,7 @@
           "type": "array"
         }
       },
-      "required": [
-        "vector_datasets",
-        "raster_datasets"
-      ],
+      "required": ["vector_datasets", "raster_datasets"],
       "type": "object"
     },
     "VectorDataset": {

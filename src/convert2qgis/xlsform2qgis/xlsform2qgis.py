@@ -416,7 +416,6 @@ class XlsformConverter:
             item_id=f"tab_item_{layer_id}",
             type=self.get_form_group_type(),
             label=layer_name,
-            parent_id=None,
         )
         self._enter_container(form_item)
 
@@ -439,9 +438,28 @@ class XlsformConverter:
 
         return dataset_def
 
-    def _add_container(self, container_def: FormItemDef) -> None:
+    def _find_form_item(self, item_id: str, form_items: list[FormItemDef]) -> FormItemDef | None:
+        for form_item_def in form_items:
+            if form_item_def.item_id == item_id:
+                return form_item_def
+
+            child_form_item = self._find_form_item(item_id, form_item_def.children)
+            if child_form_item is not None:
+                return child_form_item
+
+        return None
+
+    def _add_form_item(self, form_item_def: FormItemDef) -> None:
         current_dataset_def = self._current_dataset()
-        current_dataset_def.form_config.append(container_def)
+        current_container = self._current_container()
+
+        if current_container is None:
+            current_dataset_def.form_config.append(form_item_def)
+        else:
+            current_container.children.append(form_item_def)
+
+    def _add_container(self, container_def: FormItemDef) -> None:
+        self._add_form_item(container_def)
 
     def _enter_container(self, container_def: FormItemDef | None) -> None:
         if container_def:
@@ -464,12 +482,12 @@ class XlsformConverter:
             return None
 
         current_dataset_def = self._current_dataset()
+        current_container = self._find_form_item(self._container_ids[-1], current_dataset_def.form_config)
 
-        for form_item_def in reversed(current_dataset_def.form_config):
-            if form_item_def.item_id == self._container_ids[-1]:
-                return form_item_def
+        if current_container is None:
+            raise AssertionError(f"Current container with id {self._container_ids[-1]} not found!")
 
-        raise AssertionError(f"Current container with id {self._container_ids[-1]} not found!")
+        return current_container
 
     def _get_label(self, sheet_row: ParsedSheetRow) -> str:
         label = ""
@@ -760,8 +778,8 @@ class XlsformConverter:
 
         for row in self.survey_sheet:
             try:
-                # If there are not `parent_ids`, it means we are at the root level
-                # the form item's `parent_id` set to `None` represents that.
+                # The active container stack determines where generated form items
+                # are inserted in the nested form tree.
                 layer_id = self._layer_ids[-1]
                 dataset_def = self.find_vector_dataset(layer_id)
 
@@ -775,7 +793,8 @@ class XlsformConverter:
                 row_field_defs, row_form_item_defs, row_geometry_type = self._parse_form_row(row)
 
                 dataset_def.fields.extend(row_field_defs)
-                dataset_def.form_config.extend(row_form_item_defs)
+                for form_item_def in row_form_item_defs:
+                    self._add_form_item(form_item_def)
 
                 # TODO find a better place for `max_pixels` logic
                 if row["type"] == "image":
@@ -855,24 +874,15 @@ class XlsformConverter:
             form_item_default.visibility_expression = visibility_expr
 
         parsed_row = widget_type_cb(WidgetContext(self, row))
-        current_container = self._current_container()
 
-        # If the `parent_id` is `None`, it means we are at the root level
-        # the form item's `parent_id` set to `None` represents that.
-        if current_container is not None:
-            parent_id = current_container.item_id
-        else:
-            parent_id = None
-
-        # Determine the parent id for the current form item.
-        # If `group_status` is `GroupStatus.END``, then the last parent id is popped from the stack and no new element is added.
+        # If `group_status` is `GroupStatus.END`, the current container is popped
+        # from the stack and no new element is added.
         if parsed_row.group_status == GroupStatus.BEGIN:
             container_item = generate_form_item_def(type=self.get_form_group_type())
             container_item.update(
                 {
                     **form_item_default.to_dict(),
                     **parsed_row.form_container,
-                    "parent_id": parent_id,
                 }
             )
             self._enter_container(container_item)
@@ -916,7 +926,6 @@ class XlsformConverter:
                     **form_item_default.to_dict(),
                     **parsed_row.form_field.to_dict(),
                     "field_name": field.name,
-                    "parent_id": parent_id,
                 }
             )
             form_items.append(form_item)
@@ -929,7 +938,6 @@ class XlsformConverter:
             container_item.update(
                 {
                     **parsed_row.form_container,
-                    "parent_id": parent_id,
                 }
             )
             self._add_container(container_item)
@@ -951,7 +959,6 @@ class XlsformConverter:
                     "is_label_on_top": True,
                     **form_item_default.to_dict(),
                     **parsed_row.form_field.to_dict(),
-                    "parent_id": parent_id,
                 }
             )
             form_items.append(form_item)

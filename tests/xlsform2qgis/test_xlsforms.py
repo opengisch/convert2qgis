@@ -324,7 +324,7 @@ class TestConverter:
 
         # simulate there is a new group in the survey sheet
 
-        converter._container_ids.append("parent_id_here")
+        converter._container_ids.append("item_container_id_here")
 
         assert converter.get_form_group_type() == "group_box"
 
@@ -348,7 +348,7 @@ class TestConverter:
         assert converter.get_form_group_type() == "group_box"
 
         # simulate there is a new group in the survey sheet
-        converter._container_ids.append("parent_id_here")
+        converter._container_ids.append("item_container_id_here")
 
         assert converter.get_form_group_type() == "tab"
 
@@ -381,7 +381,7 @@ class TestConverter:
             widget_type="TextEdit",
         )
 
-        assert len(survey_layer.form_config) == 2
+        assert len(survey_layer.form_config) == 1
 
         survey_form_tab = survey_layer.form_config[0].item_id
 
@@ -389,13 +389,14 @@ class TestConverter:
             item_id=survey_form_tab,
             label="Survey",
             type="group_box",
-        )
-        assert survey_layer.form_config[1] == generate_form_item_def(
-            item_id=survey_layer.form_config[1].item_id,
-            field_name="field_001",
-            type="field",
-            parent_id=survey_form_tab,
-            is_label_on_top=True,
+            children=[
+                generate_form_item_def(
+                    item_id=survey_layer.form_config[0].children[0].item_id,
+                    field_name="field_001",
+                    type="field",
+                    is_label_on_top=True,
+                )
+            ],
         )
 
     def test_xlsform_label(self, converter):
@@ -492,7 +493,7 @@ class TestConverter:
             widget_type="TextEdit",
         )
 
-        assert len(survey_layer.form_config) == 3
+        assert len(survey_layer.form_config) == 1
 
         survey_form_tab = survey_layer.form_config[0].item_id
 
@@ -500,19 +501,21 @@ class TestConverter:
             item_id=survey_form_tab,
             label="Survey",
             type="group_box",
-        )
-        assert survey_layer.form_config[1] == generate_form_item_def(
-            item_id="item_container_0",
-            parent_id=survey_form_tab,
-            label="Group 001",
-            type="group_box",
-        )
-        assert survey_layer.form_config[2] == generate_form_item_def(
-            item_id=survey_layer.form_config[2].item_id,
-            field_name="field_001",
-            parent_id="item_container_0",
-            type="field",
-            is_label_on_top=True,
+            children=[
+                generate_form_item_def(
+                    item_id="item_container_0",
+                    label="Group 001",
+                    type="group_box",
+                    children=[
+                        generate_form_item_def(
+                            item_id=survey_layer.form_config[0].children[0].children[0].item_id,
+                            field_name="field_001",
+                            type="field",
+                            is_label_on_top=True,
+                        )
+                    ],
+                )
+            ],
         )
 
     def test_xlsform_with_group_nesting(self, converter):
@@ -560,7 +563,7 @@ class TestConverter:
             widget_type="TextEdit",
         )
 
-        assert len(survey_layer.form_config) == 4
+        assert len(survey_layer.form_config) == 1
 
         survey_form_tab = survey_layer.form_config[0].item_id
 
@@ -568,25 +571,28 @@ class TestConverter:
             item_id=survey_form_tab,
             label="Survey",
             type="group_box",
-        )
-        assert survey_layer.form_config[1] == generate_form_item_def(
-            item_id="item_container_0",
-            label="Group 001",
-            parent_id=survey_form_tab,
-            type="group_box",
-        )
-        assert survey_layer.form_config[2] == generate_form_item_def(
-            item_id="item_container_1",
-            label="Group 001_001",
-            parent_id="item_container_0",
-            type="group_box",
-        )
-        assert survey_layer.form_config[3] == generate_form_item_def(
-            item_id=survey_layer.form_config[3].item_id,
-            field_name="field_001_001",
-            parent_id="item_container_1",
-            type="field",
-            is_label_on_top=True,
+            children=[
+                generate_form_item_def(
+                    item_id="item_container_0",
+                    label="Group 001",
+                    type="group_box",
+                    children=[
+                        generate_form_item_def(
+                            item_id="item_container_1",
+                            label="Group 001_001",
+                            type="group_box",
+                            children=[
+                                generate_form_item_def(
+                                    item_id=survey_layer.form_config[0].children[0].children[0].children[0].item_id,
+                                    field_name="field_001_001",
+                                    type="field",
+                                    is_label_on_top=True,
+                                )
+                            ],
+                        )
+                    ],
+                )
+            ],
         )
 
     def test_xlsform_with_repeat(self, converter):
@@ -971,7 +977,7 @@ class TestConverter:
             },
         )
 
-        assert len(survey_layer.form_config) == 29
+        assert len(survey_layer.form_config) == 1
 
         survey_layer_form_tab = survey_layer.form_config[0].item_id
 
@@ -979,180 +985,168 @@ class TestConverter:
             item_id=survey_layer_form_tab,
             label="Survey",
             type="tab",
-        )
-        assert survey_layer.form_config[1] == generate_form_item_def(
-            item_id="item_container_0",
-            parent_id=survey_layer_form_tab,
-            label="Introduction page",
-            type="group_box",
-        )
-        assert survey_layer.form_config[2] == generate_form_item_def(
-            item_id="item_container_1",
-            label="Welcome to our new survey. Please answer a couple of  questions.",
-            parent_id="item_container_0",
-            type="text",
-            is_markdown=False,
-        )
-        assert survey_layer.form_config[3] == generate_form_item_def(
-            item_id=survey_layer.form_config[3].item_id,
-            field_name="recommend",
-            parent_id="item_container_0",
-            type="field",
-        )
-        assert survey_layer.form_config[4] == generate_form_item_def(
-            item_id=survey_layer.form_config[4].item_id,
-            field_name="services",
-            parent_id="item_container_0",
-            type="field",
-            visibility_expression=format_selected_expr("recommend", "yes"),
-        )
-        assert survey_layer.form_config[5] == generate_form_item_def(
-            item_id="item_container_6",
-            parent_id=survey_layer_form_tab,
-            label="Statisfaction evaluation page",
-            type="group_box",
-            visibility_expression=format_selected_expr("recommend", "yes"),
-        )
-        assert survey_layer.form_config[6] == generate_form_item_def(
-            item_id="item_container_7",
-            label="Services rating matrix",
-            parent_id="item_container_6",
-            type="group_box",
-        )
-        assert survey_layer.form_config[7] == generate_form_item_def(
-            item_id=survey_layer.form_config[7].item_id,
-            field_name="info_portal_rating",
-            parent_id="item_container_7",
-            type="field",
-        )
-        assert survey_layer.form_config[8] == generate_form_item_def(
-            item_id=survey_layer.form_config[8].item_id,
-            field_name="clinical_trials_rating",
-            parent_id="item_container_7",
-            type="field",
-        )
-        assert survey_layer.form_config[9] == generate_form_item_def(
-            item_id=survey_layer.form_config[9].item_id,
-            field_name="support_program_rating",
-            parent_id="item_container_7",
-            type="field",
-            visibility_expression=format_selected_expr("services", "support_program"),
-        )
-        assert survey_layer.form_config[10] == generate_form_item_def(
-            item_id=survey_layer.form_config[10].item_id,
-            field_name="ordering_rating",
-            parent_id="item_container_7",
-            type="field",
-            visibility_expression=format_selected_expr("services", "ordering"),
-        )
-        assert survey_layer.form_config[11] == generate_form_item_def(
-            item_id=survey_layer.form_config[11].item_id,
-            field_name="rep_scheduling_rating",
-            parent_id="item_container_7",
-            type="field",
-        )
-        assert survey_layer.form_config[12] == generate_form_item_def(
-            item_id=survey_layer.form_config[12].item_id,
-            field_name="cme_rating",
-            parent_id="item_container_7",
-            type="field",
-        )
-        assert survey_layer.form_config[13] == generate_form_item_def(
-            item_id=survey_layer.form_config[13].item_id,
-            field_name="feature_improve",
-            parent_id="item_container_6",
-            type="field",
-        )
-        assert survey_layer.form_config[14] == generate_form_item_def(
-            item_id="item_container_17",
-            parent_id=survey_layer_form_tab,
-            label="Company details page",
-            type="group_box",
-        )
-        assert survey_layer.form_config[15] == generate_form_item_def(
-            item_id="item_container_18",
-            label="How many employees work in your company ?",
-            parent_id="item_container_17",
-            type="group_box",
-        )
-        assert survey_layer.form_config[16] == generate_form_item_def(
-            item_id=survey_layer.form_config[16].item_id,
-            field_name="part_employees",
-            parent_id="item_container_18",
-            type="field",
-        )
-        assert survey_layer.form_config[17] == generate_form_item_def(
-            item_id=survey_layer.form_config[17].item_id,
-            field_name="full_employees",
-            parent_id="item_container_18",
-            type="field",
-        )
-        assert survey_layer.form_config[18] == generate_form_item_def(
-            item_id=survey_layer.form_config[18].item_id,
-            field_name="employee_total",
-            parent_id="item_container_17",
-            type="field",
-            is_read_only=True,
-            show_label=False,
-        )
-        assert survey_layer.form_config[19] == generate_form_item_def(
-            item_id=survey_layer.form_config[19].item_id,
-            field_name="employee_summary",
-            parent_id="item_container_17",
-            type="field",
-            visibility_expression='"part_employees" > 1 and "full_employees" > 1',
-        )
-        assert survey_layer.form_config[20] == generate_form_item_def(
-            item_id="item_container_25",
-            parent_id=survey_layer_form_tab,
-            label="Contact details page",
-            type="group_box",
-        )
-        assert survey_layer.form_config[21] == generate_form_item_def(
-            item_id="item_container_26",
-            label="Please leave your contact details",
-            parent_id="item_container_25",
-            type="group_box",
-        )
-        assert survey_layer.form_config[22] == generate_form_item_def(
-            item_id=survey_layer.form_config[22].item_id,
-            field_name="salutation",
-            parent_id="item_container_26",
-            type="field",
-        )
-        assert survey_layer.form_config[23] == generate_form_item_def(
-            item_id=survey_layer.form_config[23].item_id,
-            field_name="name",
-            parent_id="item_container_26",
-            type="field",
-        )
-        assert survey_layer.form_config[24] == generate_form_item_def(
-            item_id=survey_layer.form_config[24].item_id,
-            field_name="address",
-            parent_id="item_container_26",
-            type="field",
-        )
-        assert survey_layer.form_config[25] == generate_form_item_def(
-            item_id=survey_layer.form_config[25].item_id,
-            field_name="zip_code",
-            parent_id="item_container_26",
-            type="field",
-        )
-        assert survey_layer.form_config[26] == generate_form_item_def(
-            item_id=survey_layer.form_config[26].item_id,
-            field_name="city",
-            parent_id="item_container_26",
-            type="field",
-        )
-        assert survey_layer.form_config[27] == generate_form_item_def(
-            item_id=survey_layer.form_config[27].item_id,
-            field_name="state",
-            parent_id="item_container_26",
-            type="field",
-        )
-        assert survey_layer.form_config[28] == generate_form_item_def(
-            item_id=survey_layer.form_config[28].item_id,
-            field_name="comment",
-            parent_id="item_container_25",
-            type="field",
+            children=[
+                generate_form_item_def(
+                    item_id="item_container_0",
+                    label="Introduction page",
+                    type="group_box",
+                    children=[
+                        generate_form_item_def(
+                            item_id="item_container_1",
+                            label="Welcome to our new survey. Please answer a couple of  questions.",
+                            type="text",
+                            is_markdown=False,
+                        ),
+                        generate_form_item_def(
+                            item_id=survey_layer.form_config[0].children[0].children[1].item_id,
+                            field_name="recommend",
+                            type="field",
+                        ),
+                        generate_form_item_def(
+                            item_id=survey_layer.form_config[0].children[0].children[2].item_id,
+                            field_name="services",
+                            type="field",
+                            visibility_expression=format_selected_expr("recommend", "yes"),
+                        ),
+                    ],
+                ),
+                generate_form_item_def(
+                    item_id="item_container_6",
+                    label="Statisfaction evaluation page",
+                    type="group_box",
+                    visibility_expression=format_selected_expr("recommend", "yes"),
+                    children=[
+                        generate_form_item_def(
+                            item_id="item_container_7",
+                            label="Services rating matrix",
+                            type="group_box",
+                            children=[
+                                generate_form_item_def(
+                                    item_id=survey_layer.form_config[0].children[1].children[0].children[0].item_id,
+                                    field_name="info_portal_rating",
+                                    type="field",
+                                ),
+                                generate_form_item_def(
+                                    item_id=survey_layer.form_config[0].children[1].children[0].children[1].item_id,
+                                    field_name="clinical_trials_rating",
+                                    type="field",
+                                ),
+                                generate_form_item_def(
+                                    item_id=survey_layer.form_config[0].children[1].children[0].children[2].item_id,
+                                    field_name="support_program_rating",
+                                    type="field",
+                                    visibility_expression=format_selected_expr("services", "support_program"),
+                                ),
+                                generate_form_item_def(
+                                    item_id=survey_layer.form_config[0].children[1].children[0].children[3].item_id,
+                                    field_name="ordering_rating",
+                                    type="field",
+                                    visibility_expression=format_selected_expr("services", "ordering"),
+                                ),
+                                generate_form_item_def(
+                                    item_id=survey_layer.form_config[0].children[1].children[0].children[4].item_id,
+                                    field_name="rep_scheduling_rating",
+                                    type="field",
+                                ),
+                                generate_form_item_def(
+                                    item_id=survey_layer.form_config[0].children[1].children[0].children[5].item_id,
+                                    field_name="cme_rating",
+                                    type="field",
+                                ),
+                            ],
+                        ),
+                        generate_form_item_def(
+                            item_id=survey_layer.form_config[0].children[1].children[1].item_id,
+                            field_name="feature_improve",
+                            type="field",
+                        ),
+                    ],
+                ),
+                generate_form_item_def(
+                    item_id="item_container_17",
+                    label="Company details page",
+                    type="group_box",
+                    children=[
+                        generate_form_item_def(
+                            item_id="item_container_18",
+                            label="How many employees work in your company ?",
+                            type="group_box",
+                            children=[
+                                generate_form_item_def(
+                                    item_id=survey_layer.form_config[0].children[2].children[0].children[0].item_id,
+                                    field_name="part_employees",
+                                    type="field",
+                                ),
+                                generate_form_item_def(
+                                    item_id=survey_layer.form_config[0].children[2].children[0].children[1].item_id,
+                                    field_name="full_employees",
+                                    type="field",
+                                ),
+                            ],
+                        ),
+                        generate_form_item_def(
+                            item_id=survey_layer.form_config[0].children[2].children[1].item_id,
+                            field_name="employee_total",
+                            type="field",
+                            is_read_only=True,
+                            show_label=False,
+                        ),
+                        generate_form_item_def(
+                            item_id=survey_layer.form_config[0].children[2].children[2].item_id,
+                            field_name="employee_summary",
+                            type="field",
+                            visibility_expression='"part_employees" > 1 and "full_employees" > 1',
+                        ),
+                    ],
+                ),
+                generate_form_item_def(
+                    item_id="item_container_25",
+                    label="Contact details page",
+                    type="group_box",
+                    children=[
+                        generate_form_item_def(
+                            item_id="item_container_26",
+                            label="Please leave your contact details",
+                            type="group_box",
+                            children=[
+                                generate_form_item_def(
+                                    item_id=survey_layer.form_config[0].children[3].children[0].children[0].item_id,
+                                    field_name="salutation",
+                                    type="field",
+                                ),
+                                generate_form_item_def(
+                                    item_id=survey_layer.form_config[0].children[3].children[0].children[1].item_id,
+                                    field_name="name",
+                                    type="field",
+                                ),
+                                generate_form_item_def(
+                                    item_id=survey_layer.form_config[0].children[3].children[0].children[2].item_id,
+                                    field_name="address",
+                                    type="field",
+                                ),
+                                generate_form_item_def(
+                                    item_id=survey_layer.form_config[0].children[3].children[0].children[3].item_id,
+                                    field_name="zip_code",
+                                    type="field",
+                                ),
+                                generate_form_item_def(
+                                    item_id=survey_layer.form_config[0].children[3].children[0].children[4].item_id,
+                                    field_name="city",
+                                    type="field",
+                                ),
+                                generate_form_item_def(
+                                    item_id=survey_layer.form_config[0].children[3].children[0].children[5].item_id,
+                                    field_name="state",
+                                    type="field",
+                                ),
+                            ],
+                        ),
+                        generate_form_item_def(
+                            item_id=survey_layer.form_config[0].children[3].children[1].item_id,
+                            field_name="comment",
+                            type="field",
+                        ),
+                    ],
+                ),
+            ],
         )

@@ -104,7 +104,6 @@ def generate_form_item_def(**kwargs: Any) -> FormItemDef:
         form_item = FormItemDef(
             field_name=None,
             item_id=str(uuid.uuid4()),
-            parent_id=None,
             type="field",
             is_label_on_top=True,
         )
@@ -115,8 +114,8 @@ def generate_form_item_def(**kwargs: Any) -> FormItemDef:
     form_item = FormItemDef(
         item_id=str(uuid.uuid4()),
         label="",
-        parent_id=None,
         type="group_box",
+        children=[],
     )
     form_item.update(kwargs)
 
