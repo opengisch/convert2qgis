@@ -1,6 +1,7 @@
 from typing import cast
 
 import pytest
+from qgis.core import QgsProject, QgsVectorLayer
 
 from convert2qgis.json2qgis.errors import Qgis2JsonError
 from convert2qgis.json2qgis.generate import (
@@ -204,3 +205,56 @@ def test_project_creator_validates_raw_dict_before_dropping_unknown_properties()
 
     with pytest.raises(Qgis2JsonError):
         ProjectCreator(project_dict)
+
+
+def test_project_creator_sets_polymorphic_relations() -> None:
+    project_dict = build_project_dict()
+    project_dict["relations"] = []
+    project_dict["polymorphic_relations"] = [
+        {
+            "relation_id": "poly_rel_1",
+            "name": "document_owner",
+            "from_layer_id": "documents",
+            "to_layer_field": "layer_id",
+            "to_layer_expression": "@layer_id",
+            "to_layer_ids": ["birds", "mammals"],
+            "strength": "composition",
+            "field_pairs": [
+                {
+                    "from_field": "uuid",
+                    "to_field": "document_uuid",
+                },
+            ],
+        },
+    ]
+    creator = ProjectCreator(project_dict)
+    project = QgsProject.instance()
+    project.clear()
+    documents_layer = QgsVectorLayer(
+        "Point?field=layer_id:string&field=uuid:string&crs=EPSG:4326",
+        "documents",
+        "memory",
+    )
+    documents_layer.setId("documents")
+    birds_layer = QgsVectorLayer(
+        "Point?field=document_uuid:string&crs=EPSG:4326",
+        "birds",
+        "memory",
+    )
+    birds_layer.setId("birds")
+    mammals_layer = QgsVectorLayer(
+        "Point?field=document_uuid:string&crs=EPSG:4326",
+        "mammals",
+        "memory",
+    )
+    mammals_layer.setId("mammals")
+    project.addMapLayers([documents_layer, birds_layer, mammals_layer])
+    creator._project = project
+
+    creator._set_relations()
+
+    relation_manager = project.relationManager()
+
+    assert relation_manager is not None
+    assert relation_manager.polymorphicRelation("poly_rel_1").isValid()
+    project.clear()
