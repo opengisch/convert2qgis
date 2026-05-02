@@ -423,6 +423,7 @@ class XlsformConverter:
         layer_id = self._layer_ids.pop()
 
         self._exit_container()
+        self._exit_container()
 
         return layer_id
 
@@ -891,6 +892,27 @@ class XlsformConverter:
         elif parsed_row.group_status == GroupStatus.END:
             self._exit_container()
 
+        if parsed_row.relation:
+            assert parsed_row.form_field is not None
+            assert parsed_row.form_field.type == "relation"
+
+            self.relations.append(
+                generate_relation_def(
+                    **parsed_row.relation,
+                )
+            )
+
+            form_item = generate_form_item_def()
+            form_item.update(
+                {
+                    "visibility_expression": visibility_expr,
+                    "is_label_on_top": True,
+                    **form_item_default.to_dict(),
+                    **parsed_row.form_field.to_dict(),
+                }
+            )
+            self._add_form_item(form_item)
+
         # Determine the layer id for the current form item.
         # If `layer_status` is `layerStatus.END``, then the last layer id is popped from the stack and no new element is added.
         if parsed_row.layer_status == LayerStatus.BEGIN:
@@ -941,27 +963,6 @@ class XlsformConverter:
                 }
             )
             self._add_container(container_item)
-
-        if parsed_row.relation:
-            assert parsed_row.form_field is not None
-            assert parsed_row.form_field.type == "relation"
-
-            self.relations.append(
-                generate_relation_def(
-                    **parsed_row.relation,
-                )
-            )
-
-            form_item = generate_form_item_def()
-            form_item.update(
-                {
-                    "visibility_expression": visibility_expr,
-                    "is_label_on_top": True,
-                    **form_item_default.to_dict(),
-                    **parsed_row.form_field.to_dict(),
-                }
-            )
-            form_items.append(form_item)
 
         return fields, form_items, geometry_type
 

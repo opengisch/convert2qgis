@@ -642,6 +642,72 @@ class TestConverter:
         assert repeat_layer_1.fields[1].name == "uuid_parent"
         assert repeat_layer_1.fields[2].name == "field_001"
 
+    def test_xlsform_with_repeat_places_relation_on_parent_form(self, converter):
+        converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
+            [
+                generate_survey_row(
+                    type="begin repeat",
+                    name="group_001",
+                    label="Group 001",
+                ),
+                generate_survey_row(
+                    type="begin group",
+                    name="group_001_001",
+                    label="Group 001_001",
+                ),
+                generate_survey_row(
+                    type="text",
+                    name="field_001",
+                    label="Field 001",
+                ),
+                generate_survey_row(
+                    type="end group",
+                ),
+                generate_survey_row(
+                    type="end repeat",
+                ),
+                generate_survey_row(
+                    type="integer",
+                    name="field_002",
+                    label="Field 002",
+                ),
+            ]
+        )
+
+        converter.convert()
+
+        assert len(converter.vector_datasets) == 2
+
+        survey_layer, repeat_layer = converter.vector_datasets
+
+        assert len(survey_layer.form_config) == 1
+        survey_form = survey_layer.form_config[0]
+        assert survey_form.type == "group_box"
+        assert survey_form.field_name is None
+        assert survey_form.label == "Survey"
+        assert len(survey_form.children) == 2
+        assert survey_form.children[0].type == "relation"
+        assert survey_form.children[0].field_name == "relation_0"
+        assert survey_form.children[0].children == []
+        assert survey_form.children[1].type == "field"
+        assert survey_form.children[1].field_name == "field_002"
+        assert survey_form.children[1].children == []
+
+        assert len(repeat_layer.form_config) == 1
+        repeat_form = repeat_layer.form_config[0]
+        assert repeat_form.type == "group_box"
+        assert repeat_form.field_name is None
+        assert repeat_form.label == "repeat_group_001"
+        assert len(repeat_form.children) == 1
+        repeat_group = repeat_form.children[0]
+        assert repeat_group.type == "group_box"
+        assert repeat_group.field_name is None
+        assert repeat_group.label == "Group 001_001"
+        assert len(repeat_group.children) == 1
+        assert repeat_group.children[0].type == "field"
+        assert repeat_group.children[0].field_name == "field_001"
+        assert repeat_group.children[0].children == []
+
     @pytest.mark.parametrize(
         "xlsform_type,expected_geometry",
         [
