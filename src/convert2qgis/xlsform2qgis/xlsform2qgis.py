@@ -836,7 +836,7 @@ class XlsformConverter:
                 for form_item_def in row_form_item_defs:
                     self._add_form_item(form_item_def)
 
-                # TODO find a better place for `max_pixels` logic
+                # TODO @suricactus: find a better place for `max_pixels` logic
                 if row["type"] == "image":
                     max_pixels = self._get_field_settings_max_pixels(row, max_pixels)
 

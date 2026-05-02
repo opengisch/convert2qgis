@@ -94,7 +94,7 @@ class ProjectCreator:
         previous_cwd = os.getcwd()
 
         try:
-            # TODO: ugly hack as hell, otherwise the `QgsVectorFileWriter` writes wrong paths
+            # TODO @suricactus: ugly hack as hell, otherwise the `QgsVectorFileWriter` writes wrong paths. Find a better way to handle this!
             os.chdir(self._output_dir)
 
             return self._create_project()
