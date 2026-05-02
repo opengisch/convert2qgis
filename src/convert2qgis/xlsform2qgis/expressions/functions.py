@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import inspect
 import re
-from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, cast, overload
 
 from convert2qgis.xlsform2qgis.expressions.utils import (
@@ -12,6 +11,8 @@ from convert2qgis.xlsform2qgis.expressions.utils import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
     from convert2qgis.xlsform2qgis.expressions.expression import ExpressionContext
 
 
@@ -53,10 +54,7 @@ class FunctionSpec:
         if count < min_args:
             return False
 
-        if max_args is not None and count > max_args:
-            return False
-
-        return True
+        return not (max_args is not None and count > max_args)
 
     def validate(self, count: int) -> bool:
         return self._validate_function(count)

@@ -384,7 +384,7 @@ class _ExpressionParser:
 
     def _parse_primary(self) -> AstNode:
         token = self._current()
-        if token.type == TokenType.NUMBER or token.type == TokenType.STRING:
+        if token.type in (TokenType.NUMBER, TokenType.STRING):
             self._advance()
             return Literal(
                 token.value, token.raw_value, LiteralType.from_token_type(token.type)

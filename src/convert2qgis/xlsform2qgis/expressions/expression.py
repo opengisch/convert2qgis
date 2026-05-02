@@ -264,7 +264,6 @@ class Expression:
         ):
             return True
 
-        if isinstance(self.ast, Literal) and self.ast.type == LiteralType.STRING:
-            return True
-
-        return False
+        return bool(
+            isinstance(self.ast, Literal) and self.ast.type == LiteralType.STRING
+        )

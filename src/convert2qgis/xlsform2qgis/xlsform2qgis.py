@@ -343,10 +343,7 @@ class XlsformConverter:
         if self.survey_sheet.indices["type"] == -1:
             return False
 
-        if self.survey_sheet.indices["name"] == -1:
-            return False
-
-        return True
+        return self.survey_sheet.indices["name"] != -1
 
     @property
     def all_datasets(self) -> list[DatasetDef]:
@@ -394,7 +391,7 @@ class XlsformConverter:
                 should_strip_tags=should_strip_tags,
             )
         except ParseError as err:
-            logger.error(
+            logger.exception(
                 f"Failed to parse expression `{expression_str}` for field `{current_field}`: {err}"
             )
 
@@ -847,7 +844,7 @@ class XlsformConverter:
                     geometry_type_by_layer_id[layer_id] = row_geometry_type
 
             except Exception as err:
-                logger.error(
+                logger.exception(
                     f"Failed to parse row with type `{row['type']}` and name `{row['name']}` at row index {row.idx}: {err}"
                 )
 
@@ -1008,9 +1005,9 @@ class XlsformConverter:
     def _get_choices_columns(self, list_choices: list[ChoicesDef]) -> list[str]:
         # The additional columns are most likely related to a single choice group,
         # so we need to iterate over all rows for the given choice group and collect the columns that are non-empty.
-        columns_set: set[str] = set(("name", "label", "list_name"))
+        columns_set: set[str] = {"name", "label", "list_name"}
         for list_choices_row in list_choices:
-            for additional_column in list_choices_row.additional_columns.keys():
+            for additional_column in list_choices_row.additional_columns:
                 if list_choices_row.additional_columns[additional_column] is not None:
                     columns_set.add(additional_column)
 
@@ -1114,7 +1111,7 @@ class XlsformConverter:
             layer_name = build_choices_layer_name(list_name)
 
             fields = []
-            for col_name in list_choices[0].to_dict().keys():
+            for col_name in list_choices[0].to_dict():
                 if col_name in ("list_name", "additional_columns"):
                     continue
 
@@ -1125,7 +1122,7 @@ class XlsformConverter:
                         widget_type="TextEdit",
                     ),
                 )
-            for col_name in list_choices[0].additional_columns.keys():
+            for col_name in list_choices[0].additional_columns:
                 fields.append(
                     generate_field_def(
                         name=col_name,
@@ -1139,7 +1136,7 @@ class XlsformConverter:
                 # Drop the `list_name` and `additional_columns` keys from the feature attributes
                 record = {
                     key: list_choice.to_dict()[key]
-                    for key in list_choice.to_dict().keys()
+                    for key in list_choice.to_dict()
                     if key not in ("list_name", "additional_columns")
                 }
                 record.update(list_choice.additional_columns)

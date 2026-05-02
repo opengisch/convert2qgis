@@ -123,7 +123,9 @@ def check_output(
             try:
                 validate(output)
             except Exception as e:
-                logger.error(f"Error during function '{func.__name__}' execution: {e}")
+                logger.exception(
+                    f"Error during function '{func.__name__}' execution: {e}"
+                )
                 raise
 
             return output
@@ -552,7 +554,7 @@ def set_field_widget(field: QgsField, field_def: FieldDef | dict[str, Any]) -> N
     # Widget configuration
     wc = dict(field_def.widget_config)
 
-    if widget_type == "Hidden" or widget_type == "Color":
+    if widget_type in {"Hidden", "Color"}:
         pass
     elif widget_type == "CheckBox":
         wc.update(

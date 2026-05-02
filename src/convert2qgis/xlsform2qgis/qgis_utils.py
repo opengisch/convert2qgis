@@ -3,8 +3,7 @@ import gc
 import logging
 import os
 import tempfile
-from collections.abc import Iterable
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from qgis.core import (
     Qgis,
@@ -23,6 +22,9 @@ from qgis.core import (
     QgsVectorLayerUtils,
 )
 from qgis.PyQt.QtCore import QObject, pyqtSignal
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 logger = logging.getLogger(__package__)
 

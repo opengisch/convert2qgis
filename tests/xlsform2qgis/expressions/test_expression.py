@@ -1,5 +1,5 @@
 import re
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import pytest
 
@@ -14,7 +14,9 @@ from convert2qgis.xlsform2qgis.expressions.utils import (
     convert_date_format,
     convert_datetime_format,
 )
-from convert2qgis.xlsform2qgis.type_defs import XlsformSettings
+
+if TYPE_CHECKING:
+    from convert2qgis.xlsform2qgis.type_defs import XlsformSettings
 
 
 def build_context(

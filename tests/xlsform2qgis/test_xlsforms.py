@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock
 
 import pytest
@@ -11,7 +11,6 @@ from convert2qgis.json2qgis.generate import (
     generate_uuid_field_def,
     generate_vector_dataset_def,
 )
-from convert2qgis.json2qgis.type_defs import VectorDatasetDef
 from convert2qgis.xlsform2qgis import xlsform2qgis as xlsform2qgis_module
 from convert2qgis.xlsform2qgis.expressions.functions import SUPPORTED_FUNCTIONS
 from convert2qgis.xlsform2qgis.sheet_parser import ParsedSheetRow
@@ -19,6 +18,9 @@ from convert2qgis.xlsform2qgis.xlsform2qgis import (
     XlsformConverter,
     parse_xlsform_sheets,
 )
+
+if TYPE_CHECKING:
+    from convert2qgis.json2qgis.type_defs import VectorDatasetDef
 
 
 def format_selected_expr(field_name: str, value: str) -> str:
@@ -743,7 +745,7 @@ class TestConverter:
         assert repeat_group.children[0].children == []
 
     @pytest.mark.parametrize(
-        "xlsform_type,expected_geometry",
+        ("xlsform_type", "expected_geometry"),
         [
             ("geopoint", "Point"),
             ("start-geopoint", "Point"),
