@@ -84,6 +84,6 @@ def build_choices_layer_name(*parts: str) -> str:
 
 def build_choices_layer_id(*parts: str) -> str:
     prefix = build_choices_layer_name(*parts)
-    md5_hash = md5(prefix.encode()).hexdigest()
+    md5_hash = md5(prefix.encode(), usedforsecurity=False).hexdigest()
 
     return f"{prefix}_{md5_hash}"
