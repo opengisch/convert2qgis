@@ -63,12 +63,12 @@ except ModuleNotFoundError:
 try:
     import unidecode
 except ModuleNotFoundError:
-    unidecode = None  # type: ignore
+    unidecode = None  # type: ignore[assignment]
 
 try:
     import markdown
 except ModuleNotFoundError:
-    markdown = None  # type: ignore
+    markdown = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -87,9 +87,9 @@ def get_schema_validator() -> Callable[[dict[str, Any]], None]:
     schema = get_schema_json()
 
     if fastjsonschema:
-        return fastjsonschema.compile(schema)  # type: ignore
+        return fastjsonschema.compile(schema)  # type: ignore[no-any-return]
     else:
-        return lambda _data: None  # type: ignore
+        return lambda _data: None
 
 
 def check_output(
@@ -207,22 +207,22 @@ def get_layer_flags(
     if dataset_def.is_identifiable:
         flags |= QgsMapLayer.LayerFlag.Identifiable
     else:
-        flags &= ~QgsMapLayer.LayerFlag.Identifiable  # type: ignore
+        flags &= ~QgsMapLayer.LayerFlag.Identifiable  # type: ignore[reportOperatorIssue]
 
     if dataset_def.is_removable:
         flags |= QgsMapLayer.LayerFlag.Removable
     else:
-        flags &= ~QgsMapLayer.LayerFlag.Removable  # type: ignore
+        flags &= ~QgsMapLayer.LayerFlag.Removable  # type: ignore[reportOperatorIssue]
 
     if dataset_def.is_searchable:
         flags |= QgsMapLayer.LayerFlag.Searchable
     else:
-        flags &= ~QgsMapLayer.LayerFlag.Searchable  # type: ignore
+        flags &= ~QgsMapLayer.LayerFlag.Searchable  # type: ignore[reportOperatorIssue]
 
     if dataset_def.is_private:
         flags |= QgsMapLayer.LayerFlag.Private
     else:
-        flags &= ~QgsMapLayer.LayerFlag.Private  # type: ignore
+        flags &= ~QgsMapLayer.LayerFlag.Private  # type: ignore[reportOperatorIssue]
 
     return flags
 
@@ -465,7 +465,7 @@ def set_layer_fields(
             QgsFieldConstraints.Constraint.ConstraintUnique,
             QgsFieldConstraints.Constraint.ConstraintExpression,
         ):
-            if not (constraints.constraints() & constraint_type):  # type: ignore
+            if not (constraints.constraints() & constraint_type):  # type: ignore[reportGeneralTypeIssues]
                 continue
 
             layer.setFieldConstraint(

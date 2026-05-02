@@ -11,7 +11,7 @@ from qgis.core import (
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransform,
     QgsCsException,
-    QgsFeature,  # type: ignore
+    QgsFeature,
     QgsFeatureRequest,
     QgsFeatureSink,
     QgsFeatureSource,
