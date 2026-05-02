@@ -4,7 +4,7 @@ from convert2qgis.xlsform2qgis.qgis_utils import start_app
 from convert2qgis.xlsform2qgis.xlsform2qgis import convert_xlsform
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Convert an XLSForm file to a QGIS project via JSON representation")
     parser.add_argument(
         "input_xlsform",

@@ -238,7 +238,7 @@ class ProjectCreator:
             assert isinstance(dataset_def, RasterDatasetDef)
             layer = self._create_raster_layer(dataset_def)
         # Additional layer types can be handled here
-        elif layer_type == "mesh":
+        elif layer_type == "mesh":  # type: ignore[unreachable]
             layer = self._create_mesh_layer(dataset_def)
         elif layer_type == "vector_tile":
             layer = self._create_vector_tile_layer(dataset_def)
@@ -378,7 +378,7 @@ class ProjectCreator:
         layer.updateExtents()
         layer.commitChanges()
 
-    def _set_relations(self):
+    def _set_relations(self) -> None:
         relation_manager = self._project.relationManager()
 
         assert relation_manager is not None
@@ -387,8 +387,8 @@ class ProjectCreator:
             relation = create_relation(relation_def)
             relation_manager.addRelation(relation)
 
-        for relation_def in self.definition.polymorphic_relations:
-            relation = create_polymorphic_relation(relation_def)
+        for poly_relation_def in self.definition.polymorphic_relations:
+            relation = create_polymorphic_relation(poly_relation_def)
             relation_manager.addPolymorphicRelation(relation)
 
     def _create_raster_layer(self, dataset: RasterDatasetDef) -> QgsMapLayer:

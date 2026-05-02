@@ -3,15 +3,19 @@ import gc
 import logging
 import os
 import tempfile
+from typing import Iterable, cast
 
 from qgis.core import (
     Qgis,
     QgsApplication,
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransform,
-    QgsCsException,  # type: ignore
+    QgsCsException,
+    QgsFeature,  # type: ignore
     QgsFeatureRequest,
     QgsFeatureSink,
+    QgsFeatureSource,
+    QgsFeedback,
     QgsProject,
     QgsRectangle,
     QgsVectorLayer,
@@ -57,15 +61,15 @@ def start_app() -> str:
 
         # make sure the app is closed, otherwise the container exists with non-zero
         @atexit.register
-        def exitQgis():
+        def exitQgis() -> None:
             stop_app()
 
         logger.info("QGIS app started!")
 
-    return Qgis.version()
+    return cast(str, Qgis.version())
 
 
-def stop_app():
+def stop_app() -> None:
     """Cleans up and exits QGIS"""
     global QGISAPP
 
@@ -92,7 +96,7 @@ def stop_app():
         logger.info("Deleted QGIS app!")
 
 
-def set_survey_features(project: QgsProject, features) -> QgsRectangle | None:
+def set_survey_features(project: QgsProject, features: QgsFeatureSource) -> QgsRectangle | None:
     """Loads a given set of features into the survey layer of the project.
 
     Returns the extent of the added features converted to the project CRS,
@@ -143,7 +147,7 @@ def set_survey_features(project: QgsProject, features) -> QgsRectangle | None:
 
     request = QgsFeatureRequest()
     request.setDestinationCrs(survey_layer.crs(), project.transformContext())
-    features_iterator = features.getFeatures(request)
+    features_iterator = cast(Iterable[QgsFeature], features.getFeatures(request))
     for feature in features_iterator:
         output_features = QgsVectorLayerUtils.makeFeatureCompatible(
             feature,
@@ -219,7 +223,7 @@ def transform_bounding_box(
         return QgsRectangle()
 
 
-def set_project_extent(project: QgsProject, input_extent: QgsRectangle, feedback) -> QgsRectangle:
+def set_project_extent(project: QgsProject, input_extent: QgsRectangle, feedback: QgsFeedback) -> QgsRectangle:
     """Sets project extent to given `input_extent`."""
     project_extent = QgsRectangle(input_extent)
 
@@ -277,9 +281,9 @@ class LoggingSignals(QObject):
     error = pyqtSignal(str)
     debug = pyqtSignal(str)
 
-    _instance = None
+    _instance: "LoggingSignals | None" = None
 
-    def __new__(cls):
+    def __new__(cls) -> "LoggingSignals":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
 
@@ -292,7 +296,7 @@ class QtSignalsHandler(logging.Handler):
 
         self.signals = LoggingSignals()
 
-    def emit(self, record):
+    def emit(self, record: logging.LogRecord) -> None:
         try:
             msg = self.format(record)
 

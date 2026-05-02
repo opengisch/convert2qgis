@@ -8,15 +8,15 @@ import pytest
 from convert2qgis.json2qgis.generate import (
     generate_field_def,
     generate_form_item_def,
+    generate_uuid_field_def,
     generate_vector_dataset_def,
 )
 from convert2qgis.json2qgis.type_defs import VectorDatasetDef
 from convert2qgis.xlsform2qgis import xlsform2qgis as xlsform2qgis_module
-from convert2qgis.xlsform2qgis.expressions.parser import SUPPORTED_FUNCTIONS
+from convert2qgis.xlsform2qgis.expressions.functions import SUPPORTED_FUNCTIONS
+from convert2qgis.xlsform2qgis.sheet_parser import ParsedSheetRow
 from convert2qgis.xlsform2qgis.xlsform2qgis import (
-    ParsedSheetRow,
     XlsformConverter,
-    generate_uuid_field_def,
     parse_xlsform_sheets,
 )
 
@@ -31,7 +31,7 @@ def to_parsed_sheet_rows(rows: list[dict[str, str | None]]) -> list[ParsedSheetR
     return [ParsedSheetRow(**row, idx=i) for i, row in enumerate(rows)]
 
 
-def generate_survey_row(**kwargs):
+def generate_survey_row(**kwargs) -> dict[str, str | None]:
     return {
         "type": "",
         "name": "",

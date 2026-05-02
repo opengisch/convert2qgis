@@ -1,4 +1,4 @@
-from typing import cast
+from typing import Any
 
 import pytest
 from qgis.core import QgsProject, QgsVectorLayer
@@ -22,38 +22,35 @@ from convert2qgis.json2qgis.type_defs import (
 )
 
 
-def build_project_dict() -> dict:
-    layer = cast(
-        VectorDatasetDef,
-        generate_vector_dataset_def(
-            layer_type="vector",
-            layer_id="layer_1",
-            name="Survey",
-            geometry_type="NoGeometry",
-            fields=[
-                generate_field_def(
-                    field_id="field_1",
-                    name="uuid",
-                    type="string",
-                    widget_type="TextEdit",
-                )
-            ],
-            form_config=[
-                generate_form_item_def(
-                    item_id="tab_1",
-                    type="tab",
-                    label="Survey",
-                    children=[
-                        generate_form_item_def(
-                            item_id="form_1",
-                            type="field",
-                            field_name="uuid",
-                        )
-                    ],
-                )
-            ],
-            primary_key="uuid",
-        ),
+def build_project_dict() -> dict[str, Any]:
+    layer = generate_vector_dataset_def(
+        layer_type="vector",
+        layer_id="layer_1",
+        name="Survey",
+        geometry_type="NoGeometry",
+        fields=[
+            generate_field_def(
+                field_id="field_1",
+                name="uuid",
+                type="string",
+                widget_type="TextEdit",
+            )
+        ],
+        form_config=[
+            generate_form_item_def(
+                item_id="tab_1",
+                type="tab",
+                label="Survey",
+                children=[
+                    generate_form_item_def(
+                        item_id="form_1",
+                        type="field",
+                        field_name="uuid",
+                    )
+                ],
+            )
+        ],
+        primary_key="uuid",
     )
     relation = generate_relation_def(
         relation_id="rel_1",

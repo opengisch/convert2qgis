@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import inspect
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, cast, overload
 
 from convert2qgis.xlsform2qgis.expressions.utils import (
@@ -19,7 +19,7 @@ _NULL = "NULL"
 
 
 class FunctionSpec:
-    expression: str | Callable[..., str] | None
+    expression: str | Callable[..., str | None] | None
 
     _expected_args_count: Callable[[int], bool] | int | tuple[int, int | None]
     _validate_function: Callable[[int], bool]
@@ -194,7 +194,7 @@ if(
 }
 
 
-def _args_to_placeholders(args) -> str:
+def _args_to_placeholders(args: Sequence[str]) -> str:
     return ", ".join(f"{{{i}}}" for i in range(1, len(args) + 1))
 
 
