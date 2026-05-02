@@ -64,7 +64,7 @@ class DataclassModelMixin:
         if args:
             [other] = args
             if isinstance(other, DataclassModelMixin):
-                data.update(dict(other._iter_items()))
+                data.update(dict(other._iter_items()))  # noqa: SLF001
             elif isinstance(other, Mapping):
                 data.update(other)
             else:

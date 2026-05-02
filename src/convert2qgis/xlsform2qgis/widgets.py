@@ -128,7 +128,7 @@ def widget_calculate(ctx: WidgetContext) -> ParsedRow:
             }
         )
 
-    if ctx.converter._get_label(ctx.row):
+    if ctx.converter._get_label(ctx.row):  # noqa: SLF001
         widget_type = "TextEdit"
         show_label = True
     else:
