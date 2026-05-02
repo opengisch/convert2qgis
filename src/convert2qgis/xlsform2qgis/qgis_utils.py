@@ -48,7 +48,7 @@ def start_app() -> str:
         str: QGIS app version that was started.
 
     """
-    global QGISAPP
+    global QGISAPP  # noqa: PLW0603
 
     if QGISAPP is None:
         logger.info(
@@ -77,7 +77,7 @@ def start_app() -> str:
 
 def stop_app() -> None:
     """Cleans up and exits QGIS"""
-    global QGISAPP
+    global QGISAPP  # noqa: PLW0603
 
     # note that if this function is called from @atexit.register, the globals are cleaned up
     if "QGISAPP" not in globals():
