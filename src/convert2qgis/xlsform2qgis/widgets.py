@@ -280,7 +280,7 @@ def widget_text(ctx: WidgetContext) -> ParsedRow:
 
 
 @register_type(["acknowledge"])
-def widget_acknowledge(ctx: WidgetContext) -> ParsedRow:
+def widget_acknowledge(_ctx: WidgetContext) -> ParsedRow:
     return ParsedRow(
         field={
             "widget_type": "CheckBox",
@@ -289,7 +289,7 @@ def widget_acknowledge(ctx: WidgetContext) -> ParsedRow:
 
 
 @register_type(["integer", "decimal"])
-def widget_numeric(ctx: WidgetContext) -> ParsedRow:
+def widget_numeric(_ctx: WidgetContext) -> ParsedRow:
     return ParsedRow(
         field={
             "widget_type": "Range",
@@ -497,7 +497,7 @@ def widget_begin_group(ctx: WidgetContext) -> ParsedRow:
 
 
 @register_type(["end group", "end_group"])
-def widget_end_group(ctx: WidgetContext) -> ParsedRow:
+def widget_end_group(_ctx: WidgetContext) -> ParsedRow:
     return ParsedRow(
         group_status=GroupStatus.END,
     )
@@ -582,7 +582,7 @@ def widget_begin_repeat(ctx: WidgetContext) -> ParsedRow:
 @register_type(
     ["end repeat", "end_repeat"],
 )
-def widget_end_repeat(ctx: WidgetContext) -> ParsedRow:
+def widget_end_repeat(_ctx: WidgetContext) -> ParsedRow:
     return ParsedRow(
         layer_status=LayerStatus.END,
     )
