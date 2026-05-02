@@ -4,9 +4,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field, fields
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, ClassVar, Literal, TypeAlias, TypeVar, cast
-
-from typing_extensions import Self
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeAlias, TypeVar, cast
 
 RelationStrength: TypeAlias = Literal["association", "composition"]
 ConstraintStrength: TypeAlias = Literal["hard", "soft", "not_set"]
@@ -28,6 +26,9 @@ LayerType: TypeAlias = Literal["vector", "raster", "mesh", "vector_tile", "point
 
 
 T = TypeVar("T", bound="DataclassModelMixin")
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 
 def _serialize(value: Any) -> Any:
