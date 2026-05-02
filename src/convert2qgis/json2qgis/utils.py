@@ -35,7 +35,11 @@ from qgis.core import (
 from qgis.PyQt.QtCore import QMetaType
 from qgis.PyQt.QtGui import QColor
 
-from convert2qgis.json2qgis.errors import Qgis2JsonError, UnknownCrsSystemError
+from convert2qgis.json2qgis.errors import (
+    InvalidCustomPropertyError,
+    Qgis2JsonError,
+    UnknownCrsSystemError,
+)
 from convert2qgis.json2qgis.type_defs import (
     DatasetDef,
     FieldDef,
@@ -715,7 +719,7 @@ def set_project_custom_properties(
         key_parts = key_with_scope.split("/")
 
         if len(key_parts) != 2:  # noqa: PLR2004
-            raise Exception(
+            raise InvalidCustomPropertyError(
                 f'Invalid custom property "{key_with_scope}", expected format "scope/key".'
             )
 

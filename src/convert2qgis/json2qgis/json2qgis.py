@@ -20,6 +20,7 @@ from qgis.PyQt.QtCore import QSize
 from qgis.PyQt.QtXml import QDomDocument
 
 from convert2qgis.json2qgis.errors import (
+    InvalidExtentError,
     Qgis2JsonError,
     UnknownVectorLayerDataproviderError,
 )
@@ -230,7 +231,7 @@ class ProjectCreator:
                 extent = QgsRectangle(QgsPointXY(p1_x, p1_y), QgsPointXY(p2_x, p2_y))
 
                 if extent.isEmpty() or not extent.isFinite():
-                    raise Exception('Invalid WKT extent: "%s"', extent_coords)
+                    raise InvalidExtentError('Invalid WKT extent: "%s"', extent_coords)
 
                 map_settings.setExtent(extent)
             except Exception as err:
