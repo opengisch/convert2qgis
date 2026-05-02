@@ -167,9 +167,7 @@ def convert_xlsform(
 
 
 def write_project_json(project_json: dict[str, Any], json_filename: PathOrStr) -> None:
-    logger.info(
-        "Writing intermediate JSON representation to file: {}".format(json_filename)
-    )
+    logger.info("Writing intermediate JSON representation to file: %s", json_filename)
 
     json_filename = Path(json_filename)
     json_filename.parent.mkdir(parents=True, exist_ok=True)
@@ -691,7 +689,7 @@ class XlsformConverter:
                 self._field_compatibilities["metadata"] = True
 
                 logger.info(
-                    'The metadata "username" and "email" is only available through QFieldCloud; it will return an empty value in QGIS'.format()
+                    'The metadata "username" and "email" is only available through QFieldCloud; it will return an empty value in QGIS'
                 )
         else:
             # no compatibility warnings, horray!
