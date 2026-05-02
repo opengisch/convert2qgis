@@ -37,7 +37,7 @@ class FunctionSpec:
         elif isinstance(args_count, (tuple, int)):
             self._validate_function = self._validate_arg_count
         else:
-            raise ValueError(
+            raise TypeError(
                 f"Invalid argument for `FunctionSpec`, expected int, tuple[int, int], or callable, got {type(args_count)}"
             )
 
@@ -49,7 +49,7 @@ class FunctionSpec:
         elif isinstance(self._expected_args_count, tuple):
             min_args, max_args = cast("tuple[int, int]", self._expected_args_count)
         else:
-            raise AssertionError("Unexpected type for `self._expected_args_count`")
+            raise TypeError("Unexpected type for `self._expected_args_count`")
 
         if count < min_args:
             return False

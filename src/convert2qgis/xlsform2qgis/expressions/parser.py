@@ -460,7 +460,7 @@ class _ExpressionParser:
                 raise AssertionError("Invalid call expression")
 
             if not isinstance(node.callee, Identifier):
-                raise AssertionError("Invalid call target")
+                raise TypeError("Invalid call target")
 
             cls._validate_ast(node.callee)
 
