@@ -391,12 +391,11 @@ class XlsformConverter:
                 self._get_expression_context(current_field, parser_type),
                 should_strip_tags=should_strip_tags,
             )
-        except ParseError as err:
+        except ParseError:
             logger.exception(
-                "Failed to parse expression `%s` for field `%s`: %s",
+                "Failed to parse expression `%s` for field `%s`!",
                 expression_str,
                 current_field,
-                err,
             )
 
             if self._skip_failed_expressions:
@@ -852,13 +851,12 @@ class XlsformConverter:
 
                     geometry_type_by_layer_id[layer_id] = row_geometry_type
 
-            except Exception as err:
+            except Exception:
                 logger.exception(
-                    "Failed to parse row with type `%s` and name `%s` at row index %d: %s",
+                    "Failed to parse row with type `%s` and name `%s` at row index %d!",
                     row["type"],
                     row["name"],
                     row.idx,
-                    err,
                 )
 
                 raise

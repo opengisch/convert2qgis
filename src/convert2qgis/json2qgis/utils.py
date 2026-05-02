@@ -122,10 +122,8 @@ def check_output(
             output = func(*args, **kwargs)
             try:
                 validate(output)
-            except Exception as err:
-                logger.exception(
-                    "Error during function '%s' execution: %s", func.__name__, err
-                )
+            except Exception:
+                logger.exception("Error during function '%s' execution!", func.__name__)
                 raise
 
             return output
