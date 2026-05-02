@@ -33,6 +33,7 @@ from convert2qgis.json2qgis.type_defs import (
 )
 from convert2qgis.json2qgis.utils import (
     create_fields,
+    create_polymorphic_relation,
     create_relation,
     get_layer_edit_form,
     get_layer_flags,
@@ -385,6 +386,10 @@ class ProjectCreator:
         for relation_def in self.definition.relations:
             relation = create_relation(relation_def)
             relation_manager.addRelation(relation)
+
+        for relation_def in self.definition.polymorphic_relations:
+            relation = create_polymorphic_relation(relation_def)
+            relation_manager.addPolymorphicRelation(relation)
 
     def _create_raster_layer(self, dataset: RasterDatasetDef) -> QgsMapLayer:
         # Implementation for creating a raster layer
