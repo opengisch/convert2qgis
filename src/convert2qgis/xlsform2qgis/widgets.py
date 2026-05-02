@@ -1,6 +1,6 @@
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from convert2qgis.json2qgis.generate import (
     generate_field_def,
@@ -63,7 +63,7 @@ class WidgetRegistry:
     """Singleton registry for widget type callbacks."""
 
     _instance: "WidgetRegistry" | None = None
-    _registry: dict[str, Callable[[WidgetContext], ParsedRow]] = {}
+    _registry: ClassVar[dict[str, Callable[[WidgetContext], ParsedRow]]] = {}
 
     def __new__(cls) -> "WidgetRegistry":
         if cls._instance is None:
