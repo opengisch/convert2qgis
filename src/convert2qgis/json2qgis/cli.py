@@ -19,11 +19,11 @@ def main() -> None:
         help="Path to the JSON project definition file",
     )
     parser.add_argument(
-        "--output",
+        "--output-dir",
         "-o",
         type=str,
         required=True,
-        help="Path to the output QGIS project file",
+        help="Path to the output directory for the QGIS project file",
     )
 
     args = parser.parse_args()
@@ -32,4 +32,4 @@ def main() -> None:
 
     start_app()
     creator = ProjectCreator(project_def)
-    creator.build(args.output)
+    creator.build(args.output_dir)
