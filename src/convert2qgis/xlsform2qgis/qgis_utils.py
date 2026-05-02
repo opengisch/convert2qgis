@@ -102,7 +102,7 @@ def stop_app() -> None:
         logger.info("Deleted QGIS app!")
 
 
-def set_survey_features(
+def set_survey_features(  # noqa: PLR0911
     project: QgsProject, features: QgsFeatureSource
 ) -> QgsRectangle | None:
     """

@@ -206,7 +206,7 @@ def convert_xlsform_to_json(
     return project_json
 
 
-def convert_xlsform_to_qgis_project(
+def convert_xlsform_to_qgis_project(  # noqa: PLR0913
     xlsform_filename: PathOrStr,
     output_dir: PathOrStr,
     *,
@@ -889,7 +889,7 @@ class XlsformConverter:
             )
         )
 
-    def _parse_form_row(
+    def _parse_form_row(  # noqa: PLR0912, PLR0915
         self, row: ParsedSheetRow
     ) -> tuple[list[FieldDef], list[FormItemDef], GeometryType | None]:
         fields = []

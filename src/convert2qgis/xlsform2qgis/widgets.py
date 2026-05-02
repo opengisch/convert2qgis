@@ -38,7 +38,7 @@ class WidgetContext:
 
 
 class ParsedRow:
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         layer: WeakDatasetDef | Mapping[str, Any] | None = None,
         relation: Mapping[str, Any] | None = None,

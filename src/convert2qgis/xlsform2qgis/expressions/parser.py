@@ -140,7 +140,7 @@ class _ExpressionParser:
         return cls(tokens, parser_type=ParserType.TEMPLATE)
 
     @staticmethod
-    def _validate_tokens(tokens: list[Token]) -> None:
+    def _validate_tokens(tokens: list[Token]) -> None:  # noqa: PLR0912,PLR0915
         stack: list[Token] = []
         last_significant: Token | None = None
         total = len(tokens)

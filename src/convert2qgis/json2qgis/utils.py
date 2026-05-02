@@ -229,7 +229,7 @@ def get_layer_flags(
     return flags
 
 
-def get_layer_edit_form(
+def get_layer_edit_form(  # noqa: PLR0915
     fields: QgsFields,
     dataset_def: VectorDatasetDef | dict[str, Any],
     form_config: QgsEditFormConfig | None = None,
@@ -242,7 +242,7 @@ def get_layer_edit_form(
     form_config.setLayout(Qgis.AttributeFormLayout.DragAndDrop)
     form_config.clearTabs()
 
-    def add_form_item(
+    def add_form_item(  # noqa: PLR0912, PLR0915
         form_item_def: FormItemDef,
         parent: QgsAttributeEditorContainer,
     ) -> QgsAttributeEditorContainer | None:
