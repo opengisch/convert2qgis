@@ -116,15 +116,15 @@ def parse_xlsform_sheets(
     xlsform_filename: PathOrStr,
 ) -> tuple[ParsedSheet, ParsedSheet, ParsedSheet]:
     """Extract the survey, choices and settings sheets from the given XLSForm file."""
-    logger.debug(f"Parsing XLSForm file: {xlsform_filename}")
+    logger.debug("Parsing XLSForm file: %s", xlsform_filename)
 
     xlsform_filename = Path(xlsform_filename)
     if not xlsform_filename.exists():
-        raise FileNotFoundError(f"XLSForm file not found: {xlsform_filename}")
+        raise FileNotFoundError("XLSForm file not found: %s", xlsform_filename)
 
     xlsform_filename = Path(xlsform_filename)
     if not xlsform_filename.exists():
-        raise FileNotFoundError(f"XLSForm file not found: {xlsform_filename}")
+        raise FileNotFoundError("XLSForm file not found: %s", xlsform_filename)
 
     try:
         survey_sheet = ParsedSheet("survey", xlsform_filename)
@@ -132,7 +132,8 @@ def parse_xlsform_sheets(
         settings_sheet = ParsedSheet("settings", xlsform_filename)
     except ValueError as err:
         raise XlsformConverterError(
-            f'Expected the provided spreadsheet to contain sheets named "survey", "choices" and "settings", but got an error: {err}'
+            'Expected the provided spreadsheet to contain sheets named "survey", "choices" and "settings", but got an error: %s',
+            err,
         ) from err
 
     return (survey_sheet, choices_sheet, settings_sheet)
@@ -392,7 +393,10 @@ class XlsformConverter:
             )
         except ParseError as err:
             logger.exception(
-                f"Failed to parse expression `{expression_str}` for field `{current_field}`: {err}"
+                "Failed to parse expression `%s` for field `%s`: %s",
+                expression_str,
+                current_field,
+                err,
             )
 
             if self._skip_failed_expressions:
@@ -517,7 +521,9 @@ class XlsformConverter:
 
         if not label:
             logger.debug(
-                f"Label for default language `{default_language}` not found in row index {sheet_row.idx}, falling back to `label` column!"
+                "Label for default language `%s` not found in row index %d, falling back to `label` column!",
+                default_language,
+                sheet_row.idx,
             )
 
             label = strip_html(sheet_row["label"] or "")
@@ -551,7 +557,7 @@ class XlsformConverter:
         field_type = XLS_TYPES_MAP.get(xlsform_type)
 
         if not field_type:
-            logger.debug(f"Couldn't determine the type for `{field_name}`!")
+            logger.debug("Couldn't determine the type for `%s`!", field_name)
 
             return WeakFieldDef()
 
@@ -563,7 +569,8 @@ class XlsformConverter:
         # you cannot define both `calculation` and `default` at the same time, in such case use only `calculation`
         if sheet_row["calculation"] and sheet_row["default"]:
             logger.warning(
-                "Both `calculation` and `default` are set; only calculation will be used"
+                "Both `calculation` and `default` are set for field `%s`; only calculation will be used",
+                field_name,
             )
 
         # handle default value from either `calculation` or `default` column
@@ -816,7 +823,7 @@ class XlsformConverter:
 
                 if not row["type"]:
                     logger.debug(
-                        f"Skipping row with empty `type` at row index {row.idx}!"
+                        "Skipping row with empty `type` at row index %d!", row.idx
                     )
 
                     continue
@@ -836,7 +843,9 @@ class XlsformConverter:
                 if row_geometry_type:
                     if layer_id in geometry_type_by_layer_id:
                         logger.warning(
-                            f"Multiple geometry types defined for layer `{dataset_def.name}`; using the first one `{row_geometry_type}`"
+                            "Multiple geometry types defined for layer `%s`; using the first one `%s`",
+                            dataset_def.name,
+                            row_geometry_type,
                         )
 
                         continue
@@ -845,7 +854,11 @@ class XlsformConverter:
 
             except Exception as err:
                 logger.exception(
-                    f"Failed to parse row with type `{row['type']}` and name `{row['name']}` at row index {row.idx}: {err}"
+                    "Failed to parse row with type `%s` and name `%s` at row index %d: %s",
+                    row["type"],
+                    row["name"],
+                    row.idx,
+                    err,
                 )
 
                 raise
@@ -888,7 +901,7 @@ class XlsformConverter:
         widget_type_cb = self.widget_registry.get(row["type"])
 
         if not widget_type_cb:
-            logger.warning(f"Unsupported xlsform type: {row['type']}, skipping!")
+            logger.warning("Unsupported xlsform type: %s, skipping!", row["type"])
 
             return [], [], None
 
@@ -1048,7 +1061,7 @@ class XlsformConverter:
         for idx, row in enumerate(self.choices_sheet, 1):
             if not row["list_name"]:
                 logger.debug(
-                    f"Skipping row with empty `list_name` in choices at row {idx}!"
+                    "Skipping row with empty `list_name` in choices at row %d!", idx
                 )
 
                 last_list_name = None
@@ -1072,7 +1085,9 @@ class XlsformConverter:
 
                 if not col_name:
                     logger.debug(
-                        f"Empty value for `{col_name}` in choices at row {idx}, using empty string as default!"
+                        "Empty value for `%s` in choices at row %d, using empty string as default!",
+                        col_name,
+                        idx,
                     )
 
                     continue

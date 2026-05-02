@@ -100,7 +100,10 @@ class ParsedSheet:
 
             if field_name == f"Field{index + 1}":
                 logger.debug(
-                    f"Skipping default field name `{field_name}` at index {index} in sheet `{self.name}`!"
+                    "Skipping default field name `%s` at index %d in sheet `%s`!",
+                    field_name,
+                    index,
+                    self.name,
                 )
 
                 continue
@@ -109,7 +112,11 @@ class ParsedSheet:
 
             if self.indices[normalized_field_name] != -1:
                 logger.warning(
-                    f"Column name `{normalized_field_name}` found both at index {self.indices[normalized_field_name]} and {index} in sheet `{self.name}`; will use the first occurrence!"
+                    "Column name `%s` found both at index %d and %d in sheet `%s`; will use the first occurrence!",
+                    normalized_field_name,
+                    self.indices[normalized_field_name],
+                    index,
+                    self.name,
                 )
 
                 continue
@@ -141,7 +148,9 @@ class ParsedSheet:
 
             if not any(row.values()):
                 logger.debug(
-                    f"Skipping spreadsheet row with empty values at row index {idx} in sheet `{self.name}`!"
+                    "Skipping spreadsheet row with empty values at row index %d in sheet `%s`!",
+                    idx,
+                    self.name,
                 )
                 continue
 

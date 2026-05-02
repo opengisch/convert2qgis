@@ -122,9 +122,9 @@ def check_output(
             output = func(*args, **kwargs)
             try:
                 validate(output)
-            except Exception as e:
+            except Exception as err:
                 logger.exception(
-                    f"Error during function '{func.__name__}' execution: {e}"
+                    "Error during function '%s' execution: %s", func.__name__, err
                 )
                 raise
 
@@ -324,7 +324,8 @@ def get_layer_edit_form(
                     item_label = markdown.markdown(item_label)
                 else:
                     logger.warning(
-                        f"Markdown support is not available. Text item '{item_label}' will not be rendered as HTML, but as raw markdown."
+                        "Markdown support is not available. Text item '%s' will not be rendered as HTML, but as raw markdown.",
+                        item_label,
                     )
 
             container = QgsAttributeEditorTextElement(item_label, parent)
@@ -435,7 +436,9 @@ def set_layer_fields(
 
         if field_idx == -1:
             logger.warning(
-                f"Field '{field_name}' not found in layer '{dataset_def.name}'. Skipping field configuration."
+                "Field '%s' not found in layer '%s'. Skipping field configuration.",
+                field_name,
+                dataset_def.name,
             )
 
             continue
@@ -765,7 +768,10 @@ def str_to_crs(
     except Exception as err:
         if fallback_crs:
             logger.warning(
-                f"Failed to create CRS from definition '{crs_def}', attempting to use fallback CRS definition '{fallback_crs}'... Error: {err}"
+                "Failed to create CRS from definition '%s', attempting to use fallback CRS definition '%s'... Error: %s",
+                crs_def,
+                fallback_crs,
+                err,
             )
 
             return str_to_crs(fallback_crs)
@@ -775,7 +781,9 @@ def str_to_crs(
     if not crs.isValid():
         if fallback_crs:
             logger.warning(
-                f"CRS created from definition '{crs_def}' is invalid, attempting to use fallback CRS definition '{fallback_crs}'..."
+                "CRS created from definition '%s' is invalid, attempting to use fallback CRS definition '%s'...",
+                crs_def,
+                fallback_crs,
             )
 
             return str_to_crs(fallback_crs)

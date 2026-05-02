@@ -52,7 +52,7 @@ def start_app() -> str:
 
     if QGISAPP is None:
         logger.info(
-            f"Starting QGIS app version {Qgis.versionInt()} ({Qgis.devVersion()})..."
+            "Starting QGIS app version %s (%s)...", Qgis.versionInt(), Qgis.devVersion()
         )
         argvb: list[str] = []
 
@@ -215,12 +215,12 @@ def transform_bounding_box(
         )
 
     if not source_crs.isValid():
-        logger.warning(f"Invalid source CRS: {source_authid}")
+        logger.warning("Invalid source CRS: %s", source_authid)
 
         return QgsRectangle()
 
     if not dest_crs.isValid():
-        logger.warning(f"Invalid destination CRS: {dest_authid}")
+        logger.warning("Invalid destination CRS: %s", dest_authid)
 
         return QgsRectangle()
 

@@ -104,7 +104,7 @@ class ProjectCreator:
     def _create_project(self) -> QgsProject:
         project_title = self.definition.project.title or "xlsform_project"
 
-        logger.info(f"Creating project with title: {project_title}")
+        logger.info("Creating project with title: %s", project_title)
         logger.info("Creating %d layers...", len(self.definition.all_datasets))
 
         for dataset_def in self.definition.all_datasets:
@@ -177,11 +177,13 @@ class ProjectCreator:
 
         project_filename = f"{normalize_name(project_title)}.qgs"
 
-        logger.info(f'Writing project to "{project_filename}"...')
+        logger.info('Writing project to "%s"...', project_filename)
 
         if not self._project.write(str(project_filename)):
             logger.error(
-                f'Failed to write project to "{project_filename}": {self._project.error()}'
+                'Failed to write project to "%s": %s',
+                project_filename,
+                self._project.error(),
             )
 
         return self._project
@@ -211,14 +213,16 @@ class ProjectCreator:
 
         extent_coords = self.definition.project.extent
         if extent_coords.strip():
-            logger.info(f'Attempting to set project extent to "{extent_coords}"')
+            logger.info('Attempting to set project extent to "%s"', extent_coords)
 
             try:
                 coords = extent_coords.split(",")
 
                 if len(coords) != 4:
                     raise ValueError(
-                        f'Invalid number of coordinates: expected 4, got {len(coords)} in "{extent_coords}"'
+                        'Invalid number of coordinates: expected 4, got %d in "%s"',
+                        len(coords),
+                        extent_coords,
                     )
 
                 p1_x, p1_y, p2_x, p2_y = map(float, coords)
@@ -226,11 +230,11 @@ class ProjectCreator:
                 extent = QgsRectangle(QgsPointXY(p1_x, p1_y), QgsPointXY(p2_x, p2_y))
 
                 if extent.isEmpty() or not extent.isFinite():
-                    raise Exception(f"Invalid WKT extent: {extent_coords}")
+                    raise Exception('Invalid WKT extent: "%s"', extent_coords)
 
                 map_settings.setExtent(extent)
             except Exception as err:
-                logger.warning(f'Failed to set WKT extent "{extent_coords}": {err}')
+                logger.warning('Failed to set WKT extent "%s": %s', extent_coords, err)
 
         map_settings.writeXml(map_canvas_node, document)
 
@@ -373,17 +377,19 @@ class ProjectCreator:
 
         if not bool(layer_data_provider) or not layer_data_provider.isValid():
             raise UnknownVectorLayerDataproviderError(
-                f"Failed to get data provider for layer 1: {dataset_def.name}"
+                "Failed to get data provider for layer 1: %s", dataset_def.name
             )
 
         if layer.geometryType() != Qgis.GeometryType.Null:
             raise NotImplementedError(
-                f"Cannot edit geometry layer: {dataset_def.name} has geometry {layer.geometryType()}"
+                "Cannot edit geometry layer: %s has geometry %s",
+                dataset_def.name,
+                layer.geometryType(),
             )
 
         layer_data = dataset_def.data
         if not layer_data:
-            logger.debug(f"No feature data to be added to layer {dataset_def.name}!")
+            logger.debug("No feature data to be added to layer %s!", dataset_def.name)
 
             return
 
