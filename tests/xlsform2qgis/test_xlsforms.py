@@ -88,13 +88,13 @@ class TestConverter:
         monkeypatch.setattr(
             xlsform2qgis_module,
             "parse_xlsform_sheets",
-            lambda *args, **kwargs: (MagicMock(), MagicMock(), MagicMock()),
+            lambda *_args, **_kwargs: (MagicMock(), MagicMock(), MagicMock()),
         )
         converter = MagicMock()
         converter.is_valid.return_value = True
         converter.to_json.return_value = project_json
         monkeypatch.setattr(
-            xlsform2qgis_module, "XlsformConverter", lambda *args, **kwargs: converter
+            xlsform2qgis_module, "XlsformConverter", lambda *_args, **_kwargs: converter
         )
 
         result = xlsform2qgis_module.convert_xlsform(

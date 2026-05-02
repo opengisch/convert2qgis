@@ -89,7 +89,7 @@ def get_schema_validator() -> Callable[[dict[str, Any]], None]:
     if fastjsonschema:
         return fastjsonschema.compile(schema)  # type: ignore
     else:
-        return lambda data: None  # type: ignore
+        return lambda _data: None  # type: ignore
 
 
 def check_output(
