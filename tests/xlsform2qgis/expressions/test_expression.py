@@ -63,7 +63,7 @@ def ctx() -> ExpressionContext:
 
 
 @pytest.mark.parametrize(
-    ["xls_format", "expected"],
+    ("xls_format", "expected"),
     [
         ("%Y-%m-%d", "yyyy-MM-dd"),
         ("%y/%n/%e", "yy/M/d"),
@@ -78,7 +78,7 @@ def test_convert_date_format(xls_format: str, expected: str) -> None:
 
 
 @pytest.mark.parametrize(
-    ["xls_format", "expected"],
+    ("xls_format", "expected"),
     [
         ("%Y-%m-%d %H:%M:%S", "yyyy-MM-dd HH:mm:ss"),
         ("%y/%n/%e %h:%M", "yy/M/d H:mm"),
