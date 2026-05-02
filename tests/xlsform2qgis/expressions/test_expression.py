@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 def build_context(
-    expressions: dict[str, str] | None = None,
+    expressions: "dict[str, str] | None" = None,
     parser_type: ParserType = ParserType.EXPRESSION,
 ) -> ExpressionContext:
     choices_by_list: dict[str, list[ChoicesDef]] = {

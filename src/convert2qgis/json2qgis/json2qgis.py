@@ -65,7 +65,7 @@ class ProjectCreator:
     _has_geometry: bool = False
     """Whether any of the project vector layers has a geometry type."""
 
-    def __init__(self, definition: ProjectDef | dict[str, Any]) -> None:
+    def __init__(self, definition: "ProjectDef | dict[str, Any]") -> None:
         # validate the project definition against the JSON schema if a schema validator is available
         if fastjsonschema:
             try:

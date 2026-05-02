@@ -8,7 +8,7 @@ authors = [
     {name = "Rakan Farhouda",email = "rakan@opengis.ch"}
 ]
 readme = "README.md"
-requires-python = ">=3.10,<4.0"
+requires-python = ">=3.9"
 dependencies = []
 
 [project.optional-dependencies]

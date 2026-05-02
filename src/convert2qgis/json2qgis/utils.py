@@ -202,7 +202,7 @@ def get_field_type(type_name: str) -> QMetaType.Type:
 
 
 def get_layer_flags(
-    flags: QgsMapLayer.LayerFlags, dataset_def: DatasetDef | dict[str, Any]
+    flags: QgsMapLayer.LayerFlags, dataset_def: "DatasetDef | dict[str, Any]"
 ) -> QgsMapLayer.LayerFlags:
     dataset_def = dataset_from_data(dataset_def)
 
@@ -231,8 +231,8 @@ def get_layer_flags(
 
 def get_layer_edit_form(  # noqa: PLR0915
     fields: QgsFields,
-    dataset_def: VectorDatasetDef | dict[str, Any],
-    form_config: QgsEditFormConfig | None = None,
+    dataset_def: "VectorDatasetDef | dict[str, Any]",
+    form_config: "QgsEditFormConfig | None" = None,
 ) -> QgsEditFormConfig:
     dataset_def = VectorDatasetDef.from_data(dataset_def)
 
@@ -245,7 +245,7 @@ def get_layer_edit_form(  # noqa: PLR0915
     def add_form_item(  # noqa: PLR0912, PLR0915
         form_item_def: FormItemDef,
         parent: QgsAttributeEditorContainer,
-    ) -> QgsAttributeEditorContainer | None:
+    ) -> "QgsAttributeEditorContainer | None":
         item_type = form_item_def.type
         item_label = form_item_def.label
 
@@ -387,7 +387,7 @@ def get_layer_edit_form(  # noqa: PLR0915
     return form_config
 
 
-def create_field(field_def: FieldDef | dict[str, Any]) -> QgsField:
+def create_field(field_def: "FieldDef | dict[str, Any]") -> QgsField:
     field_def = FieldDef.from_data(field_def)
 
     # Map FieldDef type to Qt QMetaType type IDs
@@ -404,7 +404,7 @@ def create_field(field_def: FieldDef | dict[str, Any]) -> QgsField:
     return field
 
 
-def create_fields(dataset_def: VectorDatasetDef | dict[str, Any]) -> QgsFields:
+def create_fields(dataset_def: "VectorDatasetDef | dict[str, Any]") -> QgsFields:
     dataset_def = VectorDatasetDef.from_data(dataset_def)
 
     fields = QgsFields()
@@ -417,7 +417,7 @@ def create_fields(dataset_def: VectorDatasetDef | dict[str, Any]) -> QgsFields:
 
 
 def set_layer_fields(
-    layer: QgsVectorLayer, dataset_def: VectorDatasetDef | dict[str, Any]
+    layer: QgsVectorLayer, dataset_def: "VectorDatasetDef | dict[str, Any]"
 ) -> None:
     dataset_def = VectorDatasetDef.from_data(dataset_def)
 
@@ -485,7 +485,7 @@ def set_layer_fields(
 
 
 def set_field_default_value(
-    field: QgsField, field_def: FieldDef | dict[str, Any]
+    field: QgsField, field_def: "FieldDef | dict[str, Any]"
 ) -> None:
     field_def = FieldDef.from_data(field_def)
 
@@ -500,7 +500,7 @@ def set_field_default_value(
 
 
 def set_field_constraints(
-    field: QgsField, field_def: FieldDef | dict[str, Any]
+    field: QgsField, field_def: "FieldDef | dict[str, Any]"
 ) -> None:
     field_def = FieldDef.from_data(field_def)
 
@@ -552,7 +552,7 @@ def set_field_constraints(
     field.setConstraints(constraints)
 
 
-def set_field_widget(field: QgsField, field_def: FieldDef | dict[str, Any]) -> None:
+def set_field_widget(field: QgsField, field_def: "FieldDef | dict[str, Any]") -> None:
     field_def = FieldDef.from_data(field_def)
 
     widget_type = field_def.widget_type
@@ -608,7 +608,7 @@ def set_field_widget(field: QgsField, field_def: FieldDef | dict[str, Any]) -> N
 
 
 def set_layer_tree(
-    project: QgsProject, project_def: ProjectDef | dict[str, Any]
+    project: QgsProject, project_def: "ProjectDef | dict[str, Any]"
 ) -> None:
     project_def = ProjectDef.from_data(project_def)
 
@@ -669,7 +669,7 @@ def get_relation_strength(strength_name: RelationStrength) -> Qgis.RelationshipS
     return strengths[strength_name]
 
 
-def create_relation(relation_def: RelationDef | dict[str, Any]) -> QgsRelation:
+def create_relation(relation_def: "RelationDef | dict[str, Any]") -> QgsRelation:
     relation_def = RelationDef.from_data(relation_def)
 
     relation = QgsRelation()
@@ -689,7 +689,7 @@ def create_relation(relation_def: RelationDef | dict[str, Any]) -> QgsRelation:
 
 
 def create_polymorphic_relation(
-    relation_def: PolymorphicRelationDef | dict[str, Any],
+    relation_def: "PolymorphicRelationDef | dict[str, Any]",
 ) -> QgsPolymorphicRelation:
     relation_def = PolymorphicRelationDef.from_data(relation_def)
 
@@ -748,7 +748,7 @@ def set_layer_custom_properties(
 
 
 def str_to_crs(
-    crs_def: str, fallback_crs: str | None = None
+    crs_def: str, fallback_crs: "str | None" = None
 ) -> QgsCoordinateReferenceSystem:
     """
     Converts a CRS definition string to a `QgsCoordinateReferenceSystem` object.

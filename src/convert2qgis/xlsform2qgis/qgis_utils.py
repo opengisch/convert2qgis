@@ -30,7 +30,7 @@ logger = logging.getLogger(__package__)
 
 obj = QObject()
 
-QGISAPP: QgsApplication | None = None
+QGISAPP: "QgsApplication | None" = None
 
 
 def start_app() -> str:
@@ -104,7 +104,7 @@ def stop_app() -> None:
 
 def set_survey_features(  # noqa: PLR0911
     project: QgsProject, features: QgsFeatureSource
-) -> QgsRectangle | None:
+) -> "QgsRectangle | None":
     """
     Loads a given set of features into the survey layer of the project.
 
@@ -192,8 +192,8 @@ def set_survey_features(  # noqa: PLR0911
 
 def transform_bounding_box(
     extent: QgsRectangle,
-    source_authid: str | QgsCoordinateReferenceSystem,
-    dest_authid: str | QgsCoordinateReferenceSystem,
+    source_authid: "str | QgsCoordinateReferenceSystem",
+    dest_authid: "str | QgsCoordinateReferenceSystem",
     project: QgsProject,
 ) -> QgsRectangle:
     if isinstance(source_authid, str):

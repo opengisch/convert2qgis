@@ -144,11 +144,11 @@ def parse_xlsform_sheets(
 def convert_xlsform(
     xlsform_filename: PathOrStr,
     *,
-    output_dir: PathOrStr | None = None,
-    settings: ConverterSettings | None = None,
+    output_dir: "PathOrStr | None" = None,
+    settings: "ConverterSettings | None" = None,
     skip_failed_expressions: bool = False,
-    json_filename: PathOrStr | None = None,
-) -> QgsProject | dict[str, Any]:
+    json_filename: "PathOrStr | None" = None,
+) -> "QgsProject | dict[str, Any]":
     if output_dir:
         return convert_xlsform_to_qgis_project(
             xlsform_filename,
@@ -181,9 +181,9 @@ def write_project_json(project_json: dict[str, Any], json_filename: PathOrStr) -
 def convert_xlsform_to_json(
     xlsform_filename: PathOrStr,
     *,
-    settings: ConverterSettings | None = None,
+    settings: "ConverterSettings | None" = None,
     skip_failed_expressions: bool = False,
-    json_filename: PathOrStr | None = None,
+    json_filename: "PathOrStr | None" = None,
 ) -> dict[str, Any]:
     survey_sheet, choices_sheet, settings_sheet = parse_xlsform_sheets(xlsform_filename)
 
@@ -210,10 +210,10 @@ def convert_xlsform_to_qgis_project(  # noqa: PLR0913
     xlsform_filename: PathOrStr,
     output_dir: PathOrStr,
     *,
-    settings: ConverterSettings | None = None,
-    survey_features: QgsFeatureSource | None = None,
+    settings: "ConverterSettings | None" = None,
+    survey_features: "QgsFeatureSource | None" = None,
     skip_failed_expressions: bool = False,
-    json_filename: PathOrStr | None = None,
+    json_filename: "PathOrStr | None" = None,
 ) -> QgsProject:
     project_json = convert_xlsform_to_json(
         xlsform_filename,
@@ -273,7 +273,7 @@ class XlsformConverter:
     _layer_ids: list[str]
     """Stack to keep track of the current layer ids while parsing the survey sheet, to be able to assign fields and form items to the correct layer. Whenever a new layer is defined, its id is pushed to the stack, and whenever a layer definition ends, it is popped from the stack."""
 
-    _container_ids: list[str | None]
+    _container_ids: "list[str | None]"
     """Stack to keep track of the current parent container ids while parsing the survey sheet, to be able to assign form items to the correct parent container. Whenever a new container is defined, its id is pushed to the stack, and whenever a container definition ends, it is popped from the stack. The value `None` is used to represent the root level, where there is no parent container."""
 
     def __init__(
@@ -281,7 +281,7 @@ class XlsformConverter:
         survey_sheet: ParsedSheet,
         choices_sheet: ParsedSheet,
         settings_sheet: ParsedSheet,
-        settings: ConverterSettings | None = None,
+        settings: "ConverterSettings | None" = None,
         skip_failed_expressions: bool = False,
     ) -> None:
         settings = settings or {}
@@ -350,7 +350,7 @@ class XlsformConverter:
     def all_datasets(self) -> list[DatasetDef]:
         return [*self.vector_datasets, *self.raster_datasets]
 
-    def find_vector_dataset(self, layer_id: str) -> VectorDatasetDef | None:
+    def find_vector_dataset(self, layer_id: str) -> "VectorDatasetDef | None":
         for dataset_def in self.vector_datasets:
             if dataset_def.layer_id == layer_id:
                 return dataset_def
@@ -454,7 +454,7 @@ class XlsformConverter:
 
     def _find_form_item(
         self, item_id: str, form_items: list[FormItemDef]
-    ) -> FormItemDef | None:
+    ) -> "FormItemDef | None":
         for form_item_def in form_items:
             if form_item_def.item_id == item_id:
                 return form_item_def
@@ -477,7 +477,7 @@ class XlsformConverter:
     def _add_container(self, container_def: FormItemDef) -> None:
         self._add_form_item(container_def)
 
-    def _enter_container(self, container_def: FormItemDef | None) -> None:
+    def _enter_container(self, container_def: "FormItemDef | None") -> None:
         if container_def:
             self._add_container(container_def)
 
@@ -485,12 +485,12 @@ class XlsformConverter:
         else:
             self._container_ids.append(None)
 
-    def _exit_container(self) -> str | None:
+    def _exit_container(self) -> "str | None":
         item_id = self._container_ids.pop()
 
         return item_id
 
-    def _current_container(self) -> FormItemDef | None:
+    def _current_container(self) -> "FormItemDef | None":
         if not self._container_ids:
             raise ValueError("No form containers defined yet!")
 
@@ -730,7 +730,7 @@ class XlsformConverter:
 
         return settings
 
-    def get_display_expression(self, xlsform_expression: str | None) -> str:
+    def get_display_expression(self, xlsform_expression: "str | None") -> str:
         if not xlsform_expression:
             return ""
 
@@ -891,7 +891,7 @@ class XlsformConverter:
 
     def _parse_form_row(  # noqa: PLR0912, PLR0915
         self, row: ParsedSheetRow
-    ) -> tuple[list[FieldDef], list[FormItemDef], GeometryType | None]:
+    ) -> "tuple[list[FieldDef], list[FormItemDef], GeometryType | None]":
         fields = []
         form_items = []
         geometry_type = None
@@ -1029,7 +1029,7 @@ class XlsformConverter:
     def _get_choices_record(
         self,
         columns: list[str],
-        raw_choice_record: ChoicesDef | None,
+        raw_choice_record: "ChoicesDef | None",
     ) -> ChoicesDef:
         record_data: dict[str, Any] = {
             "additional_columns": {},
@@ -1180,8 +1180,8 @@ class XlsformConverter:
         return ""
 
     def _get_field_settings_max_pixels(
-        self, row: ParsedSheetRow, previous_max_pixels: int | None
-    ) -> int | None:
+        self, row: ParsedSheetRow, previous_max_pixels: "int | None"
+    ) -> "int | None":
         # the current image field does not have parameters set, return the previous value
         if not row["parameters"]:
             return previous_max_pixels

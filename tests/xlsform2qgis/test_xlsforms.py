@@ -29,11 +29,11 @@ def format_selected_expr(field_name: str, value: str) -> str:
     return expression.format("selected", f'"{field_name}"', f"'{value}'")
 
 
-def to_parsed_sheet_rows(rows: list[dict[str, str | None]]) -> list[ParsedSheetRow]:
+def to_parsed_sheet_rows(rows: list[dict[str, "str | None"]]) -> list[ParsedSheetRow]:
     return [ParsedSheetRow(**row, idx=i) for i, row in enumerate(rows)]
 
 
-def generate_survey_row(**kwargs) -> dict[str, str | None]:
+def generate_survey_row(**kwargs) -> dict[str, "str | None"]:
     return {
         "type": "",
         "name": "",

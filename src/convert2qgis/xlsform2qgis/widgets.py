@@ -40,12 +40,12 @@ class WidgetContext:
 class ParsedRow:
     def __init__(  # noqa: PLR0913
         self,
-        layer: WeakDatasetDef | Mapping[str, Any] | None = None,
-        relation: Mapping[str, Any] | None = None,
-        field: WeakFieldDef | Mapping[str, Any] | None = None,
-        form_field: WeakFormItemDef | Mapping[str, Any] | None = None,
-        form_container: Mapping[str, Any] | None = None,
-        geometry_type: GeometryType | None = None,
+        layer: "WeakDatasetDef | Mapping[str, Any] | None" = None,
+        relation: "Mapping[str, Any] | None" = None,
+        field: "WeakFieldDef | Mapping[str, Any] | None" = None,
+        form_field: "WeakFormItemDef | Mapping[str, Any] | None" = None,
+        form_container: "Mapping[str, Any] | None" = None,
+        geometry_type: "GeometryType | None" = None,
         group_status: GroupStatus = GroupStatus.NONE,
         layer_status: LayerStatus = LayerStatus.NONE,
     ) -> None:
@@ -82,7 +82,7 @@ class WidgetRegistry:
         self,
         widget_type: str,
         is_strict: bool = False,
-    ) -> Callable[[WidgetContext], ParsedRow] | None:
+    ) -> "Callable[[WidgetContext], ParsedRow] | None":
         cb = self._registry.get(widget_type)
 
         if not cb and not is_strict:
