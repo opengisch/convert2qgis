@@ -72,7 +72,9 @@ try:
 
     logger.debug("The logger will also emit pyQt signals!")
 except Exception:
-    pass
+    logger.debug(
+        "Running outside QGIS, failed to import `QtSignalsHandler`, the logger will not emit `pyQt` signals!"
+    )
 
 
 XLS_TYPES_MAP = {
