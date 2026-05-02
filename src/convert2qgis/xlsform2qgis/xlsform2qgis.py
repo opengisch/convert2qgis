@@ -1068,7 +1068,7 @@ class XlsformConverter:
 
             # the choices from a single list must be consecutive values
             if last_list_name is not None and last_list_name != row["list_name"]:
-                assert last_list_name not in choices
+                assert row["list_name"] not in choices
 
             last_list_name = row["list_name"]
             choice = ChoicesDef(
