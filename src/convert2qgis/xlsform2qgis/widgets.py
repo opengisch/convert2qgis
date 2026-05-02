@@ -62,7 +62,7 @@ class ParsedRow:
 class WidgetRegistry:
     """Singleton registry for widget type callbacks."""
 
-    _instance: "WidgetRegistry" | None = None
+    _instance: "WidgetRegistry | None" = None
     _registry: ClassVar[dict[str, Callable[[WidgetContext], ParsedRow]]] = {}
 
     def __new__(cls) -> "WidgetRegistry":
