@@ -35,7 +35,7 @@ from qgis.core import (
 from qgis.PyQt.QtCore import QMetaType
 from qgis.PyQt.QtGui import QColor
 
-from convert2qgis.json2qgis.errors import Qgis2JsonError, UnknownCrsSystem
+from convert2qgis.json2qgis.errors import Qgis2JsonError, UnknownCrsSystemError
 from convert2qgis.json2qgis.type_defs import (
     DatasetDef,
     FieldDef,
@@ -776,7 +776,7 @@ def str_to_crs(
 
             return str_to_crs(fallback_crs)
         else:
-            raise UnknownCrsSystem(f"Failed to create CRS: {err}") from err
+            raise UnknownCrsSystemError(f"Failed to create CRS: {err}") from err
 
     if not crs.isValid():
         if fallback_crs:
@@ -788,6 +788,6 @@ def str_to_crs(
 
             return str_to_crs(fallback_crs)
         else:
-            raise UnknownCrsSystem(f"Invalid CRS: {crs_def}")
+            raise UnknownCrsSystemError(f"Invalid CRS: {crs_def}")
 
     return crs
