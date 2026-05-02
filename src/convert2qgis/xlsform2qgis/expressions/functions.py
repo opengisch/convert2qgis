@@ -389,17 +389,17 @@ def jr_choice_name(choice_value: str, list_name: str, ctx: ExpressionContext) ->
 
 
 @register_function(name="min", args_count=(1, None))
-def min(*args: str) -> str:
+def func_min(*args: str) -> str:
     return "min({})".format(_args_to_placeholders(args))
 
 
 @register_function(name="max", args_count=(1, None))
-def max(*args: str) -> str:
+def func_max(*args: str) -> str:
     return "max({})".format(_args_to_placeholders(args))
 
 
 @register_function(name="sum", args_count=(1, None))
-def sum(*args: str) -> str:
+def func_sum(*args: str) -> str:
     return "sum({})".format(_args_to_placeholders(args))
 
 
