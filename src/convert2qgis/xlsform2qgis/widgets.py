@@ -19,10 +19,8 @@ from convert2qgis.xlsform2qgis.converter_utils import (
     parse_xlsform_select_from_file_parameters,
     strip_html,
 )
-from convert2qgis.xlsform2qgis.expressions.expression import (
-    ParserType,
-    QgisRenderType,
-)
+from convert2qgis.xlsform2qgis.expressions.expression import QgisRenderType
+from convert2qgis.xlsform2qgis.expressions.parser import ParserType
 from convert2qgis.xlsform2qgis.sheet_parser import ParsedSheetRow
 from convert2qgis.xlsform2qgis.type_defs import (
     GroupStatus,
@@ -64,10 +62,10 @@ class ParsedRow:
 class WidgetRegistry:
     """Singleton registry for widget type callbacks."""
 
-    _instance = None
+    _instance: "WidgetRegistry" | None = None
     _registry: dict[str, Callable[[WidgetContext], ParsedRow]] = {}
 
-    def __new__(cls):
+    def __new__(cls) -> "WidgetRegistry":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
 

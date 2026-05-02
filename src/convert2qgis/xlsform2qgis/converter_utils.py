@@ -5,17 +5,17 @@ from io import StringIO
 
 
 class HTMLStripper(HTMLParser):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.reset()
         self.strict = False
         self.convert_charrefs = True
         self.text = StringIO()
 
-    def handle_data(self, data):
+    def handle_data(self, data: str) -> None:
         self.text.write(data)
 
-    def get_data(self):
+    def get_data(self) -> str:
         return self.text.getvalue()
 
 

@@ -36,9 +36,37 @@ lint.ignore = [
 
 [tool.mypy]
 python_version = "3.12"
-ignore_missing_imports = true
-disable_error_code = ["import-untyped"]
 
+strict = true
+warn_unreachable = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unused_configs = true
+no_implicit_reexport = true
+show_error_codes = true
+pretty = true
+
+# Sensible escape hatches for real-world projects
+disallow_subclassing_any = false
+disallow_any_generics = true
+disallow_untyped_decorators = false
+
+# Usually better handled gradually per-module
+ignore_missing_imports = false
+
+# Not enabled yet, since pylance, mypy and ty have very different understanding of what should be ignored
+warn_unused_ignores = false
+
+[[tool.mypy.overrides]]
+module = [
+  "tests",
+  "tests.*",
+]
+# Allow missing return types (and other annotations) in tests
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+# Still type-check inside test bodies
+check_untyped_defs = true
 
 [build-system]
 requires = ["uv_build>=0.9.13,<0.10.0"]

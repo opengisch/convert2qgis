@@ -4,8 +4,8 @@ from typing import assert_never
 
 from convert2qgis.json2qgis.type_defs import ChoicesDef
 from convert2qgis.xlsform2qgis.converter_utils import strip_html
+from convert2qgis.xlsform2qgis.expressions.functions import SUPPORTED_FUNCTIONS
 from convert2qgis.xlsform2qgis.expressions.parser import (
-    SUPPORTED_FUNCTIONS,
     AstNode,
     BinaryOp,
     BracketList,
@@ -236,7 +236,7 @@ class Expression:
         self,
         use_current: bool = False,
         expression_type: QgisRenderType = QgisRenderType.EXPRESSION,
-    ):
+    ) -> str:
         try:
             return self._to_qgis(use_current=use_current, expression_type=expression_type)
         except Exception:

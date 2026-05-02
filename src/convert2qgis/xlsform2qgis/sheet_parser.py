@@ -5,6 +5,7 @@ from collections.abc import Iterable, Iterator
 from typing import Any, cast
 
 from qgis.core import (
+    QgsFeature,
     QgsVectorLayer,
 )
 from qgis.PyQt.QtCore import QVariant
@@ -113,7 +114,7 @@ class ParsedSheet:
             self.indices[normalized_field_name] = index
 
     def __iter__(self) -> Iterator[ParsedSheetRow]:
-        it = cast(Iterable, self.layer.getFeatures())
+        it = cast(Iterable[QgsFeature], self.layer.getFeatures())
         for idx, feat in enumerate(it):
             if idx == 0 and self.skip_first_row:
                 continue

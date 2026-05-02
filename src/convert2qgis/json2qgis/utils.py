@@ -80,7 +80,7 @@ def get_schema_json() -> dict[str, Any]:
     data_path = files("convert2qgis.json2qgis").joinpath("schema/schema_20251121.json")
     schema_json = data_path.read_text()
 
-    return json.loads(schema_json)
+    return cast(dict[str, Any], json.loads(schema_json))
 
 
 def get_schema_validator() -> Callable[[dict[str, Any]], None]:
@@ -92,13 +92,13 @@ def get_schema_validator() -> Callable[[dict[str, Any]], None]:
         return lambda data: None  # type: ignore
 
 
-def check_output(path: str):
+def check_output(path: str) -> Callable[[Callable[..., dict[str, Any]]], Callable[..., dict[str, Any]]]:
     """Decorator to quickly do a sanity check if the output of a given function is a valid JSON schema."""
     schema = get_schema_json()
 
-    def decorator(func):
+    def decorator(func: Callable[..., dict[str, Any]]) -> Callable[..., dict[str, Any]]:
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> dict[str, Any]:
             # If `fastjsonschema` is not available, skip validation and just execute the function
             if resolve_path is None or fastjsonschema is None:
                 return func(*args, **kwargs)

@@ -1,21 +1,22 @@
 import pytest
 
 from convert2qgis.xlsform2qgis.expressions.tokenizer import (
+    Token,
     TokenType,
     tokenize_expression,
     tokenize_template,
 )
 
 
-def _tokens(expression: str):
+def _tokens(expression: str) -> list[Token]:
     return list(tokenize_expression(expression))
 
 
-def _template_tokens(expression: str):
+def _template_tokens(expression: str) -> list[Token]:
     return list(tokenize_template(expression))
 
 
-def _strip_eof(tokens):
+def _strip_eof(tokens: list[Token]) -> list[Token]:
     return [token for token in tokens if token.type != TokenType.EOF]
 
 

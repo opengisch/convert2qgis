@@ -50,9 +50,8 @@ from convert2qgis.xlsform2qgis.converter_utils import (
 from convert2qgis.xlsform2qgis.expressions.expression import (
     Expression,
     ExpressionContext,
-    ParserType,
 )
-from convert2qgis.xlsform2qgis.expressions.parser import ParseError
+from convert2qgis.xlsform2qgis.expressions.parser import ParseError, ParserType
 from convert2qgis.xlsform2qgis.qgis_utils import set_survey_features
 from convert2qgis.xlsform2qgis.sheet_parser import ParsedSheet, ParsedSheetRow
 from convert2qgis.xlsform2qgis.type_defs import (
@@ -148,7 +147,7 @@ def convert_xlsform(
     settings: ConverterSettings | None = None,
     skip_failed_expressions: bool = False,
     json_filename: PathOrStr | None = None,
-):
+) -> QgsProject | dict[str, Any]:
     if output_dir:
         return convert_xlsform_to_qgis_project(
             xlsform_filename,
@@ -300,12 +299,12 @@ class XlsformConverter:
         self._project_extent = settings.get("extent", "").strip() or ""
         self._xlsform_settings = {
             **self._get_xlsform_settings(),
-            **settings.get("xlsform_settings", {}),
+            **cast(XlsformSettings, settings.get("xlsform_settings", {})),
         }
 
         basemap_url = settings.get("basemap_url", None)
         if basemap_url:
-            basemap_name = settings.get("basemap_name") or _FALLBACK_BASEMAP_NAME
+            basemap_name = cast(str | None, settings.get("basemap_name")) or _FALLBACK_BASEMAP_NAME
         elif basemap_url == "":
             basemap_url = ""
             basemap_name = ""
@@ -835,7 +834,7 @@ class XlsformConverter:
 
             dataset_def.geometry_type = geometry_type
 
-    def add_basemap_layer(self):
+    def add_basemap_layer(self) -> None:
         layer_id = "basemap_layer"
         basemap_dataset_def = generate_raster_dataset_def(
             crs="EPSG:3857",
@@ -1030,6 +1029,7 @@ class XlsformConverter:
             if last_list_name is not None and last_list_name != row["list_name"]:
                 assert last_list_name not in choices
 
+            last_list_name = row["list_name"]
             choice = ChoicesDef(
                 name=str(row["name"]).strip(),
                 label=self._get_label(row),
@@ -1132,7 +1132,7 @@ class XlsformConverter:
 
         return ""
 
-    def _get_field_settings_max_pixels(self, row, previous_max_pixels: int | None) -> int | None:
+    def _get_field_settings_max_pixels(self, row: ParsedSheetRow, previous_max_pixels: int | None) -> int | None:
         # the current image field does not have parameters set, return the previous value
         if not row["parameters"]:
             return previous_max_pixels
