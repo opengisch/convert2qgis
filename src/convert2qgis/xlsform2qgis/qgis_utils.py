@@ -67,7 +67,7 @@ def start_app() -> str:
 
         # make sure the app is closed, otherwise the container exists with non-zero
         @atexit.register
-        def exitQgis() -> None:
+        def exitQgis() -> None:  # noqa: N802
             stop_app()
 
         logger.info("QGIS app started!")

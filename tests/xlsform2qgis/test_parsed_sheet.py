@@ -34,16 +34,16 @@ class _FakeQgsVectorLayer:
         self._feature_count = feature_count
         self._header_attrs = header_attrs or []
 
-    def isValid(self) -> bool:
+    def isValid(self) -> bool:  # noqa: N802
         return True
 
     def fields(self) -> _FakeQgsFields:
         return self._fields
 
-    def featureCount(self) -> int:
+    def featureCount(self) -> int:  # noqa: N802
         return self._feature_count
 
-    def getFeature(self, _idx: int) -> _FakeQgsFeature:
+    def getFeature(self, _idx: int) -> _FakeQgsFeature:  # noqa: N802
         return _FakeQgsFeature(self._header_attrs)
 
 
