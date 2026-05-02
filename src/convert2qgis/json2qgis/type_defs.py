@@ -627,6 +627,9 @@ class ChoicesDef(DataclassModelMixin):
 
     additional_columns: dict[str, str] = field(default_factory=dict)
 
+    # use parent class `__hash__` implementation, as it is reset when we set custom `__eq__`
+    __hash__ = DataclassModelMixin.__hash__
+
     def __eq__(self, other: object) -> bool:
         if isinstance(other, ChoicesDef):
             return self.to_dict() == other.to_dict()
