@@ -68,7 +68,8 @@ class ParsedSheet:
             raise ValueError(f"Unexpected sheet name {self.name}!")
 
         self.layer = QgsVectorLayer(
-            str(xlsform_filename) + f"|layername={self.name}|option:FIELD_TYPES=STRING|option:HEADERS=FORCE",
+            str(xlsform_filename)
+            + f"|layername={self.name}|option:FIELD_TYPES=STRING|option:HEADERS=FORCE",
             self.name,
             "ogr",
         )
@@ -98,7 +99,9 @@ class ParsedSheet:
                 continue
 
             if field_name == f"Field{index + 1}":
-                logger.debug(f"Skipping default field name `{field_name}` at index {index} in sheet `{self.name}`!")
+                logger.debug(
+                    f"Skipping default field name `{field_name}` at index {index} in sheet `{self.name}`!"
+                )
 
                 continue
 
@@ -114,7 +117,7 @@ class ParsedSheet:
             self.indices[normalized_field_name] = index
 
     def __iter__(self) -> Iterator[ParsedSheetRow]:
-        it = cast(Iterable[QgsFeature], self.layer.getFeatures())
+        it = cast("Iterable[QgsFeature]", self.layer.getFeatures())
         for idx, feat in enumerate(it):
             if idx == 0 and self.skip_first_row:
                 continue
@@ -137,7 +140,9 @@ class ParsedSheet:
                 row[col_name] = ParsedSheet._to_python_value(value)
 
             if not any(row.values()):
-                logger.debug(f"Skipping spreadsheet row with empty values at row index {idx} in sheet `{self.name}`!")
+                logger.debug(
+                    f"Skipping spreadsheet row with empty values at row index {idx} in sheet `{self.name}`!"
+                )
                 continue
 
             yield row

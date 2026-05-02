@@ -79,7 +79,9 @@ class Expression:
 
         def render_tmpl(node: AstNode, seen: set[str]) -> tuple[str, int]:
             if expression_type == QgisRenderType.EXPRESSION:
-                raise AssertionError("`render_tmpl` should only be used for `TEMPLATE` expressions")
+                raise AssertionError(
+                    "`render_tmpl` should only be used for `TEMPLATE` expressions"
+                )
 
             if isinstance(node, Template):
                 elements = [render_tmpl(arg, seen)[0] for arg in node.elements]
@@ -89,7 +91,9 @@ class Expression:
 
             if isinstance(node, Literal):
                 if node.type not in (LiteralType.STRING, LiteralType.EMPTY):
-                    raise AssertionError(f"Unexpected literal type in template expression: {node.type}")
+                    raise AssertionError(
+                        f"Unexpected literal type in template expression: {node.type}"
+                    )
 
                 return node.value, 100
 
@@ -108,9 +112,11 @@ class Expression:
                 field_expr = get_field_value(node.name)
                 return TEMPLATE_START + field_expr + TEMPLATE_END, 100
 
-            raise AssertionError(f"Unexpected node type in template expression: {type(node)}")
+            raise AssertionError(
+                f"Unexpected node type in template expression: {type(node)}"
+            )
 
-        def render(node: AstNode, seen: set[str]) -> tuple[str, int]:  # noqa: C901
+        def render(node: AstNode, seen: set[str]) -> tuple[str, int]:
             # regular render should never encounter Template nodes, but we add an assertion here just to be safe
             if isinstance(node, Template):
                 return " || ".join(render(arg, seen)[0] for arg in node.elements), 100
@@ -160,7 +166,9 @@ class Expression:
 
                 if left_prec < prec:
                     left = f"({left})"
-                if right_prec < prec or (right_prec == prec and node.operator in _non_associative_ops()):
+                if right_prec < prec or (
+                    right_prec == prec and node.operator in _non_associative_ops()
+                ):
                     right = f"({right})"
 
                 return f"{left} {operator} {right}", prec
@@ -230,7 +238,9 @@ class Expression:
         else:  # pragma: no cover
             assert_never(expression_type)
 
-            raise NotImplementedError(f"Unknown parser type: {self.context.parser_type}")
+            raise NotImplementedError(
+                f"Unknown parser type: {self.context.parser_type}"
+            )
 
     def to_qgis(
         self,
@@ -238,7 +248,9 @@ class Expression:
         expression_type: QgisRenderType = QgisRenderType.EXPRESSION,
     ) -> str:
         try:
-            return self._to_qgis(use_current=use_current, expression_type=expression_type)
+            return self._to_qgis(
+                use_current=use_current, expression_type=expression_type
+            )
         except Exception:
             if self.context.skip_expression_errors:
                 return ""
@@ -247,7 +259,8 @@ class Expression:
 
     def is_str(self) -> bool:
         if isinstance(self.ast, Template) and all(
-            isinstance(elem, Literal) and elem.type == LiteralType.STRING for elem in self.ast.elements
+            isinstance(elem, Literal) and elem.type == LiteralType.STRING
+            for elem in self.ast.elements
         ):
             return True
 

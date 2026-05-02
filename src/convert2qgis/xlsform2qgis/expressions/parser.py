@@ -22,7 +22,7 @@ class LiteralType(StrEnum):
     EMPTY = "empty"
 
     @staticmethod
-    def from_token_type(token_type: TokenType) -> "LiteralType":
+    def from_token_type(token_type: TokenType) -> LiteralType:
         if token_type == TokenType.NUMBER:
             return LiteralType.NUMBER
         if token_type == TokenType.STRING:
@@ -96,7 +96,9 @@ class ParseError(Exception):
     position: int | None = None
     token: Token | None = None
 
-    def __init__(self, message: str, position: int | None = None, token: Token | None = None) -> None:
+    def __init__(
+        self, message: str, position: int | None = None, token: Token | None = None
+    ) -> None:
         self.message = message
         self.position = position
         self.token = token
@@ -126,19 +128,19 @@ class _ExpressionParser:
         self._parser_type = parser_type
 
     @classmethod
-    def from_expression(cls, expression: str) -> "_ExpressionParser":
+    def from_expression(cls, expression: str) -> _ExpressionParser:
         tokens = list(tokenize_expression(expression))
         cls._validate_tokens(tokens)
         return cls(tokens, parser_type=ParserType.EXPRESSION)
 
     @classmethod
-    def from_template(cls, expression: str) -> "_ExpressionParser":
+    def from_template(cls, expression: str) -> _ExpressionParser:
         tokens = list(tokenize_template(expression))
         cls._validate_tokens(tokens)
         return cls(tokens, parser_type=ParserType.TEMPLATE)
 
     @staticmethod
-    def _validate_tokens(tokens: list[Token]) -> None:  # noqa: C901
+    def _validate_tokens(tokens: list[Token]) -> None:
         stack: list[Token] = []
         last_significant: Token | None = None
         total = len(tokens)
@@ -169,14 +171,22 @@ class _ExpressionParser:
 
                 if value == ",":
                     if last_significant is None:
-                        raise ParseError("Comma cannot start an expression", token.start)
+                        raise ParseError(
+                            "Comma cannot start an expression", token.start
+                        )
                     if last_significant.type == TokenType.OPERATOR:
                         raise ParseError("Comma after operator", token.start)
-                    if last_significant.type == TokenType.PUNCTUATION and last_significant.value == OPENING_BRACKET:
+                    if (
+                        last_significant.type == TokenType.PUNCTUATION
+                        and last_significant.value == OPENING_BRACKET
+                    ):
                         raise ParseError("Comma after opening bracket", token.start)
                     if index + 1 < total:
                         next_token = tokens[index + 1]
-                        if next_token.type == TokenType.PUNCTUATION and next_token.value == CLOSING_BRACKET:
+                        if (
+                            next_token.type == TokenType.PUNCTUATION
+                            and next_token.value == CLOSING_BRACKET
+                        ):
                             raise ParseError("Trailing comma", token.start)
 
                         if next_token.type == TokenType.EOF:
@@ -199,12 +209,18 @@ class _ExpressionParser:
                         last_significant = token
                         continue
                     raise ParseError("Consecutive operators", token.start)
-                if last_significant.type == TokenType.PUNCTUATION and last_significant.value == OPENING_BRACKET:
+                if (
+                    last_significant.type == TokenType.PUNCTUATION
+                    and last_significant.value == OPENING_BRACKET
+                ):
                     if token.value in unary_ops:
                         last_significant = token
                         continue
                     raise ParseError("Operator after opening bracket", token.start)
-                if last_significant.type == TokenType.PUNCTUATION and last_significant.value == ",":
+                if (
+                    last_significant.type == TokenType.PUNCTUATION
+                    and last_significant.value == ","
+                ):
                     if token.value in unary_ops:
                         last_significant = token
                         continue
@@ -221,7 +237,10 @@ class _ExpressionParser:
             if last_significant.type == TokenType.OPERATOR:
                 raise ParseError("Trailing operator", last_significant.start)
 
-            if last_significant.type == TokenType.PUNCTUATION and last_significant.value == ",":
+            if (
+                last_significant.type == TokenType.PUNCTUATION
+                and last_significant.value == ","
+            ):
                 raise ParseError("Trailing comma", last_significant.start)
 
     def _current(self) -> Token:
@@ -272,7 +291,9 @@ class _ExpressionParser:
             token = self._current()
 
             if token.type == TokenType.STRING:
-                elements.append(Literal(token.value, token.raw_value, LiteralType.STRING))
+                elements.append(
+                    Literal(token.value, token.raw_value, LiteralType.STRING)
+                )
                 self._advance()
 
                 continue
@@ -348,7 +369,11 @@ class _ExpressionParser:
         if token.type == TokenType.OPERATOR and token.value in {"not", "+", "-"}:
             self._advance()
             operand = self._parse_unary()
-            if token.value == "-" and isinstance(operand, Literal) and operand.type == LiteralType.NUMBER:
+            if (
+                token.value == "-"
+                and isinstance(operand, Literal)
+                and operand.type == LiteralType.NUMBER
+            ):
                 return Literal(
                     f"-{operand.value}",
                     f"-{operand.raw_value}",
@@ -361,7 +386,9 @@ class _ExpressionParser:
         token = self._current()
         if token.type == TokenType.NUMBER or token.type == TokenType.STRING:
             self._advance()
-            return Literal(token.value, token.raw_value, LiteralType.from_token_type(token.type))
+            return Literal(
+                token.value, token.raw_value, LiteralType.from_token_type(token.type)
+            )
         if token.type == TokenType.VARIABLE:
             self._advance()
             return Variable(token.value, token.raw_value)
@@ -401,13 +428,16 @@ class _ExpressionParser:
 
             comma = self._expect(TokenType.PUNCTUATION, ",")
 
-            if self._current().type == TokenType.PUNCTUATION and self._current().value == close_bracket:
+            if (
+                self._current().type == TokenType.PUNCTUATION
+                and self._current().value == close_bracket
+            ):
                 raise ParseError("Trailing comma", comma.start)
 
         return elements
 
     @classmethod
-    def _validate_ast(cls, node: AstNode) -> None:  # noqa: C901
+    def _validate_ast(cls, node: AstNode) -> None:
         if isinstance(node, UnaryOp):
             if node.operand is None:
                 raise AssertionError("Invalid unary expression")

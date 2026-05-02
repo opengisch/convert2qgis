@@ -111,8 +111,6 @@ _DEFAULT_BASEMAP_NAME = "OpenStreetMap"
 class XlsformConverterError(Exception):
     """Base error class for XLSForm conversion errors."""
 
-    pass
-
 
 def parse_xlsform_sheets(
     xlsform_filename: PathOrStr,
@@ -168,7 +166,9 @@ def convert_xlsform(
 
 
 def write_project_json(project_json: dict[str, Any], json_filename: PathOrStr) -> None:
-    logger.info("Writing intermediate JSON representation to file: {}".format(json_filename))
+    logger.info(
+        "Writing intermediate JSON representation to file: {}".format(json_filename)
+    )
 
     json_filename = Path(json_filename)
     json_filename.parent.mkdir(parents=True, exist_ok=True)
@@ -299,12 +299,15 @@ class XlsformConverter:
         self._project_extent = settings.get("extent", "").strip() or ""
         self._xlsform_settings = {
             **self._get_xlsform_settings(),
-            **cast(XlsformSettings, settings.get("xlsform_settings", {})),
+            **cast("XlsformSettings", settings.get("xlsform_settings", {})),
         }
 
         basemap_url = settings.get("basemap_url", None)
         if basemap_url:
-            basemap_name = cast(str | None, settings.get("basemap_name")) or _FALLBACK_BASEMAP_NAME
+            basemap_name = (
+                cast("str | None", settings.get("basemap_name"))
+                or _FALLBACK_BASEMAP_NAME
+            )
         elif basemap_url == "":
             basemap_url = ""
             basemap_name = ""
@@ -391,7 +394,9 @@ class XlsformConverter:
                 should_strip_tags=should_strip_tags,
             )
         except ParseError as err:
-            logger.error(f"Failed to parse expression `{expression_str}` for field `{current_field}`: {err}")
+            logger.error(
+                f"Failed to parse expression `{expression_str}` for field `{current_field}`: {err}"
+            )
 
             if self._skip_failed_expressions:
                 return Expression(
@@ -447,7 +452,9 @@ class XlsformConverter:
 
         return dataset_def
 
-    def _find_form_item(self, item_id: str, form_items: list[FormItemDef]) -> FormItemDef | None:
+    def _find_form_item(
+        self, item_id: str, form_items: list[FormItemDef]
+    ) -> FormItemDef | None:
         for form_item_def in form_items:
             if form_item_def.item_id == item_id:
                 return form_item_def
@@ -491,10 +498,14 @@ class XlsformConverter:
             return None
 
         current_dataset_def = self._current_dataset()
-        current_container = self._find_form_item(self._container_ids[-1], current_dataset_def.form_config)
+        current_container = self._find_form_item(
+            self._container_ids[-1], current_dataset_def.form_config
+        )
 
         if current_container is None:
-            raise AssertionError(f"Current container with id {self._container_ids[-1]} not found!")
+            raise AssertionError(
+                f"Current container with id {self._container_ids[-1]} not found!"
+            )
 
         return current_container
 
@@ -540,7 +551,7 @@ class XlsformConverter:
         field_def = WeakFieldDef()
         xlsform_type = get_xlsform_type(sheet_row["type"])
         field_name = str(sheet_row["name"]).strip()
-        field_type = XLS_TYPES_MAP.get(xlsform_type, None)
+        field_type = XLS_TYPES_MAP.get(xlsform_type)
 
         if not field_type:
             logger.debug(f"Couldn't determine the type for `{field_name}`!")
@@ -549,16 +560,20 @@ class XlsformConverter:
 
         self._check_xlsform_type_compatibility(xlsform_type)
 
-        field_def.update(cast(WeakFieldDef, self._get_field_def_alias(sheet_row)))
+        field_def.update(cast("WeakFieldDef", self._get_field_def_alias(sheet_row)))
         field_def.update(self._get_field_constraints_config(sheet_row))
 
         # you cannot define both `calculation` and `default` at the same time, in such case use only `calculation`
         if sheet_row["calculation"] and sheet_row["default"]:
-            logger.warning("Both `calculation` and `default` are set; only calculation will be used")
+            logger.warning(
+                "Both `calculation` and `default` are set; only calculation will be used"
+            )
 
         # handle default value from either `calculation` or `default` column
         if sheet_row["calculation"]:
-            default_value_expression = self.get_expression(sheet_row["calculation"], field_name).to_qgis()
+            default_value_expression = self.get_expression(
+                sheet_row["calculation"], field_name
+            ).to_qgis()
 
             field_def.update(
                 {
@@ -601,7 +616,9 @@ class XlsformConverter:
 
         return field_default_config
 
-    def _get_field_constraints_config(self, sheet_row: ParsedSheetRow) -> dict[str, Any]:
+    def _get_field_constraints_config(
+        self, sheet_row: ParsedSheetRow
+    ) -> dict[str, Any]:
         field_name = str(sheet_row["name"]).strip()
         indices = self.survey_sheet.indices
 
@@ -611,13 +628,17 @@ class XlsformConverter:
 
         if sheet_row["constraint"]:
             constraint_str = str(sheet_row["constraint"]).strip()
-            constraint_expression = self.get_expression(constraint_str, field_name).to_qgis()
+            constraint_expression = self.get_expression(
+                constraint_str, field_name
+            ).to_qgis()
 
             if constraint_expression:
                 constraint_expression_strength = "hard"
 
             if sheet_row["constraint_message"]:
-                constraint_expression_description = str(sheet_row["constraint_message"]).strip()
+                constraint_expression_description = str(
+                    sheet_row["constraint_message"]
+                ).strip()
 
         is_not_null = False
         is_not_null_strength: ConstraintStrength = "not_set"
@@ -754,7 +775,9 @@ class XlsformConverter:
 
         self.vector_datasets.extend(self._get_choices_datasets())
 
-        display_expression = self.get_display_expression(self._xlsform_settings["instance_name"])
+        display_expression = self.get_display_expression(
+            self._xlsform_settings["instance_name"]
+        )
         layer_id = "survey_layer"
         layer_name = "Survey"
         self._enter_vector_dataset(
@@ -795,11 +818,15 @@ class XlsformConverter:
                 assert dataset_def is not None
 
                 if not row["type"]:
-                    logger.debug(f"Skipping row with empty `type` at row index {row.idx}!")
+                    logger.debug(
+                        f"Skipping row with empty `type` at row index {row.idx}!"
+                    )
 
                     continue
 
-                row_field_defs, row_form_item_defs, row_geometry_type = self._parse_form_row(row)
+                row_field_defs, row_form_item_defs, row_geometry_type = (
+                    self._parse_form_row(row)
+                )
 
                 dataset_def.fields.extend(row_field_defs)
                 for form_item_def in row_form_item_defs:
@@ -854,7 +881,9 @@ class XlsformConverter:
             )
         )
 
-    def _parse_form_row(self, row: ParsedSheetRow) -> tuple[list[FieldDef], list[FormItemDef], GeometryType | None]:  # noqa: C901
+    def _parse_form_row(
+        self, row: ParsedSheetRow
+    ) -> tuple[list[FieldDef], list[FormItemDef], GeometryType | None]:
         fields = []
         form_items = []
         geometry_type = None
@@ -875,7 +904,9 @@ class XlsformConverter:
         form_item_default = WeakFormItemDef()
 
         if row["relevant"]:
-            visibility_expr = self.get_expression(row["relevant"], row["name"]).to_qgis()
+            visibility_expr = self.get_expression(
+                row["relevant"], row["name"]
+            ).to_qgis()
         else:
             visibility_expr = ""
 
@@ -1019,7 +1050,9 @@ class XlsformConverter:
 
         for idx, row in enumerate(self.choices_sheet, 1):
             if not row["list_name"]:
-                logger.debug(f"Skipping row with empty `list_name` in choices at row {idx}!")
+                logger.debug(
+                    f"Skipping row with empty `list_name` in choices at row {idx}!"
+                )
 
                 last_list_name = None
 
@@ -1058,11 +1091,15 @@ class XlsformConverter:
 
             cleaned_choices = [
                 # We always add an empty option
-                self._get_choices_record(columns, ChoicesDef(name="", label="", list_name=list_name)),
+                self._get_choices_record(
+                    columns, ChoicesDef(name="", label="", list_name=list_name)
+                ),
             ]
 
             for raw_choice_record in raw_choice_records:
-                cleaned_choices.append(self._get_choices_record(columns, raw_choice_record))
+                cleaned_choices.append(
+                    self._get_choices_record(columns, raw_choice_record)
+                )
 
             cleaned_choices_by_list[list_name] = cleaned_choices
 
@@ -1132,12 +1169,16 @@ class XlsformConverter:
 
         return ""
 
-    def _get_field_settings_max_pixels(self, row: ParsedSheetRow, previous_max_pixels: int | None) -> int | None:
+    def _get_field_settings_max_pixels(
+        self, row: ParsedSheetRow, previous_max_pixels: int | None
+    ) -> int | None:
         # the current image field does not have parameters set, return the previous value
         if not row["parameters"]:
             return previous_max_pixels
 
-        image_max_pixels_matches = re.search(r"max-pixels=\s*([0-9]+)", row["parameters"], flags=re.IGNORECASE)
+        image_max_pixels_matches = re.search(
+            r"max-pixels=\s*([0-9]+)", row["parameters"], flags=re.IGNORECASE
+        )
 
         # the current image field does not have max-pixels parameter, return the previous value
         if not image_max_pixels_matches:

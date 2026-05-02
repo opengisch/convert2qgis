@@ -70,7 +70,9 @@ def converter():
 
 
 class TestConverter:
-    def test_convert_xlsform_writes_json_without_output_dir(self, tmp_path, monkeypatch):
+    def test_convert_xlsform_writes_json_without_output_dir(
+        self, tmp_path, monkeypatch
+    ):
         project_json = {
             "version": "1.0",
             "project": {"title": "Survey"},
@@ -89,7 +91,9 @@ class TestConverter:
         converter = MagicMock()
         converter.is_valid.return_value = True
         converter.to_json.return_value = project_json
-        monkeypatch.setattr(xlsform2qgis_module, "XlsformConverter", lambda *args, **kwargs: converter)
+        monkeypatch.setattr(
+            xlsform2qgis_module, "XlsformConverter", lambda *args, **kwargs: converter
+        )
 
         result = xlsform2qgis_module.convert_xlsform(
             "survey.xlsx",
@@ -191,68 +195,56 @@ class TestConverter:
 
         assert choices_datasets == [
             generate_vector_dataset_def(
-                **{
-                    "name": "list_list_001",
-                    "layer_id": choices_datasets[0].layer_id,
-                    "geometry_type": "NoGeometry",
-                    "crs": "EPSG:4326",
-                    "custom_properties": {
-                        "QFieldSync/action": "copy",
-                        "QFieldSync/cloud_action": "no_action",
-                    },
-                    "is_private": True,
-                    "data": choices_data_by_list.get("list_001", []),
-                    "fields": [
-                        generate_field_def(
-                            **{
-                                "field_id": choices_datasets[0].fields[0].field_id,
-                                "name": "name",
-                                "type": "string",
-                                "widget_type": "TextEdit",
-                            },
-                        ),
-                        generate_field_def(
-                            **{
-                                "field_id": choices_datasets[0].fields[1].field_id,
-                                "name": "label",
-                                "type": "string",
-                                "widget_type": "TextEdit",
-                            },
-                        ),
-                    ],
-                }
+                name="list_list_001",
+                layer_id=choices_datasets[0].layer_id,
+                geometry_type="NoGeometry",
+                crs="EPSG:4326",
+                custom_properties={
+                    "QFieldSync/action": "copy",
+                    "QFieldSync/cloud_action": "no_action",
+                },
+                is_private=True,
+                data=choices_data_by_list.get("list_001", []),
+                fields=[
+                    generate_field_def(
+                        field_id=choices_datasets[0].fields[0].field_id,
+                        name="name",
+                        type="string",
+                        widget_type="TextEdit",
+                    ),
+                    generate_field_def(
+                        field_id=choices_datasets[0].fields[1].field_id,
+                        name="label",
+                        type="string",
+                        widget_type="TextEdit",
+                    ),
+                ],
             ),
             generate_vector_dataset_def(
-                **{
-                    "name": "list_list_002",
-                    "layer_id": choices_datasets[1].layer_id,
-                    "geometry_type": "NoGeometry",
-                    "crs": "EPSG:4326",
-                    "custom_properties": {
-                        "QFieldSync/action": "copy",
-                        "QFieldSync/cloud_action": "no_action",
-                    },
-                    "is_private": True,
-                    "data": choices_data_by_list.get("list_002", []),
-                    "fields": [
-                        generate_field_def(
-                            **{
-                                "field_id": choices_datasets[1].fields[0].field_id,
-                                "name": "name",
-                                "type": "string",
-                                "widget_type": "TextEdit",
-                            },
-                        ),
-                        generate_field_def(
-                            **{
-                                "field_id": choices_datasets[1].fields[1].field_id,
-                                "name": "label",
-                                "type": "string",
-                                "widget_type": "TextEdit",
-                            },
-                        ),
-                    ],
-                }
+                name="list_list_002",
+                layer_id=choices_datasets[1].layer_id,
+                geometry_type="NoGeometry",
+                crs="EPSG:4326",
+                custom_properties={
+                    "QFieldSync/action": "copy",
+                    "QFieldSync/cloud_action": "no_action",
+                },
+                is_private=True,
+                data=choices_data_by_list.get("list_002", []),
+                fields=[
+                    generate_field_def(
+                        field_id=choices_datasets[1].fields[0].field_id,
+                        name="name",
+                        type="string",
+                        widget_type="TextEdit",
+                    ),
+                    generate_field_def(
+                        field_id=choices_datasets[1].fields[1].field_id,
+                        name="label",
+                        type="string",
+                        widget_type="TextEdit",
+                    ),
+                ],
             ),
         ]
 
@@ -300,7 +292,9 @@ class TestConverter:
         ]
         assert all("external_id" in record for record in choices_dataset.data)
         assert all("list_name" not in record for record in choices_dataset.data)
-        assert all("additional_columns" not in record for record in choices_dataset.data)
+        assert all(
+            "additional_columns" not in record for record in choices_dataset.data
+        )
 
     def test_get_choices_datasets_skips_empty_additional_columns(self, converter):
         converter.choices_sheet.__iter__.return_value = to_parsed_sheet_rows(
@@ -452,7 +446,9 @@ class TestConverter:
                 ),
             ]
         )
-        converter.settings_sheet.__iter__.return_value = to_parsed_sheet_rows([{"default_language": "English"}])
+        converter.settings_sheet.__iter__.return_value = to_parsed_sheet_rows(
+            [{"default_language": "English"}]
+        )
 
         converter._xlsform_settings = converter._get_xlsform_settings()
         converter.convert()
@@ -539,7 +535,10 @@ class TestConverter:
                     type="group_box",
                     children=[
                         generate_form_item_def(
-                            item_id=survey_layer.form_config[0].children[0].children[0].item_id,
+                            item_id=survey_layer.form_config[0]
+                            .children[0]
+                            .children[0]
+                            .item_id,
                             field_name="field_001",
                             type="field",
                             is_label_on_top=True,
@@ -614,7 +613,11 @@ class TestConverter:
                             type="group_box",
                             children=[
                                 generate_form_item_def(
-                                    item_id=survey_layer.form_config[0].children[0].children[0].children[0].item_id,
+                                    item_id=survey_layer.form_config[0]
+                                    .children[0]
+                                    .children[0]
+                                    .children[0]
+                                    .item_id,
                                     field_name="field_001_001",
                                     type="field",
                                     is_label_on_top=True,
@@ -779,9 +782,14 @@ class TestConverter:
         converter.convert()
 
         assert converter._xlsform_settings
-        assert converter._xlsform_settings["instance_name"] == r"concat(${lname}, '-', ${fname}, '-', uuid())"
         assert (
-            converter.get_display_expression(converter._xlsform_settings["instance_name"])
+            converter._xlsform_settings["instance_name"]
+            == r"concat(${lname}, '-', ${fname}, '-', uuid())"
+        )
+        assert (
+            converter.get_display_expression(
+                converter._xlsform_settings["instance_name"]
+            )
             == "concat(\"lname\", '-', \"fname\", '-', uuid(format:='WithoutBraces'))"
         )
 
@@ -790,7 +798,9 @@ class TestConverter:
         return str(Path(__file__).parent / "data/service_rating.xlsx")
 
     def test_xlsform_survey_rating_file(self, xlsform_filename: str):
-        survey_sheet, choices_sheet, settings_sheet = parse_xlsform_sheets(xlsform_filename)
+        survey_sheet, choices_sheet, settings_sheet = parse_xlsform_sheets(
+            xlsform_filename
+        )
 
         converter = XlsformConverter(
             survey_sheet,
@@ -808,7 +818,7 @@ class TestConverter:
         sorted_datasets = sorted(converter.all_datasets, key=lambda ml: ml.name)
 
         survey_layer, *_ = sorted_datasets
-        survey_layer = cast(VectorDatasetDef, survey_layer)
+        survey_layer = cast("VectorDatasetDef", survey_layer)
 
         assert len(survey_layer.fields) == 21
         assert survey_layer.fields[0] == generate_uuid_field_def(
@@ -1095,15 +1105,23 @@ class TestConverter:
                             is_markdown=False,
                         ),
                         generate_form_item_def(
-                            item_id=survey_layer.form_config[0].children[0].children[1].item_id,
+                            item_id=survey_layer.form_config[0]
+                            .children[0]
+                            .children[1]
+                            .item_id,
                             field_name="recommend",
                             type="field",
                         ),
                         generate_form_item_def(
-                            item_id=survey_layer.form_config[0].children[0].children[2].item_id,
+                            item_id=survey_layer.form_config[0]
+                            .children[0]
+                            .children[2]
+                            .item_id,
                             field_name="services",
                             type="field",
-                            visibility_expression=format_selected_expr("recommend", "yes"),
+                            visibility_expression=format_selected_expr(
+                                "recommend", "yes"
+                            ),
                         ),
                     ],
                 ),
@@ -1119,41 +1137,72 @@ class TestConverter:
                             type="group_box",
                             children=[
                                 generate_form_item_def(
-                                    item_id=survey_layer.form_config[0].children[1].children[0].children[0].item_id,
+                                    item_id=survey_layer.form_config[0]
+                                    .children[1]
+                                    .children[0]
+                                    .children[0]
+                                    .item_id,
                                     field_name="info_portal_rating",
                                     type="field",
                                 ),
                                 generate_form_item_def(
-                                    item_id=survey_layer.form_config[0].children[1].children[0].children[1].item_id,
+                                    item_id=survey_layer.form_config[0]
+                                    .children[1]
+                                    .children[0]
+                                    .children[1]
+                                    .item_id,
                                     field_name="clinical_trials_rating",
                                     type="field",
                                 ),
                                 generate_form_item_def(
-                                    item_id=survey_layer.form_config[0].children[1].children[0].children[2].item_id,
+                                    item_id=survey_layer.form_config[0]
+                                    .children[1]
+                                    .children[0]
+                                    .children[2]
+                                    .item_id,
                                     field_name="support_program_rating",
                                     type="field",
-                                    visibility_expression=format_selected_expr("services", "support_program"),
+                                    visibility_expression=format_selected_expr(
+                                        "services", "support_program"
+                                    ),
                                 ),
                                 generate_form_item_def(
-                                    item_id=survey_layer.form_config[0].children[1].children[0].children[3].item_id,
+                                    item_id=survey_layer.form_config[0]
+                                    .children[1]
+                                    .children[0]
+                                    .children[3]
+                                    .item_id,
                                     field_name="ordering_rating",
                                     type="field",
-                                    visibility_expression=format_selected_expr("services", "ordering"),
+                                    visibility_expression=format_selected_expr(
+                                        "services", "ordering"
+                                    ),
                                 ),
                                 generate_form_item_def(
-                                    item_id=survey_layer.form_config[0].children[1].children[0].children[4].item_id,
+                                    item_id=survey_layer.form_config[0]
+                                    .children[1]
+                                    .children[0]
+                                    .children[4]
+                                    .item_id,
                                     field_name="rep_scheduling_rating",
                                     type="field",
                                 ),
                                 generate_form_item_def(
-                                    item_id=survey_layer.form_config[0].children[1].children[0].children[5].item_id,
+                                    item_id=survey_layer.form_config[0]
+                                    .children[1]
+                                    .children[0]
+                                    .children[5]
+                                    .item_id,
                                     field_name="cme_rating",
                                     type="field",
                                 ),
                             ],
                         ),
                         generate_form_item_def(
-                            item_id=survey_layer.form_config[0].children[1].children[1].item_id,
+                            item_id=survey_layer.form_config[0]
+                            .children[1]
+                            .children[1]
+                            .item_id,
                             field_name="feature_improve",
                             type="field",
                         ),
@@ -1170,26 +1219,40 @@ class TestConverter:
                             type="group_box",
                             children=[
                                 generate_form_item_def(
-                                    item_id=survey_layer.form_config[0].children[2].children[0].children[0].item_id,
+                                    item_id=survey_layer.form_config[0]
+                                    .children[2]
+                                    .children[0]
+                                    .children[0]
+                                    .item_id,
                                     field_name="part_employees",
                                     type="field",
                                 ),
                                 generate_form_item_def(
-                                    item_id=survey_layer.form_config[0].children[2].children[0].children[1].item_id,
+                                    item_id=survey_layer.form_config[0]
+                                    .children[2]
+                                    .children[0]
+                                    .children[1]
+                                    .item_id,
                                     field_name="full_employees",
                                     type="field",
                                 ),
                             ],
                         ),
                         generate_form_item_def(
-                            item_id=survey_layer.form_config[0].children[2].children[1].item_id,
+                            item_id=survey_layer.form_config[0]
+                            .children[2]
+                            .children[1]
+                            .item_id,
                             field_name="employee_total",
                             type="field",
                             is_read_only=True,
                             show_label=False,
                         ),
                         generate_form_item_def(
-                            item_id=survey_layer.form_config[0].children[2].children[2].item_id,
+                            item_id=survey_layer.form_config[0]
+                            .children[2]
+                            .children[2]
+                            .item_id,
                             field_name="employee_summary",
                             type="field",
                             visibility_expression='"part_employees" > 1 and "full_employees" > 1',
@@ -1207,39 +1270,66 @@ class TestConverter:
                             type="group_box",
                             children=[
                                 generate_form_item_def(
-                                    item_id=survey_layer.form_config[0].children[3].children[0].children[0].item_id,
+                                    item_id=survey_layer.form_config[0]
+                                    .children[3]
+                                    .children[0]
+                                    .children[0]
+                                    .item_id,
                                     field_name="salutation",
                                     type="field",
                                 ),
                                 generate_form_item_def(
-                                    item_id=survey_layer.form_config[0].children[3].children[0].children[1].item_id,
+                                    item_id=survey_layer.form_config[0]
+                                    .children[3]
+                                    .children[0]
+                                    .children[1]
+                                    .item_id,
                                     field_name="name",
                                     type="field",
                                 ),
                                 generate_form_item_def(
-                                    item_id=survey_layer.form_config[0].children[3].children[0].children[2].item_id,
+                                    item_id=survey_layer.form_config[0]
+                                    .children[3]
+                                    .children[0]
+                                    .children[2]
+                                    .item_id,
                                     field_name="address",
                                     type="field",
                                 ),
                                 generate_form_item_def(
-                                    item_id=survey_layer.form_config[0].children[3].children[0].children[3].item_id,
+                                    item_id=survey_layer.form_config[0]
+                                    .children[3]
+                                    .children[0]
+                                    .children[3]
+                                    .item_id,
                                     field_name="zip_code",
                                     type="field",
                                 ),
                                 generate_form_item_def(
-                                    item_id=survey_layer.form_config[0].children[3].children[0].children[4].item_id,
+                                    item_id=survey_layer.form_config[0]
+                                    .children[3]
+                                    .children[0]
+                                    .children[4]
+                                    .item_id,
                                     field_name="city",
                                     type="field",
                                 ),
                                 generate_form_item_def(
-                                    item_id=survey_layer.form_config[0].children[3].children[0].children[5].item_id,
+                                    item_id=survey_layer.form_config[0]
+                                    .children[3]
+                                    .children[0]
+                                    .children[5]
+                                    .item_id,
                                     field_name="state",
                                     type="field",
                                 ),
                             ],
                         ),
                         generate_form_item_def(
-                            item_id=survey_layer.form_config[0].children[3].children[1].item_id,
+                            item_id=survey_layer.form_config[0]
+                            .children[3]
+                            .children[1]
+                            .item_id,
                             field_name="comment",
                             type="field",
                         ),
