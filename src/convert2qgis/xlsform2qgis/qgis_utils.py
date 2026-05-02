@@ -253,14 +253,16 @@ def set_project_extent(
             project.crs().mapUnits() != Qgis.DistanceUnit.Unknown
             and project.crs().mapUnits() != Qgis.DistanceUnit.Degrees
         ):
-            # Insure the initial project extent is not too zoomed in
-            if project_extent.width() < 200:
-                w_padding = (200 - project_extent.width()) / 2
+            min_extent_size = 200
+
+            # Ensure the initial project extent is not too zoomed in
+            if project_extent.width() < min_extent_size:
+                w_padding = (min_extent_size - project_extent.width()) / 2
                 project_extent.setXMinimum(project_extent.xMinimum() - w_padding)
                 project_extent.setXMaximum(project_extent.xMaximum() + w_padding)
 
-            if project_extent.height() < 200:
-                h_padding = (200 - project_extent.height()) / 2
+            if project_extent.height() < min_extent_size:
+                h_padding = (min_extent_size - project_extent.height()) / 2
                 project_extent.setYMinimum(project_extent.yMinimum() - h_padding)
                 project_extent.setYMaximum(project_extent.yMaximum() + h_padding)
 

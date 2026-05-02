@@ -89,7 +89,7 @@ class ParsedSheet:
             else:
                 raise ValueError("Could not determine xlsform column headers!")
 
-        if not len(fields_names) >= 2:
+        if not len(fields_names) >= 2:  # noqa: PLR2004
             raise ValueError("Sheet must have at least 2 columns: 'type', 'name'")
 
         for index, field_name in enumerate(fields_names):

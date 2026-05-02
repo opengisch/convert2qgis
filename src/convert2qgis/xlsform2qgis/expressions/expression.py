@@ -154,7 +154,7 @@ class Expression:
 
             if isinstance(node, UnaryOp):
                 operand, operand_prec = render(node.operand, seen)
-                if operand_prec < 60:
+                if operand_prec < 60:  # noqa: PLR2004
                     operand = f"({operand})"
                 return f"{node.operator} {operand}", 60
 

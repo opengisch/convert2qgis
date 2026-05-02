@@ -716,7 +716,7 @@ def set_project_custom_properties(
     for key_with_scope, value in custom_properties.items():
         key_parts = key_with_scope.split("/")
 
-        if len(key_parts) != 2:
+        if len(key_parts) != 2:  # noqa: PLR2004
             raise Exception(
                 f'Invalid custom property "{key_with_scope}", expected format "scope/key".'
             )

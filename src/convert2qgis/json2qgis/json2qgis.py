@@ -218,7 +218,7 @@ class ProjectCreator:
             try:
                 coords = extent_coords.split(",")
 
-                if len(coords) != 4:
+                if len(coords) != 4:  # noqa: PLR2004
                     raise ValueError(
                         'Invalid number of coordinates: expected 4, got %d in "%s"',
                         len(coords),

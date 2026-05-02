@@ -104,7 +104,7 @@ def _indexed_repeat_args_count(count: int) -> bool:
 
 
 def _weighted_checklist_args_count(count: int) -> bool:
-    return count >= 4 and (count - 2) % 2 == 0
+    return count >= 4 and (count - 2) % 2 == 0  # noqa: PLR2004
 
 
 SUPPORTED_FUNCTIONS: dict[str, FunctionSpec]
