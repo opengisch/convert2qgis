@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import inspect
 import re
-from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, cast, overload
 
 from convert2qgis.xlsform2qgis.expressions.utils import (
@@ -12,6 +11,8 @@ from convert2qgis.xlsform2qgis.expressions.utils import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
     from convert2qgis.xlsform2qgis.expressions.expression import ExpressionContext
 
 
@@ -36,7 +37,7 @@ class FunctionSpec:
         elif isinstance(args_count, (tuple, int)):
             self._validate_function = self._validate_arg_count
         else:
-            raise ValueError(
+            raise TypeError(
                 f"Invalid argument for `FunctionSpec`, expected int, tuple[int, int], or callable, got {type(args_count)}"
             )
 
@@ -46,17 +47,14 @@ class FunctionSpec:
         if isinstance(self._expected_args_count, int):
             min_args, max_args = self._expected_args_count, self._expected_args_count
         elif isinstance(self._expected_args_count, tuple):
-            min_args, max_args = cast(tuple[int, int], self._expected_args_count)
+            min_args, max_args = cast("tuple[int, int]", self._expected_args_count)
         else:
-            raise AssertionError("Unexpected type for `self._expected_args_count`")
+            raise TypeError("Unexpected type for `self._expected_args_count`")
 
         if count < min_args:
             return False
 
-        if max_args is not None and count > max_args:
-            return False
-
-        return True
+        return not (max_args is not None and count > max_args)
 
     def validate(self, count: int) -> bool:
         return self._validate_function(count)
@@ -91,7 +89,9 @@ class FunctionSpec:
                 return result.format(*args)
 
         if len(args) > args_count + 1:
-            raise ValueError(f"Expected at most {args_count} arguments, got {len(args)}")
+            raise ValueError(
+                f"Expected at most {args_count} arguments, got {len(args)}"
+            )
 
         while len(args) < args_count:
             args += ("NULL",)
@@ -104,7 +104,7 @@ def _indexed_repeat_args_count(count: int) -> bool:
 
 
 def _weighted_checklist_args_count(count: int) -> bool:
-    return count >= 4 and (count - 2) % 2 == 0
+    return count >= 4 and (count - 2) % 2 == 0  # noqa: PLR2004
 
 
 SUPPORTED_FUNCTIONS: dict[str, FunctionSpec]
@@ -293,11 +293,17 @@ def register_function(
         if args_count is not None and params is not None:
             raise ValueError("Pass either `params` or `args_count`, not both")
 
-        effective_args_count = _to_args_count(_normalize_params(target, params)) if args_count is None else args_count
+        effective_args_count = (
+            _to_args_count(_normalize_params(target, params))
+            if args_count is None
+            else args_count
+        )
 
         function_name = name or target.__name__.replace("_", "-")
 
-        assert function_name not in SUPPORTED_FUNCTIONS, f"Function {function_name} already registered!"
+        assert function_name not in SUPPORTED_FUNCTIONS, (
+            f"Function {function_name} already registered!"
+        )
 
         SUPPORTED_FUNCTIONS[function_name] = FunctionSpec(
             effective_args_count,
@@ -351,7 +357,9 @@ def pulldata(*args: str) -> str:
         if looking_for == "'y'":
             return "$y"
 
-    raise ValueError(f"Unsupported implementation of pulldata with parameters {args} in QGIS expressions!")
+    raise ValueError(
+        f"Unsupported implementation of pulldata with parameters {args} in QGIS expressions!"
+    )
 
 
 @register_function(name="uuid", params=[0, 1])
@@ -369,7 +377,9 @@ def jr_choice_name(choice_value: str, list_name: str, ctx: ExpressionContext) ->
     list_name = list_name.strip("'")
 
     if list_name not in ctx.choices_by_list:
-        raise ValueError(f"Unknown choices list {list_name}, expected one of {list(ctx.choices_by_list.keys())}!")
+        raise ValueError(
+            f"Unknown choices list {list_name}, expected one of {list(ctx.choices_by_list.keys())}!"
+        )
 
     for choice in ctx.choices_by_list[list_name]:
         if choice.name == choice_value:
@@ -379,17 +389,17 @@ def jr_choice_name(choice_value: str, list_name: str, ctx: ExpressionContext) ->
 
 
 @register_function(name="min", args_count=(1, None))
-def min(*args: str) -> str:
+def func_min(*args: str) -> str:
     return "min({})".format(_args_to_placeholders(args))
 
 
 @register_function(name="max", args_count=(1, None))
-def max(*args: str) -> str:
+def func_max(*args: str) -> str:
     return "max({})".format(_args_to_placeholders(args))
 
 
 @register_function(name="sum", args_count=(1, None))
-def sum(*args: str) -> str:
+def func_sum(*args: str) -> str:
     return "sum({})".format(_args_to_placeholders(args))
 
 

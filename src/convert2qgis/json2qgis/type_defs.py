@@ -4,7 +4,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field, fields
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Literal, TypeAlias, TypeVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeAlias, TypeVar, cast
 
 RelationStrength: TypeAlias = Literal["association", "composition"]
 ConstraintStrength: TypeAlias = Literal["hard", "soft", "not_set"]
@@ -18,12 +18,17 @@ GeometryType: TypeAlias = Literal[
     "MultiPolygon",
     "NoGeometry",
 ]
-FormItemTypes: TypeAlias = Literal["field", "relation", "group_box", "tab", "row", "text"]
+FormItemTypes: TypeAlias = Literal[
+    "field", "relation", "group_box", "tab", "row", "text"
+]
 FormItemGroupTypes: TypeAlias = Literal["group_box", "tab"]
 LayerType: TypeAlias = Literal["vector", "raster", "mesh", "vector_tile", "point_cloud"]
 
 
 T = TypeVar("T", bound="DataclassModelMixin")
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 
 def _serialize(value: Any) -> Any:
@@ -40,7 +45,7 @@ def _serialize(value: Any) -> Any:
 
 
 class DataclassModelMixin:
-    __SKIP_FIELDS__: set[str] = set()
+    __SKIP_FIELDS__: ClassVar[set[str]] = set()
     """List of field names to skip when serializing to dict or comparing for equality. This is useful for fields that are not part of the actual data model, but are used for internal purposes."""
 
     def _iter_items(self) -> Iterable[tuple[str, Any]]:
@@ -60,11 +65,11 @@ class DataclassModelMixin:
         if args:
             [other] = args
             if isinstance(other, DataclassModelMixin):
-                data.update(dict(other._iter_items()))
+                data.update(dict(other._iter_items()))  # noqa: SLF001
             elif isinstance(other, Mapping):
                 data.update(other)
             else:
-                data.update(dict(cast(Iterable[tuple[str, Any]], other)))
+                data.update(dict(cast("Iterable[tuple[str, Any]]", other)))
         data.update(kwargs)
         for key, value in data.items():
             setattr(self, key, value)
@@ -73,14 +78,14 @@ class DataclassModelMixin:
         return {key: _serialize(value) for key, value in self._iter_items()}
 
     @classmethod
-    def from_data(cls: type[T], data: T | Mapping[str, Any]) -> T:
+    def from_data(cls, data: Self | Mapping[str, Any]) -> Self:
         if isinstance(data, cls):
             return data
 
-        return cls._from_dict(cast(Mapping[str, Any], data))
+        return cls._from_dict(cast("Mapping[str, Any]", data))
 
     @classmethod
-    def _from_dict(cls: type[T], data: Mapping[str, Any]) -> T:
+    def _from_dict(cls, data: Mapping[str, Any]) -> Self:
         instance = cls()
         instance.update(data)
         return instance
@@ -102,13 +107,16 @@ class RelationDef(DataclassModelMixin):
     strength: RelationStrength = "association"
 
     @classmethod
-    def _from_dict(cls, data: Mapping[str, Any]) -> "RelationDef":
+    def _from_dict(cls, data: Mapping[str, Any]) -> RelationDef:
         return cls(
             relation_id=data.get("relation_id", ""),
             name=data.get("name", ""),
             from_layer_id=data.get("from_layer_id", ""),
             to_layer_id=data.get("to_layer_id", ""),
-            field_pairs=[RelationFieldPairDef.from_data(item) for item in data.get("field_pairs", [])],
+            field_pairs=[
+                RelationFieldPairDef.from_data(item)
+                for item in data.get("field_pairs", [])
+            ],
             strength=data.get("strength", "association"),
         )
 
@@ -125,7 +133,7 @@ class PolymorphicRelationDef(DataclassModelMixin):
     strength: RelationStrength = "association"
 
     @classmethod
-    def _from_dict(cls, data: Mapping[str, Any]) -> "PolymorphicRelationDef":
+    def _from_dict(cls, data: Mapping[str, Any]) -> PolymorphicRelationDef:
         return cls(
             relation_id=data.get("relation_id", ""),
             name=data.get("name", ""),
@@ -133,7 +141,10 @@ class PolymorphicRelationDef(DataclassModelMixin):
             to_layer_field=data.get("to_layer_field", ""),
             to_layer_expression=data.get("to_layer_expression", ""),
             to_layer_ids=list(data.get("to_layer_ids", [])),
-            field_pairs=[RelationFieldPairDef.from_data(item) for item in data.get("field_pairs", [])],
+            field_pairs=[
+                RelationFieldPairDef.from_data(item)
+                for item in data.get("field_pairs", [])
+            ],
             strength=data.get("strength", "association"),
         )
 
@@ -235,18 +246,22 @@ class LegendTreeGroupDef(LegendTreeItemBaseDef):
     legend_item_type: Literal["group"] = "group"  # type: ignore[assignment]
     is_mutually_exclusive: bool = False
     mutually_exclusive_child_index: int = -1
-    children: list["LegendTreeItemDef"] = field(default_factory=list)
+    children: list[LegendTreeItemDef] = field(default_factory=list)
 
     @classmethod
-    def _from_dict(cls, data: Mapping[str, Any]) -> "LegendTreeGroupDef":
+    def _from_dict(cls, data: Mapping[str, Any]) -> LegendTreeGroupDef:
         return cls(
             item_id=data.get("item_id", ""),
             legend_item_type="group",
             name=data.get("name", ""),
             is_checked=data.get("is_checked", True),
             is_mutually_exclusive=data.get("is_mutually_exclusive", False),
-            mutually_exclusive_child_index=data.get("mutually_exclusive_child_index", -1),
-            children=[legend_tree_item_from_data(item) for item in data.get("children", [])],
+            mutually_exclusive_child_index=data.get(
+                "mutually_exclusive_child_index", -1
+            ),
+            children=[
+                legend_tree_item_from_data(item) for item in data.get("children", [])
+            ],
         )
 
 
@@ -281,7 +296,7 @@ class WeakFormItemDef(DataclassModelMixin):
     type: FormItemTypes | None = None
     field_name: str | None = None
     label: str | None = None
-    children: list["FormItemDef"] | None = None
+    children: list[FormItemDef] | None = None
     visibility_expression: str | None = None
     background_color: str | None = None
     is_collapsed: bool | None = None
@@ -305,7 +320,7 @@ class FormItemDef(DataclassModelMixin):
     type: FormItemTypes = "group_box"
     field_name: str | None = None
     label: str = ""
-    children: list["FormItemDef"] = field(default_factory=list)
+    children: list[FormItemDef] = field(default_factory=list)
     visibility_expression: str = ""
     background_color: str = ""
     is_collapsed: bool = False
@@ -380,7 +395,7 @@ class FormItemDef(DataclassModelMixin):
         return text_data
 
     @classmethod
-    def _from_dict(cls, data: Mapping[str, Any]) -> "FormItemDef":
+    def _from_dict(cls, data: Mapping[str, Any]) -> FormItemDef:
         item_type = data.get("type", "group_box")
 
         children = []
@@ -464,7 +479,7 @@ class VectorDatasetDef(BaseDatasetDef):
     display_expression: str = ""
 
     @classmethod
-    def _from_dict(cls, data: Mapping[str, Any]) -> "VectorDatasetDef":
+    def _from_dict(cls, data: Mapping[str, Any]) -> VectorDatasetDef:
         return cls(
             layer_id=data.get("layer_id", ""),
             name=data.get("name", ""),
@@ -477,9 +492,13 @@ class VectorDatasetDef(BaseDatasetDef):
             is_searchable=data.get("is_searchable", False),
             is_removable=data.get("is_removable", True),
             geometry_type=data.get("geometry_type", "NoGeometry"),
-            datasource_format=data.get("datasource_format", VectorLayerDataprovider.GPKG),
+            datasource_format=data.get(
+                "datasource_format", VectorLayerDataprovider.GPKG
+            ),
             fields=[FieldDef.from_data(item) for item in data.get("fields", [])],
-            form_config=[FormItemDef.from_data(item) for item in data.get("form_config", [])],
+            form_config=[
+                FormItemDef.from_data(item) for item in data.get("form_config", [])
+            ],
             data=list(data.get("data", [])),
             primary_key=data.get("primary_key", ""),
             indices=list(data.get("indices", [])),
@@ -495,7 +514,7 @@ class RasterDatasetDef(BaseDatasetDef):
     datasource_format: str = "wms"
 
     @classmethod
-    def _from_dict(cls, data: Mapping[str, Any]) -> "RasterDatasetDef":
+    def _from_dict(cls, data: Mapping[str, Any]) -> RasterDatasetDef:
         return cls(
             layer_id=data.get("layer_id", ""),
             name=data.get("name", ""),
@@ -530,10 +549,16 @@ class DatasetGroupDef(DataclassModelMixin):
     raster_datasets: list[RasterDatasetDef] = field(default_factory=list)
 
     @classmethod
-    def _from_dict(cls, data: Mapping[str, Any]) -> "DatasetGroupDef":
+    def _from_dict(cls, data: Mapping[str, Any]) -> DatasetGroupDef:
         return cls(
-            vector_datasets=[VectorDatasetDef.from_data(item) for item in data.get("vector_datasets", [])],
-            raster_datasets=[RasterDatasetDef.from_data(item) for item in data.get("raster_datasets", [])],
+            vector_datasets=[
+                VectorDatasetDef.from_data(item)
+                for item in data.get("vector_datasets", [])
+            ],
+            raster_datasets=[
+                RasterDatasetDef.from_data(item)
+                for item in data.get("raster_datasets", [])
+            ],
         )
 
     def iter_datasets(self) -> Iterable[DatasetDef]:
@@ -551,21 +576,30 @@ class ProjectDef(DataclassModelMixin):
     polymorphic_relations: list[PolymorphicRelationDef] = field(default_factory=list)
 
     @classmethod
-    def _from_dict(cls, data: Mapping[str, Any]) -> "ProjectDef":
+    def _from_dict(cls, data: Mapping[str, Any]) -> ProjectDef:
         return cls(
             project=ProjectMetadataDef.from_data(data.get("project", {})),
             version=data.get("version", ""),
-            datasets=[DatasetGroupDef.from_data(item) for item in data.get("datasets", [])],
+            datasets=[
+                DatasetGroupDef.from_data(item) for item in data.get("datasets", [])
+            ],
             legend_tree=LegendTreeGroupDef.from_data(data.get("legend_tree", {})),
-            relations=[RelationDef.from_data(item) for item in data.get("relations", [])],
+            relations=[
+                RelationDef.from_data(item) for item in data.get("relations", [])
+            ],
             polymorphic_relations=[
-                PolymorphicRelationDef.from_data(item) for item in data.get("polymorphic_relations", [])
+                PolymorphicRelationDef.from_data(item)
+                for item in data.get("polymorphic_relations", [])
             ],
         )
 
     @property
     def all_datasets(self) -> list[DatasetDef]:
-        return [dataset for dataset_group in self.datasets for dataset in dataset_group.iter_datasets()]
+        return [
+            dataset
+            for dataset_group in self.datasets
+            for dataset in dataset_group.iter_datasets()
+        ]
 
 
 def dataset_from_data(data: DatasetDef | Mapping[str, Any]) -> DatasetDef:
@@ -586,13 +620,16 @@ def dataset_from_data(data: DatasetDef | Mapping[str, Any]) -> DatasetDef:
 # we might have more fields in the sheet than we actually use, so we want them in the ChoicesDef
 @dataclass(eq=False)
 class ChoicesDef(DataclassModelMixin):
-    __SKIP_FIELDS__ = {"additional_columns"}
+    __SKIP_FIELDS__: ClassVar[set[str]] = {"additional_columns"}
 
     name: str
     label: str
     list_name: str
 
     additional_columns: dict[str, str] = field(default_factory=dict)
+
+    # use parent class `__hash__` implementation, as it is reset when we set custom `__eq__`
+    __hash__ = DataclassModelMixin.__hash__
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, ChoicesDef):

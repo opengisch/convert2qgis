@@ -68,7 +68,8 @@ class ParsedSheet:
             raise ValueError(f"Unexpected sheet name {self.name}!")
 
         self.layer = QgsVectorLayer(
-            str(xlsform_filename) + f"|layername={self.name}|option:FIELD_TYPES=STRING|option:HEADERS=FORCE",
+            str(xlsform_filename)
+            + f"|layername={self.name}|option:FIELD_TYPES=STRING|option:HEADERS=FORCE",
             self.name,
             "ogr",
         )
@@ -88,7 +89,7 @@ class ParsedSheet:
             else:
                 raise ValueError("Could not determine xlsform column headers!")
 
-        if not len(fields_names) >= 2:
+        if not len(fields_names) >= 2:  # noqa: PLR2004
             raise ValueError("Sheet must have at least 2 columns: 'type', 'name'")
 
         for index, field_name in enumerate(fields_names):
@@ -98,7 +99,12 @@ class ParsedSheet:
                 continue
 
             if field_name == f"Field{index + 1}":
-                logger.debug(f"Skipping default field name `{field_name}` at index {index} in sheet `{self.name}`!")
+                logger.debug(
+                    "Skipping default field name `%s` at index %d in sheet `%s`!",
+                    field_name,
+                    index,
+                    self.name,
+                )
 
                 continue
 
@@ -106,7 +112,11 @@ class ParsedSheet:
 
             if self.indices[normalized_field_name] != -1:
                 logger.warning(
-                    f"Column name `{normalized_field_name}` found both at index {self.indices[normalized_field_name]} and {index} in sheet `{self.name}`; will use the first occurrence!"
+                    "Column name `%s` found both at index %d and %d in sheet `%s`; will use the first occurrence!",
+                    normalized_field_name,
+                    self.indices[normalized_field_name],
+                    index,
+                    self.name,
                 )
 
                 continue
@@ -114,7 +124,7 @@ class ParsedSheet:
             self.indices[normalized_field_name] = index
 
     def __iter__(self) -> Iterator[ParsedSheetRow]:
-        it = cast(Iterable[QgsFeature], self.layer.getFeatures())
+        it = cast("Iterable[QgsFeature]", self.layer.getFeatures())
         for idx, feat in enumerate(it):
             if idx == 0 and self.skip_first_row:
                 continue
@@ -137,7 +147,11 @@ class ParsedSheet:
                 row[col_name] = ParsedSheet._to_python_value(value)
 
             if not any(row.values()):
-                logger.debug(f"Skipping spreadsheet row with empty values at row index {idx} in sheet `{self.name}`!")
+                logger.debug(
+                    "Skipping spreadsheet row with empty values at row index %d in sheet `%s`!",
+                    idx,
+                    self.name,
+                )
                 continue
 
             yield row

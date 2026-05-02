@@ -35,7 +35,11 @@ from qgis.core import (
 from qgis.PyQt.QtCore import QMetaType
 from qgis.PyQt.QtGui import QColor
 
-from convert2qgis.json2qgis.errors import Qgis2JsonError, UnknownCrsSystem
+from convert2qgis.json2qgis.errors import (
+    InvalidCustomPropertyError,
+    Qgis2JsonError,
+    UnknownCrsSystemError,
+)
 from convert2qgis.json2qgis.type_defs import (
     DatasetDef,
     FieldDef,
@@ -63,12 +67,12 @@ except ModuleNotFoundError:
 try:
     import unidecode
 except ModuleNotFoundError:
-    unidecode = None  # type: ignore
+    unidecode = None  # type: ignore[assignment]
 
 try:
     import markdown
 except ModuleNotFoundError:
-    markdown = None  # type: ignore
+    markdown = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -80,19 +84,21 @@ def get_schema_json() -> dict[str, Any]:
     data_path = files("convert2qgis.json2qgis").joinpath("schema/schema_20251121.json")
     schema_json = data_path.read_text()
 
-    return cast(dict[str, Any], json.loads(schema_json))
+    return cast("dict[str, Any]", json.loads(schema_json))
 
 
 def get_schema_validator() -> Callable[[dict[str, Any]], None]:
     schema = get_schema_json()
 
     if fastjsonschema:
-        return fastjsonschema.compile(schema)  # type: ignore
+        return fastjsonschema.compile(schema)  # type: ignore[no-any-return]
     else:
-        return lambda data: None  # type: ignore
+        return lambda _data: None
 
 
-def check_output(path: str) -> Callable[[Callable[..., dict[str, Any]]], Callable[..., dict[str, Any]]]:
+def check_output(
+    path: str,
+) -> Callable[[Callable[..., dict[str, Any]]], Callable[..., dict[str, Any]]]:
     """Decorator to quickly do a sanity check if the output of a given function is a valid JSON schema."""
     schema = get_schema_json()
 
@@ -112,7 +118,7 @@ def check_output(path: str) -> Callable[[Callable[..., dict[str, Any]]], Callabl
                         **schema_node,
                     }
                 validate = cast(
-                    Callable[[dict[str, Any]], None],
+                    "Callable[[dict[str, Any]], None]",
                     fastjsonschema.compile(schema_node),
                 )
                 _VALIDATORS_BY_PATH[path] = validate
@@ -120,8 +126,8 @@ def check_output(path: str) -> Callable[[Callable[..., dict[str, Any]]], Callabl
             output = func(*args, **kwargs)
             try:
                 validate(output)
-            except Exception as e:
-                logger.error(f"Error during function '{func.__name__}' execution: {e}")
+            except Exception:
+                logger.exception("Error during function '%s' execution!", func.__name__)
                 raise
 
             return output
@@ -172,7 +178,9 @@ def get_attribute_form_container_type(
     }
 
     if type_name not in type_names:
-        raise NotImplementedError(f"Unsupported attribute container item type: {type_name}")
+        raise NotImplementedError(
+            f"Unsupported attribute container item type: {type_name}"
+        )
 
     return type_names[type_name]
 
@@ -193,36 +201,38 @@ def get_field_type(type_name: str) -> QMetaType.Type:
     return type_map[type_name]
 
 
-def get_layer_flags(flags: QgsMapLayer.LayerFlags, dataset_def: DatasetDef | dict[str, Any]) -> QgsMapLayer.LayerFlags:
+def get_layer_flags(
+    flags: QgsMapLayer.LayerFlags, dataset_def: "DatasetDef | dict[str, Any]"
+) -> QgsMapLayer.LayerFlags:
     dataset_def = dataset_from_data(dataset_def)
 
     if dataset_def.is_identifiable:
         flags |= QgsMapLayer.LayerFlag.Identifiable
     else:
-        flags &= ~QgsMapLayer.LayerFlag.Identifiable  # type: ignore
+        flags &= ~QgsMapLayer.LayerFlag.Identifiable  # type: ignore[reportOperatorIssue]
 
     if dataset_def.is_removable:
         flags |= QgsMapLayer.LayerFlag.Removable
     else:
-        flags &= ~QgsMapLayer.LayerFlag.Removable  # type: ignore
+        flags &= ~QgsMapLayer.LayerFlag.Removable  # type: ignore[reportOperatorIssue]
 
     if dataset_def.is_searchable:
         flags |= QgsMapLayer.LayerFlag.Searchable
     else:
-        flags &= ~QgsMapLayer.LayerFlag.Searchable  # type: ignore
+        flags &= ~QgsMapLayer.LayerFlag.Searchable  # type: ignore[reportOperatorIssue]
 
     if dataset_def.is_private:
         flags |= QgsMapLayer.LayerFlag.Private
     else:
-        flags &= ~QgsMapLayer.LayerFlag.Private  # type: ignore
+        flags &= ~QgsMapLayer.LayerFlag.Private  # type: ignore[reportOperatorIssue]
 
     return flags
 
 
-def get_layer_edit_form(  # noqa: C901
+def get_layer_edit_form(  # noqa: PLR0915
     fields: QgsFields,
-    dataset_def: VectorDatasetDef | dict[str, Any],
-    form_config: QgsEditFormConfig | None = None,
+    dataset_def: "VectorDatasetDef | dict[str, Any]",
+    form_config: "QgsEditFormConfig | None" = None,
 ) -> QgsEditFormConfig:
     dataset_def = VectorDatasetDef.from_data(dataset_def)
 
@@ -232,10 +242,10 @@ def get_layer_edit_form(  # noqa: C901
     form_config.setLayout(Qgis.AttributeFormLayout.DragAndDrop)
     form_config.clearTabs()
 
-    def add_form_item(  # noqa: C901
+    def add_form_item(  # noqa: PLR0912, PLR0915
         form_item_def: FormItemDef,
         parent: QgsAttributeEditorContainer,
-    ) -> QgsAttributeEditorContainer | None:
+    ) -> "QgsAttributeEditorContainer | None":
         item_type = form_item_def.type
         item_label = form_item_def.label
 
@@ -248,7 +258,9 @@ def get_layer_edit_form(  # noqa: C901
             if form_item_def.visibility_expression:
                 parent_container = QgsAttributeEditorContainer("~CONDITIONAL~", parent)
                 parent_container.setVisibilityExpression(
-                    QgsOptionalExpression(QgsExpression(form_item_def.visibility_expression))
+                    QgsOptionalExpression(
+                        QgsExpression(form_item_def.visibility_expression)
+                    )
                 )
                 parent_container.setShowLabel(False)
                 container = QgsAttributeEditorField(
@@ -284,7 +296,9 @@ def get_layer_edit_form(  # noqa: C901
             if form_item_def.visibility_expression:
                 parent_container = QgsAttributeEditorContainer("", parent)
                 parent_container.setVisibilityExpression(
-                    QgsOptionalExpression(QgsExpression(form_item_def.visibility_expression))
+                    QgsOptionalExpression(
+                        QgsExpression(form_item_def.visibility_expression)
+                    )
                 )
                 container = QgsAttributeEditorRelation(
                     form_item_def.field_name,
@@ -312,7 +326,8 @@ def get_layer_edit_form(  # noqa: C901
                     item_label = markdown.markdown(item_label)
                 else:
                     logger.warning(
-                        f"Markdown support is not available. Text item '{item_label}' will not be rendered as HTML, but as raw markdown."
+                        "Markdown support is not available. Text item '%s' will not be rendered as HTML, but as raw markdown.",
+                        item_label,
                     )
 
             container = QgsAttributeEditorTextElement(item_label, parent)
@@ -328,7 +343,11 @@ def get_layer_edit_form(  # noqa: C901
         container.setType(get_attribute_form_container_type(item_type))
 
         if form_item_def.visibility_expression:
-            container.setVisibilityExpression(QgsOptionalExpression(QgsExpression(form_item_def.visibility_expression)))
+            container.setVisibilityExpression(
+                QgsOptionalExpression(
+                    QgsExpression(form_item_def.visibility_expression)
+                )
+            )
 
         if form_item_def.background_color:
             container.setBackgroundColor(QColor(form_item_def.background_color))
@@ -346,7 +365,9 @@ def get_layer_edit_form(  # noqa: C901
     root_container = form_config.invisibleRootContainer()
 
     if not root_container:
-        raise AssertionError("Failed to get root container for edit form configuration.")
+        raise AssertionError(
+            "Failed to get root container for edit form configuration."
+        )
 
     for form_item_def in dataset_def.form_config:
         add_form_item(form_item_def, root_container)
@@ -366,7 +387,7 @@ def get_layer_edit_form(  # noqa: C901
     return form_config
 
 
-def create_field(field_def: FieldDef | dict[str, Any]) -> QgsField:
+def create_field(field_def: "FieldDef | dict[str, Any]") -> QgsField:
     field_def = FieldDef.from_data(field_def)
 
     # Map FieldDef type to Qt QMetaType type IDs
@@ -383,7 +404,7 @@ def create_field(field_def: FieldDef | dict[str, Any]) -> QgsField:
     return field
 
 
-def create_fields(dataset_def: VectorDatasetDef | dict[str, Any]) -> QgsFields:
+def create_fields(dataset_def: "VectorDatasetDef | dict[str, Any]") -> QgsFields:
     dataset_def = VectorDatasetDef.from_data(dataset_def)
 
     fields = QgsFields()
@@ -395,7 +416,9 @@ def create_fields(dataset_def: VectorDatasetDef | dict[str, Any]) -> QgsFields:
     return fields
 
 
-def set_layer_fields(layer: QgsVectorLayer, dataset_def: VectorDatasetDef | dict[str, Any]) -> None:
+def set_layer_fields(
+    layer: QgsVectorLayer, dataset_def: "VectorDatasetDef | dict[str, Any]"
+) -> None:
     dataset_def = VectorDatasetDef.from_data(dataset_def)
 
     fields = layer.fields()
@@ -415,7 +438,9 @@ def set_layer_fields(layer: QgsVectorLayer, dataset_def: VectorDatasetDef | dict
 
         if field_idx == -1:
             logger.warning(
-                f"Field '{field_name}' not found in layer '{dataset_def.name}'. Skipping field configuration."
+                "Field '%s' not found in layer '%s'. Skipping field configuration.",
+                field_name,
+                dataset_def.name,
             )
 
             continue
@@ -442,7 +467,7 @@ def set_layer_fields(layer: QgsVectorLayer, dataset_def: VectorDatasetDef | dict
             QgsFieldConstraints.Constraint.ConstraintUnique,
             QgsFieldConstraints.Constraint.ConstraintExpression,
         ):
-            if not (constraints.constraints() & constraint_type):  # type: ignore
+            if not (constraints.constraints() & constraint_type):  # type: ignore[reportGeneralTypeIssues]
                 continue
 
             layer.setFieldConstraint(
@@ -459,7 +484,9 @@ def set_layer_fields(layer: QgsVectorLayer, dataset_def: VectorDatasetDef | dict
                 )
 
 
-def set_field_default_value(field: QgsField, field_def: FieldDef | dict[str, Any]) -> None:
+def set_field_default_value(
+    field: QgsField, field_def: "FieldDef | dict[str, Any]"
+) -> None:
     field_def = FieldDef.from_data(field_def)
 
     if field_def.default_value is None:
@@ -472,7 +499,9 @@ def set_field_default_value(field: QgsField, field_def: FieldDef | dict[str, Any
     field.setDefaultValueDefinition(default_value)
 
 
-def set_field_constraints(field: QgsField, field_def: FieldDef | dict[str, Any]) -> None:
+def set_field_constraints(
+    field: QgsField, field_def: "FieldDef | dict[str, Any]"
+) -> None:
     field_def = FieldDef.from_data(field_def)
 
     constraints = field.constraints()
@@ -504,7 +533,9 @@ def set_field_constraints(field: QgsField, field_def: FieldDef | dict[str, Any])
     if field_def.constraint_expression:
         constraint_expression = field_def.constraint_expression
         constraint_description = field_def.constraint_expression_description
-        constraint_expression_strength = get_constraint_strength(field_def.constraint_expression_strength)
+        constraint_expression_strength = get_constraint_strength(
+            field_def.constraint_expression_strength
+        )
 
         constraints.setConstraint(
             QgsFieldConstraints.Constraint.ConstraintExpression,
@@ -514,28 +545,28 @@ def set_field_constraints(field: QgsField, field_def: FieldDef | dict[str, Any])
             QgsFieldConstraints.Constraint.ConstraintExpression,
             constraint_expression_strength,
         )
-        constraints.setConstraintExpression(constraint_expression, constraint_description)
+        constraints.setConstraintExpression(
+            constraint_expression, constraint_description
+        )
 
     field.setConstraints(constraints)
 
 
-def set_field_widget(field: QgsField, field_def: FieldDef | dict[str, Any]) -> None:
+def set_field_widget(field: QgsField, field_def: "FieldDef | dict[str, Any]") -> None:
     field_def = FieldDef.from_data(field_def)
 
     widget_type = field_def.widget_type
     # Widget configuration
     wc = dict(field_def.widget_config)
 
-    if widget_type == "Hidden":
-        pass
-    elif widget_type == "Color":
+    if widget_type in {"Hidden", "Color"}:
         pass
     elif widget_type == "CheckBox":
         wc.update(
             {
                 "AllowNullState": wc.get("allow_null", False),
-                "CheckedState": wc.get("checked_state", None),
-                "UncheckedState": wc.get("unchecked_state", None),
+                "CheckedState": wc.get("checked_state"),
+                "UncheckedState": wc.get("unchecked_state"),
                 "TextDisplayMethod": wc.get("text_display_method", 1),
             }
         )
@@ -576,7 +607,9 @@ def set_field_widget(field: QgsField, field_def: FieldDef | dict[str, Any]) -> N
     field.setEditorWidgetSetup(widget_setup)
 
 
-def set_layer_tree(project: QgsProject, project_def: ProjectDef | dict[str, Any]) -> None:
+def set_layer_tree(
+    project: QgsProject, project_def: "ProjectDef | dict[str, Any]"
+) -> None:
     project_def = ProjectDef.from_data(project_def)
 
     tree_root = project.layerTreeRoot()
@@ -592,7 +625,9 @@ def set_layer_tree(project: QgsProject, project_def: ProjectDef | dict[str, Any]
         if legend_item_def.legend_item_type == "group":
             assert isinstance(legend_item_def, LegendTreeGroupDef)
 
-            tree_item = QgsLayerTreeGroup(legend_item_def.name, legend_item_def.is_checked)
+            tree_item = QgsLayerTreeGroup(
+                legend_item_def.name, legend_item_def.is_checked
+            )
             tree_item.setIsMutuallyExclusive(
                 legend_item_def.is_mutually_exclusive,
                 legend_item_def.mutually_exclusive_child_index,
@@ -610,7 +645,9 @@ def set_layer_tree(project: QgsProject, project_def: ProjectDef | dict[str, Any]
         layer = project.mapLayer(legend_item_def.layer_id)
 
         if not layer:
-            raise Qgis2JsonError(f"Layer '{legend_item_def.name}' not found in project for legend tree item.")
+            raise Qgis2JsonError(
+                f"Layer '{legend_item_def.name}' not found in project for legend tree item."
+            )
 
         tree_item = QgsLayerTreeLayer(layer)
         tree_item.setItemVisibilityChecked(legend_item_def.is_checked)
@@ -632,7 +669,7 @@ def get_relation_strength(strength_name: RelationStrength) -> Qgis.RelationshipS
     return strengths[strength_name]
 
 
-def create_relation(relation_def: RelationDef | dict[str, Any]) -> QgsRelation:
+def create_relation(relation_def: "RelationDef | dict[str, Any]") -> QgsRelation:
     relation_def = RelationDef.from_data(relation_def)
 
     relation = QgsRelation()
@@ -652,7 +689,7 @@ def create_relation(relation_def: RelationDef | dict[str, Any]) -> QgsRelation:
 
 
 def create_polymorphic_relation(
-    relation_def: PolymorphicRelationDef | dict[str, Any],
+    relation_def: "PolymorphicRelationDef | dict[str, Any]",
 ) -> QgsPolymorphicRelation:
     relation_def = PolymorphicRelationDef.from_data(relation_def)
 
@@ -675,12 +712,16 @@ def create_polymorphic_relation(
     return relation
 
 
-def set_project_custom_properties(project: QgsProject, custom_properties: dict[str, Any]) -> None:
+def set_project_custom_properties(
+    project: QgsProject, custom_properties: dict[str, Any]
+) -> None:
     for key_with_scope, value in custom_properties.items():
         key_parts = key_with_scope.split("/")
 
-        if len(key_parts) != 2:
-            raise Exception(f'Invalid custom property "{key_with_scope}", expected format "scope/key".')
+        if len(key_parts) != 2:  # noqa: PLR2004
+            raise InvalidCustomPropertyError(
+                f'Invalid custom property "{key_with_scope}", expected format "scope/key".'
+            )
 
         scope, key = key_parts
 
@@ -695,7 +736,9 @@ def set_project_custom_properties(project: QgsProject, custom_properties: dict[s
             project.writeEntry(scope, key, str(value))
 
 
-def set_layer_custom_properties(layer: QgsMapLayer, custom_properties: dict[str, Any]) -> None:
+def set_layer_custom_properties(
+    layer: QgsMapLayer, custom_properties: dict[str, Any]
+) -> None:
     properties = QgsObjectCustomProperties()
 
     for key, value in custom_properties.items():
@@ -704,8 +747,11 @@ def set_layer_custom_properties(layer: QgsMapLayer, custom_properties: dict[str,
     layer.setCustomProperties(properties)
 
 
-def str_to_crs(crs_def: str, fallback_crs: str | None = None) -> QgsCoordinateReferenceSystem:
-    """Converts a CRS definition string to a `QgsCoordinateReferenceSystem` object.
+def str_to_crs(
+    crs_def: str, fallback_crs: "str | None" = None
+) -> QgsCoordinateReferenceSystem:
+    """
+    Converts a CRS definition string to a `QgsCoordinateReferenceSystem` object.
 
     If the provided CRS definition is invalid and a fallback CRS is provided, it will attempt to use the fallback CRS definition instead.
 
@@ -717,27 +763,33 @@ def str_to_crs(crs_def: str, fallback_crs: str | None = None) -> QgsCoordinateRe
 
     Raises:
         UnknownCrsSystem: If both the primary and fallback CRS definitions are invalid.
+
     """
     try:
         crs = QgsCoordinateReferenceSystem(crs_def)
     except Exception as err:
         if fallback_crs:
             logger.warning(
-                f"Failed to create CRS from definition '{crs_def}', attempting to use fallback CRS definition '{fallback_crs}'... Error: {err}"
+                "Failed to create CRS from definition '%s', attempting to use fallback CRS definition '%s'... Error: %s",
+                crs_def,
+                fallback_crs,
+                err,
             )
 
             return str_to_crs(fallback_crs)
         else:
-            raise UnknownCrsSystem(f"Failed to create CRS: {err}") from err
+            raise UnknownCrsSystemError(f"Failed to create CRS: {err}") from err
 
     if not crs.isValid():
         if fallback_crs:
             logger.warning(
-                f"CRS created from definition '{crs_def}' is invalid, attempting to use fallback CRS definition '{fallback_crs}'..."
+                "CRS created from definition '%s' is invalid, attempting to use fallback CRS definition '%s'...",
+                crs_def,
+                fallback_crs,
             )
 
             return str_to_crs(fallback_crs)
         else:
-            raise UnknownCrsSystem(f"Invalid CRS: {crs_def}")
+            raise UnknownCrsSystemError(f"Invalid CRS: {crs_def}")
 
     return crs

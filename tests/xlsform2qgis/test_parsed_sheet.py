@@ -7,43 +7,43 @@ from convert2qgis.xlsform2qgis.sheet_parser import ParsedSheet
 
 
 class _FakeQgsFields:
-    def __init__(self, names: list[str | QVariant]) -> None:
+    def __init__(self, names: "list[str | QVariant]") -> None:
         self._names = names
 
-    def names(self) -> list[str | QVariant]:
+    def names(self) -> "list[str | QVariant]":
         return self._names
 
 
 class _FakeQgsFeature:
-    def __init__(self, attrs: list[str | QVariant]) -> None:
+    def __init__(self, attrs: "list[str | QVariant]") -> None:
         self._attrs = attrs
 
-    def attributes(self) -> list[str | QVariant]:
+    def attributes(self) -> "list[str | QVariant]":
         return self._attrs
 
 
 class _FakeQgsVectorLayer:
     def __init__(
         self,
-        names: list[str | QVariant],
+        names: "list[str | QVariant]",
         *,
         feature_count: int = 0,
-        header_attrs: list[str | QVariant] | None = None,
+        header_attrs: "list[str | QVariant] | None" = None,
     ) -> None:
         self._fields = _FakeQgsFields(names)
         self._feature_count = feature_count
         self._header_attrs = header_attrs or []
 
-    def isValid(self) -> bool:
+    def isValid(self) -> bool:  # noqa: N802
         return True
 
     def fields(self) -> _FakeQgsFields:
         return self._fields
 
-    def featureCount(self) -> int:
+    def featureCount(self) -> int:  # noqa: N802
         return self._feature_count
 
-    def getFeature(self, _idx: int) -> _FakeQgsFeature:
+    def getFeature(self, _idx: int) -> _FakeQgsFeature:  # noqa: N802
         return _FakeQgsFeature(self._header_attrs)
 
 

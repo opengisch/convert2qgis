@@ -3,7 +3,7 @@ import gc
 import logging
 import os
 import tempfile
-from typing import Iterable, cast
+from typing import TYPE_CHECKING, cast
 
 from qgis.core import (
     Qgis,
@@ -11,7 +11,7 @@ from qgis.core import (
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransform,
     QgsCsException,
-    QgsFeature,  # type: ignore
+    QgsFeature,
     QgsFeatureRequest,
     QgsFeatureSink,
     QgsFeatureSource,
@@ -23,15 +23,19 @@ from qgis.core import (
 )
 from qgis.PyQt.QtCore import QObject, pyqtSignal
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
 logger = logging.getLogger(__package__)
 
 obj = QObject()
 
-QGISAPP: QgsApplication | None = None
+QGISAPP: "QgsApplication | None" = None
 
 
 def start_app() -> str:
-    """Will start a QgsApplication and call all initialization code like
+    """
+    Will start a QgsApplication and call all initialization code like
     registering the providers and other infrastructure. It will not load
     any plugins.
 
@@ -44,10 +48,12 @@ def start_app() -> str:
         str: QGIS app version that was started.
 
     """
-    global QGISAPP
+    global QGISAPP  # noqa: PLW0603
 
     if QGISAPP is None:
-        logger.info(f"Starting QGIS app version {Qgis.versionInt()} ({Qgis.devVersion()})...")
+        logger.info(
+            "Starting QGIS app version %s (%s)...", Qgis.versionInt(), Qgis.devVersion()
+        )
         argvb: list[str] = []
 
         os.environ["QGIS_CUSTOM_CONFIG_PATH"] = tempfile.mkdtemp("", "QGIS_CONFIG")
@@ -61,17 +67,17 @@ def start_app() -> str:
 
         # make sure the app is closed, otherwise the container exists with non-zero
         @atexit.register
-        def exitQgis() -> None:
+        def exitQgis() -> None:  # noqa: N802
             stop_app()
 
         logger.info("QGIS app started!")
 
-    return cast(str, Qgis.version())
+    return cast("str", Qgis.version())
 
 
 def stop_app() -> None:
     """Cleans up and exits QGIS"""
-    global QGISAPP
+    global QGISAPP  # noqa: PLW0603
 
     # note that if this function is called from @atexit.register, the globals are cleaned up
     if "QGISAPP" not in globals():
@@ -96,8 +102,11 @@ def stop_app() -> None:
         logger.info("Deleted QGIS app!")
 
 
-def set_survey_features(project: QgsProject, features: QgsFeatureSource) -> QgsRectangle | None:
-    """Loads a given set of features into the survey layer of the project.
+def set_survey_features(  # noqa: PLR0911
+    project: QgsProject, features: QgsFeatureSource
+) -> "QgsRectangle | None":
+    """
+    Loads a given set of features into the survey layer of the project.
 
     Returns the extent of the added features converted to the project CRS,
     or empty extent if the extent is invalid or cannot be converted,
@@ -147,7 +156,7 @@ def set_survey_features(project: QgsProject, features: QgsFeatureSource) -> QgsR
 
     request = QgsFeatureRequest()
     request.setDestinationCrs(survey_layer.crs(), project.transformContext())
-    features_iterator = cast(Iterable[QgsFeature], features.getFeatures(request))
+    features_iterator = cast("Iterable[QgsFeature]", features.getFeatures(request))
     for feature in features_iterator:
         output_features = QgsVectorLayerUtils.makeFeatureCompatible(
             feature,
@@ -155,7 +164,9 @@ def set_survey_features(project: QgsProject, features: QgsFeatureSource) -> QgsR
             QgsFeatureSink.SinkFlag.RegeneratePrimaryKey,
         )
         if output_features:
-            if not survey_layer.addFeature(output_features[0], QgsFeatureSink.Flag.FastInsert):
+            if not survey_layer.addFeature(
+                output_features[0], QgsFeatureSink.Flag.FastInsert
+            ):
                 logger.warning(
                     obj.tr(
                         "Failed to add feature to the survey layer within the generated project, skipping this feature."
@@ -181,8 +192,8 @@ def set_survey_features(project: QgsProject, features: QgsFeatureSource) -> QgsR
 
 def transform_bounding_box(
     extent: QgsRectangle,
-    source_authid: str | QgsCoordinateReferenceSystem,
-    dest_authid: str | QgsCoordinateReferenceSystem,
+    source_authid: "str | QgsCoordinateReferenceSystem",
+    dest_authid: "str | QgsCoordinateReferenceSystem",
     project: QgsProject,
 ) -> QgsRectangle:
     if isinstance(source_authid, str):
@@ -190,22 +201,26 @@ def transform_bounding_box(
     elif isinstance(source_authid, QgsCoordinateReferenceSystem):
         source_crs = source_authid
     else:
-        raise TypeError("Expected source CRS to be either a EPSG code or QgsCoordinateReferenceSystem")
+        raise TypeError(
+            "Expected source CRS to be either a EPSG code or QgsCoordinateReferenceSystem"
+        )
 
     if isinstance(dest_authid, str):
         dest_crs = QgsCoordinateReferenceSystem(dest_authid)
     elif isinstance(dest_authid, QgsCoordinateReferenceSystem):
         dest_crs = dest_authid
     else:
-        raise TypeError("Expected dest CRS to be either a EPSG code or QgsCoordinateReferenceSystem")
+        raise TypeError(
+            "Expected dest CRS to be either a EPSG code or QgsCoordinateReferenceSystem"
+        )
 
     if not source_crs.isValid():
-        logger.warning(f"Invalid source CRS: {source_authid}")
+        logger.warning("Invalid source CRS: %s", source_authid)
 
         return QgsRectangle()
 
     if not dest_crs.isValid():
-        logger.warning(f"Invalid destination CRS: {dest_authid}")
+        logger.warning("Invalid destination CRS: %s", dest_authid)
 
         return QgsRectangle()
 
@@ -218,12 +233,18 @@ def transform_bounding_box(
     try:
         return transform.transformBoundingBox(extent)
     except QgsCsException as err:
-        logger.warning(obj.tr("Failed to transform Survey layer extent to project CRS: {}").format(err))
+        logger.warning(
+            obj.tr("Failed to transform Survey layer extent to project CRS: {}").format(
+                err
+            )
+        )
 
         return QgsRectangle()
 
 
-def set_project_extent(project: QgsProject, input_extent: QgsRectangle, feedback: QgsFeedback) -> QgsRectangle:
+def set_project_extent(
+    project: QgsProject, input_extent: QgsRectangle, feedback: QgsFeedback
+) -> QgsRectangle:
     """Sets project extent to given `input_extent`."""
     project_extent = QgsRectangle(input_extent)
 
@@ -232,14 +253,16 @@ def set_project_extent(project: QgsProject, input_extent: QgsRectangle, feedback
             project.crs().mapUnits() != Qgis.DistanceUnit.Unknown
             and project.crs().mapUnits() != Qgis.DistanceUnit.Degrees
         ):
-            # Insure the initial project extent is not too zoomed in
-            if project_extent.width() < 200:
-                w_padding = (200 - project_extent.width()) / 2
+            min_extent_size = 200
+
+            # Ensure the initial project extent is not too zoomed in
+            if project_extent.width() < min_extent_size:
+                w_padding = (min_extent_size - project_extent.width()) / 2
                 project_extent.setXMinimum(project_extent.xMinimum() - w_padding)
                 project_extent.setXMaximum(project_extent.xMaximum() + w_padding)
 
-            if project_extent.height() < 200:
-                h_padding = (200 - project_extent.height()) / 2
+            if project_extent.height() < min_extent_size:
+                h_padding = (min_extent_size - project_extent.height()) / 2
                 project_extent.setYMinimum(project_extent.yMinimum() - h_padding)
                 project_extent.setYMaximum(project_extent.yMaximum() + h_padding)
 
@@ -251,17 +274,29 @@ def set_project_extent(project: QgsProject, input_extent: QgsRectangle, feedback
 
             project_extent = QgsRectangle(-9.88, 33.41, 40.97, 61.11)
         else:
-            feedback.pushInfo(obj.tr("Defaulting to project extents determined by the coordinate system."))
+            feedback.pushInfo(
+                obj.tr(
+                    "Defaulting to project extents determined by the coordinate system."
+                )
+            )
 
             project_extent = project.crs().bounds()
             h_padding = project_extent.height() / 2
             w_padding = project_extent.width() / 2
             if w_padding < h_padding:
-                project_extent.setYMinimum(project_extent.yMinimum() + h_padding - w_padding)
-                project_extent.setYMaximum(project_extent.yMinimum() + h_padding + w_padding)
+                project_extent.setYMinimum(
+                    project_extent.yMinimum() + h_padding - w_padding
+                )
+                project_extent.setYMaximum(
+                    project_extent.yMinimum() + h_padding + w_padding
+                )
             else:
-                project_extent.setXMinimum(project_extent.xMinimum() + w_padding - h_padding)
-                project_extent.setXMaximum(project_extent.xMinimum() + w_padding + h_padding)
+                project_extent.setXMinimum(
+                    project_extent.xMinimum() + w_padding - h_padding
+                )
+                project_extent.setXMaximum(
+                    project_extent.xMinimum() + w_padding + h_padding
+                )
 
         transform = QgsCoordinateTransform(
             QgsCoordinateReferenceSystem("EPSG:4326"),

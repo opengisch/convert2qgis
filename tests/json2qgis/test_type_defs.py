@@ -193,12 +193,16 @@ def test_project_creator_validates_raw_dict_before_defaults() -> None:
         ProjectCreator(project_dict)
 
 
-def test_project_creator_validates_raw_dict_before_dropping_unknown_properties() -> None:
+def test_project_creator_validates_raw_dict_before_dropping_unknown_properties() -> (
+    None
+):
     pytest.importorskip("fastjsonschema")
 
     project_dict = build_project_dict()
     # Make the project definition invalid by adding unknown property
-    project_dict["datasets"][0]["vector_datasets"][0]["unknown_property"] = "should fail"
+    project_dict["datasets"][0]["vector_datasets"][0]["unknown_property"] = (
+        "should fail"
+    )
 
     with pytest.raises(Qgis2JsonError):
         ProjectCreator(project_dict)

@@ -1,6 +1,6 @@
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from convert2qgis.json2qgis.generate import (
     generate_field_def,
@@ -38,14 +38,14 @@ class WidgetContext:
 
 
 class ParsedRow:
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
-        layer: WeakDatasetDef | Mapping[str, Any] | None = None,
-        relation: Mapping[str, Any] | None = None,
-        field: WeakFieldDef | Mapping[str, Any] | None = None,
-        form_field: WeakFormItemDef | Mapping[str, Any] | None = None,
-        form_container: Mapping[str, Any] | None = None,
-        geometry_type: GeometryType | None = None,
+        layer: "WeakDatasetDef | Mapping[str, Any] | None" = None,
+        relation: "Mapping[str, Any] | None" = None,
+        field: "WeakFieldDef | Mapping[str, Any] | None" = None,
+        form_field: "WeakFormItemDef | Mapping[str, Any] | None" = None,
+        form_container: "Mapping[str, Any] | None" = None,
+        geometry_type: "GeometryType | None" = None,
         group_status: GroupStatus = GroupStatus.NONE,
         layer_status: LayerStatus = LayerStatus.NONE,
     ) -> None:
@@ -62,8 +62,8 @@ class ParsedRow:
 class WidgetRegistry:
     """Singleton registry for widget type callbacks."""
 
-    _instance: "WidgetRegistry" | None = None
-    _registry: dict[str, Callable[[WidgetContext], ParsedRow]] = {}
+    _instance: "WidgetRegistry | None" = None
+    _registry: ClassVar[dict[str, Callable[[WidgetContext], ParsedRow]]] = {}
 
     def __new__(cls) -> "WidgetRegistry":
         if cls._instance is None:
@@ -82,7 +82,7 @@ class WidgetRegistry:
         self,
         widget_type: str,
         is_strict: bool = False,
-    ) -> Callable[[WidgetContext], ParsedRow] | None:
+    ) -> "Callable[[WidgetContext], ParsedRow] | None":
         cb = self._registry.get(widget_type)
 
         if not cb and not is_strict:
@@ -93,7 +93,9 @@ class WidgetRegistry:
 
 def register_type(
     format_name: list[str],
-) -> Callable[[Callable[[WidgetContext], ParsedRow]], Callable[[WidgetContext], ParsedRow]]:
+) -> Callable[
+    [Callable[[WidgetContext], ParsedRow]], Callable[[WidgetContext], ParsedRow]
+]:
     widget_registry = WidgetRegistry()
 
     def decorator(
@@ -126,7 +128,7 @@ def widget_calculate(ctx: WidgetContext) -> ParsedRow:
             }
         )
 
-    if ctx.converter._get_label(ctx.row):
+    if ctx.converter._get_label(ctx.row):  # noqa: SLF001
         widget_type = "TextEdit"
         show_label = True
     else:
@@ -150,7 +152,9 @@ def widget_hidden(ctx: WidgetContext) -> ParsedRow:
     field = WeakFieldDef()
 
     if ctx.row["calculation"]:
-        default_value_expr = ctx.converter.get_expression(ctx.row["calculation"], str(ctx.row["name"]))
+        default_value_expr = ctx.converter.get_expression(
+            ctx.row["calculation"], str(ctx.row["name"])
+        )
 
         field.update(
             {
@@ -276,7 +280,7 @@ def widget_text(ctx: WidgetContext) -> ParsedRow:
 
 
 @register_type(["acknowledge"])
-def widget_acknowledge(ctx: WidgetContext) -> ParsedRow:
+def widget_acknowledge(_ctx: WidgetContext) -> ParsedRow:
     return ParsedRow(
         field={
             "widget_type": "CheckBox",
@@ -285,7 +289,7 @@ def widget_acknowledge(ctx: WidgetContext) -> ParsedRow:
 
 
 @register_type(["integer", "decimal"])
-def widget_numeric(ctx: WidgetContext) -> ParsedRow:
+def widget_numeric(_ctx: WidgetContext) -> ParsedRow:
     return ParsedRow(
         field={
             "widget_type": "Range",
@@ -383,9 +387,13 @@ def widget_select_from_file(ctx: WidgetContext) -> ParsedRow:
         "select_one_from_file",
         "select_multiple_from_file",
     ):
-        list_key, list_value = parse_xlsform_select_from_file_parameters(ctx.row["parameters"])
+        list_key, list_value = parse_xlsform_select_from_file_parameters(
+            ctx.row["parameters"]
+        )
 
-        raise NotImplementedError("select_from_file and select_multiple_from_file not implemented yet")
+        raise NotImplementedError(
+            "select_from_file and select_multiple_from_file not implemented yet"
+        )
         # layers.append(
         #     generate_vector_dataset_def(
         #         id=layer_id,
@@ -401,11 +409,10 @@ def widget_select_from_file(ctx: WidgetContext) -> ParsedRow:
         #     )
         # )
 
-    else:
-        list_key = "name"
-        list_value = "label"
+    list_key = "name"
+    list_value = "label"
 
-        assert ctx.converter.find_vector_dataset(layer_id)
+    assert ctx.converter.find_vector_dataset(layer_id)
 
     filter_expressions = []
     choice_filter_expr = ctx.converter.get_expression(
@@ -490,7 +497,7 @@ def widget_begin_group(ctx: WidgetContext) -> ParsedRow:
 
 
 @register_type(["end group", "end_group"])
-def widget_end_group(ctx: WidgetContext) -> ParsedRow:
+def widget_end_group(_ctx: WidgetContext) -> ParsedRow:
     return ParsedRow(
         group_status=GroupStatus.END,
     )
@@ -500,7 +507,9 @@ def widget_end_group(ctx: WidgetContext) -> ParsedRow:
 def widget_note(ctx: WidgetContext) -> ParsedRow:
     container_id = f"item_container_{ctx.row.idx}"
     label_expr_str = ctx.row["label"] or ""
-    label_expr = ctx.converter.get_expression(label_expr_str, str(ctx.row["name"]), ParserType.TEMPLATE)
+    label_expr = ctx.converter.get_expression(
+        label_expr_str, str(ctx.row["name"]), ParserType.TEMPLATE
+    )
 
     if label_expr.is_str():
         label = label_expr_str
@@ -573,7 +582,7 @@ def widget_begin_repeat(ctx: WidgetContext) -> ParsedRow:
 @register_type(
     ["end repeat", "end_repeat"],
 )
-def widget_end_repeat(ctx: WidgetContext) -> ParsedRow:
+def widget_end_repeat(_ctx: WidgetContext) -> ParsedRow:
     return ParsedRow(
         layer_status=LayerStatus.END,
     )

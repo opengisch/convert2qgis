@@ -29,7 +29,9 @@ def strip_html(html: str) -> str:
 def parse_xlsform_range_parameters(
     xlsform_parameters: str,
 ) -> tuple[float, float, float]:
-    start_match = re.search(r"start=\s*([0-9]+)", xlsform_parameters, flags=re.IGNORECASE)
+    start_match = re.search(
+        r"start=\s*([0-9]+)", xlsform_parameters, flags=re.IGNORECASE
+    )
     end_match = re.search(r"end=\s*([0-9]+)", xlsform_parameters, flags=re.IGNORECASE)
     step_match = re.search(r"step=\s*([0-9]+)", xlsform_parameters, flags=re.IGNORECASE)
 
@@ -82,6 +84,6 @@ def build_choices_layer_name(*parts: str) -> str:
 
 def build_choices_layer_id(*parts: str) -> str:
     prefix = build_choices_layer_name(*parts)
-    md5_hash = md5(prefix.encode()).hexdigest()
+    md5_hash = md5(prefix.encode(), usedforsecurity=False).hexdigest()
 
     return f"{prefix}_{md5_hash}"
