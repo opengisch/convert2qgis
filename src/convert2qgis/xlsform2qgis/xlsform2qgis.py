@@ -2,7 +2,7 @@ import json
 import logging
 import re
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, cast
 
@@ -701,7 +701,7 @@ class XlsformConverter:
             "form_title": "Untitled Survey",
             "form_id": "survey",
             "default_language": "",
-            "version": datetime.now().isoformat(timespec="minutes"),
+            "version": datetime.now(tz=timezone.utc).isoformat(timespec="minutes"),
             "instance_name": '"uuid"',
         }
 
