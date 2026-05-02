@@ -266,7 +266,15 @@ class ProjectCreator:
         self._project.addMapLayer(layer, False)
 
     def _get_geometry_type(self, geometry_type: str) -> str:
-        geometry_type_set = {"Point", "LineString", "Polygon", "NoGeometry"}
+        geometry_type_set = {
+            "Point",
+            "LineString",
+            "Polygon",
+            "MultiPoint",
+            "MultiLineString",
+            "MultiPolygon",
+            "NoGeometry",
+        }
 
         if geometry_type not in geometry_type_set:
             raise NotImplementedError(f"Unsupported geometry type: {geometry_type}")
