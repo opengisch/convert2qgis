@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import Enum
 from typing import assert_never
 
 from convert2qgis.json2qgis.type_defs import ChoicesDef
@@ -25,7 +25,7 @@ from convert2qgis.xlsform2qgis.expressions.utils import SINGLE_QUOTE, wrap_field
 from convert2qgis.xlsform2qgis.type_defs import XlsformSettings
 
 
-class QgisRenderType(StrEnum):
+class QgisRenderType(str, Enum):
     TEMPLATE = "template"
     EXPRESSION = "expression"
 

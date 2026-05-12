@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field, fields
-from enum import StrEnum
+from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeAlias, TypeVar, cast
 
@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
 
 def _serialize(value: Any) -> Any:
-    if isinstance(value, StrEnum):
+    if isinstance(value, Enum):
         return value.value
     if isinstance(value, DataclassModelMixin):
         return value.to_dict()
@@ -285,7 +285,7 @@ def legend_tree_item_from_data(
     raise NotImplementedError(f"Unsupported legend tree item type: {legend_item_type}")
 
 
-class VectorLayerDataprovider(StrEnum):
+class VectorLayerDataprovider(str, Enum):
     GPKG = "gpkg"
     MEMORY = "memory"
 

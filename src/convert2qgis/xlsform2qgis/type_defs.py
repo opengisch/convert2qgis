@@ -1,16 +1,16 @@
-from enum import StrEnum
+from enum import Enum
 from typing import TypedDict
 
 from convert2qgis.json2qgis.type_defs import CrsDef, FormItemGroupTypes
 
 
-class GroupStatus(StrEnum):
+class GroupStatus(str, Enum):
     NONE = "none"
     BEGIN = "start"
     END = "end"
 
 
-class LayerStatus(StrEnum):
+class LayerStatus(str, Enum):
     NONE = "none"
     BEGIN = "start"
     END = "end"
