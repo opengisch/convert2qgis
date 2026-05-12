@@ -9,16 +9,15 @@ from typing import (
     Any,
     ClassVar,
     Literal,
-    TypeAlias,
     TypeVar,
     Union,
     cast,
 )
 
-RelationStrength: TypeAlias = Literal["association", "composition"]
-ConstraintStrength: TypeAlias = Literal["hard", "soft", "not_set"]
+RelationStrength = Literal["association", "composition"]
+ConstraintStrength = Literal["hard", "soft", "not_set"]
 CrsDef = str
-GeometryType: TypeAlias = Literal[
+GeometryType = Literal[
     "Point",
     "LineString",
     "Polygon",
@@ -27,11 +26,9 @@ GeometryType: TypeAlias = Literal[
     "MultiPolygon",
     "NoGeometry",
 ]
-FormItemTypes: TypeAlias = Literal[
-    "field", "relation", "group_box", "tab", "row", "text"
-]
-FormItemGroupTypes: TypeAlias = Literal["group_box", "tab"]
-LayerType: TypeAlias = Literal["vector", "raster", "mesh", "vector_tile", "point_cloud"]
+FormItemTypes = Literal["field", "relation", "group_box", "tab", "row", "text"]
+FormItemGroupTypes = Literal["group_box", "tab"]
+LayerType = Literal["vector", "raster", "mesh", "vector_tile", "point_cloud"]
 
 
 T = TypeVar("T", bound="DataclassModelMixin")
