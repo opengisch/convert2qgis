@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import assert_never
 
 from convert2qgis.json2qgis.type_defs import ChoicesDef
 from convert2qgis.xlsform2qgis.converter_utils import strip_html
@@ -236,7 +235,8 @@ class Expression:
         elif expression_type == QgisRenderType.EXPRESSION:
             return render(self.ast, set())[0]
         else:  # pragma: no cover
-            assert_never(expression_type)
+            # TODO @suricactus: enable `assert_never` here once we require Python 3.12+
+            # assert_never(expression_type)
 
             raise NotImplementedError(
                 f"Unknown parser type: {self.context.parser_type}"
