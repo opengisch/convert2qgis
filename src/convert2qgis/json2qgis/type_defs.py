@@ -275,7 +275,7 @@ LegendTreeItemDef = Union[LegendTreeGroupDef, LegendTreeLayerDef]
 
 
 def legend_tree_item_from_data(
-    data: Union[LegendTreeItemDef, Mapping[str, Any]],
+    data: LegendTreeItemDef | Mapping[str, Any],
 ) -> LegendTreeItemDef:
     if isinstance(data, LegendTreeGroupDef):
         return data
@@ -608,7 +608,7 @@ class ProjectDef(DataclassModelMixin):
         ]
 
 
-def dataset_from_data(data: Union[DatasetDef, Mapping[str, Any]]) -> DatasetDef:
+def dataset_from_data(data: DatasetDef | Mapping[str, Any]) -> DatasetDef:
     if isinstance(data, VectorDatasetDef):
         return data
     if isinstance(data, RasterDatasetDef):
