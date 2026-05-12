@@ -4,7 +4,16 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field, fields
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeAlias, TypeVar, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Literal,
+    TypeAlias,
+    TypeVar,
+    Union,
+    cast,
+)
 
 RelationStrength: TypeAlias = Literal["association", "composition"]
 ConstraintStrength: TypeAlias = Literal["hard", "soft", "not_set"]
@@ -265,11 +274,11 @@ class LegendTreeGroupDef(LegendTreeItemBaseDef):
         )
 
 
-LegendTreeItemDef = LegendTreeGroupDef | LegendTreeLayerDef
+LegendTreeItemDef = Union[LegendTreeGroupDef, LegendTreeLayerDef]
 
 
 def legend_tree_item_from_data(
-    data: LegendTreeItemDef | Mapping[str, Any],
+    data: Union[LegendTreeItemDef, Mapping[str, Any]],
 ) -> LegendTreeItemDef:
     if isinstance(data, LegendTreeGroupDef):
         return data
@@ -531,7 +540,7 @@ class RasterDatasetDef(BaseDatasetDef):
         )
 
 
-DatasetDef = VectorDatasetDef | RasterDatasetDef
+DatasetDef = Union[VectorDatasetDef, RasterDatasetDef]
 
 
 @dataclass
@@ -602,7 +611,7 @@ class ProjectDef(DataclassModelMixin):
         ]
 
 
-def dataset_from_data(data: DatasetDef | Mapping[str, Any]) -> DatasetDef:
+def dataset_from_data(data: Union[DatasetDef, Mapping[str, Any]]) -> DatasetDef:
     if isinstance(data, VectorDatasetDef):
         return data
     if isinstance(data, RasterDatasetDef):
@@ -650,7 +659,7 @@ class AliasWithExpressionDef(DataclassModelMixin):
     alias_expression: str = ""
 
 
-AliasDef = AliasSimpleDef | AliasWithExpressionDef
+AliasDef = Union[AliasSimpleDef, AliasWithExpressionDef]
 
 
-PathOrStr = str | Path
+PathOrStr = Union[str, Path]
