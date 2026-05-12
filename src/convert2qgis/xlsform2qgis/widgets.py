@@ -1,6 +1,6 @@
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, Optional
 
 from convert2qgis.json2qgis.generate import (
     generate_field_def,
@@ -45,7 +45,7 @@ class ParsedRow:
         field: "WeakFieldDef | Mapping[str, Any] | None" = None,
         form_field: "WeakFormItemDef | Mapping[str, Any] | None" = None,
         form_container: "Mapping[str, Any] | None" = None,
-        geometry_type: "GeometryType | None" = None,
+        geometry_type: Optional[GeometryType] = None,
         group_status: GroupStatus = GroupStatus.NONE,
         layer_status: LayerStatus = LayerStatus.NONE,
     ) -> None:
@@ -54,7 +54,7 @@ class ParsedRow:
         self.field: WeakFieldDef = WeakFieldDef.from_data(field or {})
         self.form_field: WeakFormItemDef = WeakFormItemDef.from_data(form_field or {})
         self.form_container: dict[str, Any] = dict(form_container or {})
-        self.geometry_type: GeometryType | None = geometry_type
+        self.geometry_type: Optional[GeometryType] = geometry_type
         self.group_status = group_status
         self.layer_status = layer_status
 
@@ -62,7 +62,7 @@ class ParsedRow:
 class WidgetRegistry:
     """Singleton registry for widget type callbacks."""
 
-    _instance: "WidgetRegistry | None" = None
+    _instance: Optional["WidgetRegistry"] = None
     _registry: ClassVar[dict[str, Callable[[WidgetContext], ParsedRow]]] = {}
 
     def __new__(cls) -> "WidgetRegistry":
