@@ -109,7 +109,7 @@ max-line-length = 120
 "__init__.py" = ["F401"]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.9"
 
 strict = true
 warn_unreachable = true

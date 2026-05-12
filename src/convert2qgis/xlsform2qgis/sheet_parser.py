@@ -2,7 +2,7 @@ import logging
 import re
 from collections import defaultdict
 from collections.abc import Iterable, Iterator
-from typing import Any, cast
+from typing import Any, Union, cast
 
 from qgis.core import (
     QgsFeature,
@@ -77,7 +77,7 @@ class ParsedSheet:
         if not self.layer.isValid():
             raise ValueError(f"Failed to load layer from: {xlsform_filename}")
 
-        fields_names: list[str | QVariant] = self.layer.fields().names()
+        fields_names: list[Union[str, QVariant]] = self.layer.fields().names()
 
         # if the first line in the xlsform is empty
         if fields_names[0] == "Field1":

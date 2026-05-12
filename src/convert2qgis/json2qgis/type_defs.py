@@ -2,14 +2,22 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field, fields
-from enum import StrEnum
+from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeAlias, TypeVar, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Literal,
+    TypeVar,
+    Union,
+    cast,
+)
 
-RelationStrength: TypeAlias = Literal["association", "composition"]
-ConstraintStrength: TypeAlias = Literal["hard", "soft", "not_set"]
+RelationStrength = Literal["association", "composition"]
+ConstraintStrength = Literal["hard", "soft", "not_set"]
 CrsDef = str
-GeometryType: TypeAlias = Literal[
+GeometryType = Literal[
     "Point",
     "LineString",
     "Polygon",
@@ -18,11 +26,9 @@ GeometryType: TypeAlias = Literal[
     "MultiPolygon",
     "NoGeometry",
 ]
-FormItemTypes: TypeAlias = Literal[
-    "field", "relation", "group_box", "tab", "row", "text"
-]
-FormItemGroupTypes: TypeAlias = Literal["group_box", "tab"]
-LayerType: TypeAlias = Literal["vector", "raster", "mesh", "vector_tile", "point_cloud"]
+FormItemTypes = Literal["field", "relation", "group_box", "tab", "row", "text"]
+FormItemGroupTypes = Literal["group_box", "tab"]
+LayerType = Literal["vector", "raster", "mesh", "vector_tile", "point_cloud"]
 
 
 T = TypeVar("T", bound="DataclassModelMixin")
@@ -32,7 +38,7 @@ if TYPE_CHECKING:
 
 
 def _serialize(value: Any) -> Any:
-    if isinstance(value, StrEnum):
+    if isinstance(value, Enum):
         return value.value
     if isinstance(value, DataclassModelMixin):
         return value.to_dict()
@@ -265,7 +271,7 @@ class LegendTreeGroupDef(LegendTreeItemBaseDef):
         )
 
 
-LegendTreeItemDef = LegendTreeGroupDef | LegendTreeLayerDef
+LegendTreeItemDef = Union[LegendTreeGroupDef, LegendTreeLayerDef]
 
 
 def legend_tree_item_from_data(
@@ -285,7 +291,7 @@ def legend_tree_item_from_data(
     raise NotImplementedError(f"Unsupported legend tree item type: {legend_item_type}")
 
 
-class VectorLayerDataprovider(StrEnum):
+class VectorLayerDataprovider(str, Enum):
     GPKG = "gpkg"
     MEMORY = "memory"
 
@@ -531,7 +537,7 @@ class RasterDatasetDef(BaseDatasetDef):
         )
 
 
-DatasetDef = VectorDatasetDef | RasterDatasetDef
+DatasetDef = Union[VectorDatasetDef, RasterDatasetDef]
 
 
 @dataclass
@@ -650,7 +656,7 @@ class AliasWithExpressionDef(DataclassModelMixin):
     alias_expression: str = ""
 
 
-AliasDef = AliasSimpleDef | AliasWithExpressionDef
+AliasDef = Union[AliasSimpleDef, AliasWithExpressionDef]
 
 
-PathOrStr = str | Path
+PathOrStr = Union[str, Path]

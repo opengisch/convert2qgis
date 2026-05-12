@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import Enum
 
 from convert2qgis.xlsform2qgis.expressions.functions import SUPPORTED_FUNCTIONS
 from convert2qgis.xlsform2qgis.expressions.tokenizer import (
@@ -16,7 +16,7 @@ class AstNode:
     pass
 
 
-class LiteralType(StrEnum):
+class LiteralType(str, Enum):
     NUMBER = "number"
     STRING = "string"
     EMPTY = "empty"
@@ -31,7 +31,7 @@ class LiteralType(StrEnum):
         raise ValueError(f"Cannot convert token type {token_type} to LiteralType")
 
 
-class ParserType(StrEnum):
+class ParserType(str, Enum):
     EXPRESSION = "expression"
     TEMPLATE = "template"
 

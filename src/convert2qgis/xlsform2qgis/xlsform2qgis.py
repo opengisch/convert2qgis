@@ -4,7 +4,7 @@ import re
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Optional, cast
 
 from qgis.core import QgsFeatureSource, QgsProject
 
@@ -808,7 +808,7 @@ class XlsformConverter:
 
     def build_survey_form(self) -> None:
         # use the top most "layer_id" from the stack to find the respective layer definition
-        max_pixels: int | None = None
+        max_pixels: Optional[int] = None
         geometry_type_by_layer_id: dict[str, GeometryType] = {}
 
         for row in self.survey_sheet:
