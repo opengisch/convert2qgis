@@ -65,6 +65,9 @@ class ProjectCreator:
     _has_geometry: bool = False
     """Whether any of the project vector layers has a geometry type."""
 
+    _consolidate_gpkgs: bool = True
+    """Whether to consolidate all vector layers into a single GeoPackage file."""
+
     def __init__(self, definition: "ProjectDef | dict[str, Any]") -> None:
         # validate the project definition against the JSON schema if a schema validator is available
         if fastjsonschema:
@@ -103,7 +106,7 @@ class ProjectCreator:
             os.chdir(previous_cwd)
 
     def _create_project(self) -> QgsProject:
-        project_title = self.definition.project.title or "xlsform_project"
+        project_title = self._get_project_title()
 
         logger.info("Creating project with title: %s", project_title)
         logger.info("Creating %d layers...", len(self.definition.all_datasets))
@@ -176,7 +179,7 @@ class ProjectCreator:
         # NOTE: Connect to the `writeProject` signal to set the project extent before the project is written to disk.
         self._project.writeProject.connect(self._process_project_write)
 
-        project_filename = f"{normalize_name(project_title)}.qgs"
+        project_filename = f"{normalize_name(project_title)}.qgz"
 
         logger.info('Writing project to "%s"...', project_filename)
 
@@ -188,6 +191,9 @@ class ProjectCreator:
             )
 
         return self._project
+
+    def _get_project_title(self) -> str:
+        return self.definition.project.title or "xlsform_project"
 
     def _get_project_crs(self) -> QgsCoordinateReferenceSystem:
         return str_to_crs(self.definition.project.crs, "EPSG:3857")
@@ -306,6 +312,12 @@ class ProjectCreator:
         geometry_type = self._get_geometry_type(dataset_def.geometry_type)
         source = f"{geometry_type}?crs={dataset_def.crs}"
 
+        logger.info(
+            'Creating vector layer "%s" with geometry type "%s"...',
+            dataset_def.name,
+            dataset_def.geometry_type,
+        )
+
         layer = QgsVectorLayer(source, dataset_def.name, "memory")
 
         if not layer.isValid():
@@ -327,10 +339,23 @@ class ProjectCreator:
         options.layerName = normalized_name
         options.driverName = driver_name.value
 
-        file_name = normalized_name + "." + driver_name.value.lower()
+        driver_ext = driver_name.value.lower()
 
-        # TODO @suricactus: consider switching to `QgsVectorFileWriter.create()`
-        write_result, error_message, new_file, _new_layer = (
+        if self._consolidate_gpkgs and driver_name == VectorLayerDataprovider.GPKG:
+            file_name = f"{normalize_name(self._get_project_title())}.gpkg"
+        else:
+            file_name = normalized_name + "." + driver_ext
+
+        if Path(file_name).exists():
+            options.actionOnExistingFile = (
+                QgsVectorFileWriter.ActionOnExistingFile.CreateOrOverwriteLayer
+            )
+        else:
+            options.actionOnExistingFile = (
+                QgsVectorFileWriter.ActionOnExistingFile.CreateOrOverwriteFile
+            )
+
+        write_result, error_message, new_file, new_layer = (
             QgsVectorFileWriter.writeAsVectorFormatV3(
                 layer,
                 file_name,
@@ -344,7 +369,13 @@ class ProjectCreator:
                 f"Error writing vector layer: {write_result} {error_message}"
             )
 
-        new_layer = QgsVectorLayer(new_file, dataset_def.name, layer_provider_lib)
+        assert new_file == file_name
+        assert new_layer == normalized_name
+
+        # TODO @suricactus: this way of loading a layer will work fine for GPKG, but might be problematic for other formats.
+        new_layer = QgsVectorLayer(
+            f"{new_file}|layername={new_layer}", dataset_def.name, layer_provider_lib
+        )
 
         set_layer_fields(new_layer, dataset_def)
 
