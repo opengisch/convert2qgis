@@ -417,6 +417,18 @@ def create_fields(dataset_def: "VectorDatasetDef | dict[str, Any]") -> QgsFields
     return fields
 
 
+def set_layer_virtual_fields(
+    layer: QgsVectorLayer, dataset_def: "VectorDatasetDef | dict[str, Any]"
+) -> None:
+    dataset_def = VectorDatasetDef.from_data(dataset_def)
+
+    for field_def in dataset_def.virtual_fields:
+        expression = field_def.default_value or ""
+        layer.addExpressionField(expression, create_field(field_def))
+
+    layer.updateFields()
+
+
 def set_layer_fields(
     layer: QgsVectorLayer, dataset_def: "VectorDatasetDef | dict[str, Any]"
 ) -> None:
@@ -438,7 +450,7 @@ def set_layer_fields(
         widget_setup = QgsEditorWidgetSetup("Hidden", {})
         layer.setEditorWidgetSetup(field_idx, widget_setup)
 
-    for field_def in dataset_def.fields:
+    for field_def in [*dataset_def.fields, *dataset_def.virtual_fields]:
         field_name = field_def.name
         field_idx = fields.indexOf(field_name)
 

@@ -34,6 +34,7 @@ class XlsformSettings(TypedDict):
 @dataclass
 class ParsedSheetRowResult:
     fields: list[FieldDef] = field(default_factory=list)
+    virtual_fields: list[FieldDef] = field(default_factory=list)
     form_items: list[FormItemDef] = field(default_factory=list)
     geometry_type: Optional[GeometryType] = None
 

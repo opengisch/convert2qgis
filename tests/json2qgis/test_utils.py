@@ -29,6 +29,7 @@ from convert2qgis.json2qgis.utils import (
     set_layer_custom_properties,
     set_layer_fields,
     set_layer_tree,
+    set_layer_virtual_fields,
     set_project_custom_properties,
     str_to_crs,
 )
@@ -1058,6 +1059,82 @@ class TestUtils:
         # but unfortunately we get the abstract class `QgsAttributeEditorElement` as a type and we need to check the type value instead
         assert tabs[1].children()[1].type() == Qgis.AttributeEditorType.TextElement
         assert tabs[1].children()[1].name() == "<p>Hello <em>World</em></p>"
+
+    def test_get_layer_edit_form_with_virtual_field(self, sample_vector_layer_def):
+        virtual_field = {
+            **sample_vector_layer_def["fields"][0],
+            "name": "total_pop",
+            "alias": "Total population",
+            "default_value": '"Field integer" + 1',
+        }
+        sample_vector_layer_def = {
+            **sample_vector_layer_def,
+            "virtual_fields": [virtual_field],
+            "form_config": [
+                {
+                    "item_id": "main_tab",
+                    "label": "Main",
+                    "type": "tab",
+                    "children": [
+                        {
+                            "item_id": "total_pop_item",
+                            "field_name": "total_pop",
+                            "type": "field",
+                        }
+                    ],
+                }
+            ],
+        }
+        fields = create_fields(sample_vector_layer_def)
+
+        layer = QgsVectorLayer("Point?crs=EPSG:4326", "test_layer", "memory")
+        data_provider = layer.dataProvider()
+
+        assert data_provider is not None
+
+        data_provider.addAttributes(fields.toList())
+        layer.updateFields()
+        set_layer_virtual_fields(layer, sample_vector_layer_def)
+
+        form_config = get_layer_edit_form(layer.fields(), sample_vector_layer_def)
+        tab = form_config.tabs()[0]
+
+        assert layer.fields().indexOf("total_pop") != -1
+        assert (
+            layer.expressionField(layer.fields().indexOf("total_pop"))
+            == '"Field integer" + 1'
+        )
+        assert tab.children()[0].name() == "total_pop"
+
+    def test_set_layer_virtual_fields(self, sample_vector_layer_def):
+        virtual_field = {
+            **sample_vector_layer_def["fields"][0],
+            "name": "total_pop",
+            "alias": "Total population",
+            "default_value": '"Field integer" + 1',
+        }
+        sample_vector_layer_def = {
+            **sample_vector_layer_def,
+            "virtual_fields": [virtual_field],
+        }
+        fields = create_fields(sample_vector_layer_def)
+
+        layer = QgsVectorLayer("Point?crs=EPSG:4326", "test_layer", "memory")
+        data_provider = layer.dataProvider()
+
+        assert data_provider is not None
+
+        data_provider.addAttributes(fields.toList())
+        layer.updateFields()
+
+        assert layer.fields().indexOf("total_pop") == -1
+
+        set_layer_virtual_fields(layer, sample_vector_layer_def)
+
+        field_idx = layer.fields().indexOf("total_pop")
+
+        assert field_idx != -1
+        assert layer.expressionField(field_idx) == '"Field integer" + 1'
 
     def test_set_layer_fields(self, sample_vector_layer_def):
         """Test setting layer fields from VectorDatasetDef."""

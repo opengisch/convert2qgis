@@ -36,6 +36,16 @@ def build_project_dict() -> dict[str, Any]:
                 widget_type="TextEdit",
             )
         ],
+        virtual_fields=[
+            generate_field_def(
+                field_id="field_2",
+                name="total",
+                type="integer",
+                widget_type="Hidden",
+                default_value='"count_a" + "count_b"',
+                set_default_value_on_update=True,
+            )
+        ],
         form_config=[
             generate_form_item_def(
                 item_id="tab_1",
