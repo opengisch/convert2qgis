@@ -36,6 +36,9 @@ class TestGetUniqueLabel:
     def test_returns_label_when_unique(self) -> None:
         assert get_unique_label(" New Label ", ["Existing"]) == "New Label"
 
+    def test_strips_label_before_checking_duplicates(self) -> None:
+        assert get_unique_label(" Label ", ["Label"]) == "Label (2)"
+
     def test_appends_next_available_suffix_is_2(self) -> None:
         assert get_unique_label("Label", ["Label"]) == "Label (2)"
 
