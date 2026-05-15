@@ -427,6 +427,11 @@ def set_layer_fields(
     if dataset_def.datasource_format == VectorLayerDataprovider.GPKG:
         field_idx = fields.indexOf("fid")
 
+        logger.info(
+            "Hiding 'fid' field for layer '%s' since it's a GeoPackage layer...",
+            fields.names(),
+        )
+
         assert field_idx != -1
 
         widget_setup = QgsEditorWidgetSetup("Hidden", {})
