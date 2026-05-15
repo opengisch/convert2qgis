@@ -1,4 +1,5 @@
 import json
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock
@@ -623,6 +624,102 @@ class TestConverter:
                 ),
             ],
         )
+
+    def test_prune_field_definition_downgrades_hidden_hard_constraints(
+        self, converter, caplog
+    ):
+        caplog.set_level(logging.WARNING)
+        field = generate_field_def(
+            name="hidden_field",
+            widget_type="Hidden",
+            is_not_null_strength="hard",
+            constraint_expression_strength="hard",
+            is_unique_strength="hard",
+        )
+
+        converter._prune_field_definition(field)
+
+        assert field.is_not_null_strength == "soft"
+        assert field.constraint_expression_strength == "soft"
+        assert field.is_unique_strength == "soft"
+        assert [
+            record.message
+            for record in caplog.records
+            if "hidden_field" in record.message
+        ] == [
+            "Field `hidden_field` has not null constraint strength set to `hard` but has a `Hidden` widget; this will prevent saving the form, therefore the constraint strength will be downgraded to `soft`!",
+            "Field `hidden_field` has constraint expression strength set to `hard` but has a `Hidden` widget; this is not a valid combination and the constraint expression will be downgraded to `soft`!",
+            "Field `hidden_field` has unique constraint strength set to `hard` but has a `Hidden` widget; this is not a valid combination and the unique constraint will be downgraded to `soft`!",
+        ]
+
+    def test_prune_field_definition_keeps_visible_field_constraints(
+        self, converter, caplog
+    ):
+        caplog.set_level(logging.WARNING)
+        field = generate_field_def(
+            name="visible_field",
+            widget_type="TextEdit",
+            is_not_null_strength="hard",
+            constraint_expression_strength="hard",
+            is_unique_strength="hard",
+        )
+
+        converter._prune_field_definition(field)
+
+        assert field.is_not_null_strength == "hard"
+        assert field.constraint_expression_strength == "hard"
+        assert field.is_unique_strength == "hard"
+        assert [
+            record.message
+            for record in caplog.records
+            if "visible_field" in record.message
+        ] == []
+
+    def test_prune_field_definition_keeps_hidden_not_set_constraints(
+        self, converter, caplog
+    ):
+        caplog.set_level(logging.WARNING)
+        field = generate_field_def(
+            name="hidden_field",
+            widget_type="Hidden",
+            is_not_null_strength="not_set",
+            constraint_expression_strength="not_set",
+            is_unique_strength="not_set",
+        )
+
+        converter._prune_field_definition(field)
+
+        assert field.is_not_null_strength == "not_set"
+        assert field.constraint_expression_strength == "not_set"
+        assert field.is_unique_strength == "not_set"
+        assert [
+            record.message
+            for record in caplog.records
+            if "hidden_field" in record.message
+        ] == []
+
+    def test_prune_field_definition_keeps_hidden_soft_constraints(
+        self, converter, caplog
+    ):
+        caplog.set_level(logging.WARNING)
+        field = generate_field_def(
+            name="hidden_field",
+            widget_type="Hidden",
+            is_not_null_strength="soft",
+            constraint_expression_strength="soft",
+            is_unique_strength="soft",
+        )
+
+        converter._prune_field_definition(field)
+
+        assert field.is_not_null_strength == "soft"
+        assert field.constraint_expression_strength == "soft"
+        assert field.is_unique_strength == "soft"
+        assert [
+            record.message
+            for record in caplog.records
+            if "hidden_field" in record.message
+        ] == []
 
     def test_xlsform_with_group(self, converter):
         converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(

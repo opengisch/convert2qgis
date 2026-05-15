@@ -26,6 +26,7 @@ from convert2qgis.json2qgis.type_defs import (
     CrsDef,
     DatasetDef,
     DatasetGroupDef,
+    FieldDef,
     FormItemDef,
     FormItemGroupTypes,
     GeometryType,
@@ -1023,6 +1024,8 @@ class XlsformConverter:
                 }
             )
 
+            self._prune_field_definition(field)
+
             if parsed_row.field:
                 result.fields.append(field)
             elif parsed_row.virtual_field:
@@ -1054,6 +1057,34 @@ class XlsformConverter:
             self._add_container(container_item)
 
         return result
+
+    def _prune_field_definition(self, field_def: FieldDef) -> None:
+        if field_def.widget_type not in ("Hidden",):
+            return
+
+        if field_def.is_not_null_strength == "hard":
+            logger.warning(
+                "Field `%s` has not null constraint strength set to `hard` but has a `Hidden` widget; this will prevent saving the form, therefore the constraint strength will be downgraded to `soft`!",
+                field_def.name,
+            )
+
+            field_def.is_not_null_strength = "soft"
+
+        if field_def.constraint_expression_strength == "hard":
+            logger.warning(
+                "Field `%s` has constraint expression strength set to `hard` but has a `Hidden` widget; this is not a valid combination and the constraint expression will be downgraded to `soft`!",
+                field_def.name,
+            )
+
+            field_def.constraint_expression_strength = "soft"
+
+        if field_def.is_unique_strength == "hard":
+            logger.warning(
+                "Field `%s` has unique constraint strength set to `hard` but has a `Hidden` widget; this is not a valid combination and the unique constraint will be downgraded to `soft`!",
+                field_def.name,
+            )
+
+            field_def.is_unique_strength = "soft"
 
     def _get_choices_columns(self, list_choices: list[ChoicesDef]) -> list[str]:
         # The additional columns are most likely related to a single choice group,
