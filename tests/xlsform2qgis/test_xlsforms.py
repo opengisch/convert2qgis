@@ -5,12 +5,22 @@ from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock
 
 import pytest
+from qgis.core import (
+    QgsAttributeEditorContainer,
+    QgsAttributeEditorField,
+    QgsVectorLayer,
+)
 
 from convert2qgis.json2qgis.generate import (
     generate_field_def,
     generate_form_item_def,
     generate_uuid_field_def,
     generate_vector_dataset_def,
+)
+from convert2qgis.json2qgis.utils import (
+    create_fields,
+    get_layer_edit_form,
+    set_layer_virtual_fields,
 )
 from convert2qgis.xlsform2qgis import xlsform2qgis as xlsform2qgis_module
 from convert2qgis.xlsform2qgis.expressions.functions import SUPPORTED_FUNCTIONS
@@ -720,6 +730,63 @@ class TestConverter:
             for record in caplog.records
             if "hidden_field" in record.message
         ] == []
+
+    def test_xlsform_conditional_hidden_field_does_not_get_wrapper(self, converter):
+        converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
+            [
+                generate_survey_row(
+                    type="text",
+                    name="controller",
+                    label="Controller",
+                ),
+                generate_survey_row(
+                    type="text",
+                    name="visible_field",
+                    label="Visible field",
+                    relevant="${controller} = 'yes'",
+                ),
+                generate_survey_row(
+                    type="calculate",
+                    name="hidden_field",
+                    calculation="1 + 1",
+                    relevant="${controller} = 'yes'",
+                ),
+            ]
+        )
+
+        converter.convert()
+
+        survey_layer = converter.vector_datasets[0]
+        layer = QgsVectorLayer("Point?crs=EPSG:4326", "survey", "memory")
+        data_provider = layer.dataProvider()
+
+        assert data_provider is not None
+
+        data_provider.addAttributes(create_fields(survey_layer).toList())
+        layer.updateFields()
+        set_layer_virtual_fields(layer, survey_layer)
+
+        form_config = get_layer_edit_form(layer.fields(), survey_layer)
+        root_container = form_config.tabs()[0]
+        controller_item = root_container.children()[0]
+        visible_wrapper = root_container.children()[1]
+        hidden_item = root_container.children()[2]
+
+        assert isinstance(controller_item, QgsAttributeEditorField)
+        assert controller_item.name() == "controller"
+
+        assert isinstance(visible_wrapper, QgsAttributeEditorContainer)
+        assert visible_wrapper.name() == "`visible_field` conditional wrapper"
+        assert (
+            visible_wrapper.visibilityExpression().data().expression()
+            == "\"controller\" = 'yes'"
+        )
+        assert len(visible_wrapper.children()) == 1
+        assert isinstance(visible_wrapper.children()[0], QgsAttributeEditorField)
+        assert visible_wrapper.children()[0].name() == "visible_field"
+
+        assert isinstance(hidden_item, QgsAttributeEditorField)
+        assert hidden_item.name() == "hidden_field"
 
     def test_xlsform_with_group(self, converter):
         converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(

@@ -309,6 +309,11 @@ def get_layer_edit_form(  # noqa: PLR0915
     form_config.setLayout(Qgis.AttributeFormLayout.DragAndDrop)
     form_config.clearTabs()
 
+    field_defs_by_name = {
+        field_def.name: field_def
+        for field_def in [*dataset_def.fields, *dataset_def.virtual_fields]
+    }
+
     def add_form_item(  # noqa: PLR0912, PLR0915
         form_item_def: FormItemDef,
         parent: QgsAttributeEditorContainer,
@@ -322,7 +327,12 @@ def get_layer_edit_form(  # noqa: PLR0915
 
             assert field_idx != -1, f'Could not find field "{form_item_def.field_name}"'
 
-            if form_item_def.visibility_expression:
+            field_def = field_defs_by_name[form_item_def.field_name]
+
+            if (
+                form_item_def.visibility_expression
+                and field_def.widget_type != "Hidden"
+            ):
                 parent_title = f"`{form_item_def.field_name}` conditional wrapper"
                 parent_container = QgsAttributeEditorContainer(parent_title, parent)
                 parent_container.setVisibilityExpression(

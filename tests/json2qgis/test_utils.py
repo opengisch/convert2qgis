@@ -1110,6 +1110,82 @@ class TestUtils:
         )
         assert tab.children()[0].name() == "total_pop"
 
+    def test_get_layer_edit_form_wraps_visible_field_visibility_expression(
+        self, sample_vector_layer_def
+    ):
+        sample_vector_layer_def = {
+            **sample_vector_layer_def,
+            "form_config": [
+                {
+                    "item_id": "main_tab",
+                    "label": "Main",
+                    "type": "tab",
+                    "children": [
+                        {
+                            "item_id": "conditional_field",
+                            "field_name": "Field string",
+                            "type": "field",
+                            "visibility_expression": "1 > 0",
+                        }
+                    ],
+                }
+            ],
+        }
+
+        form_config = get_layer_edit_form(
+            create_fields(sample_vector_layer_def),
+            sample_vector_layer_def,
+        )
+        wrapper = form_config.tabs()[0].children()[0]
+
+        assert isinstance(wrapper, QgsAttributeEditorContainer)
+        assert wrapper.name() == "`Field string` conditional wrapper"
+        assert wrapper.visibilityExpression().data().expression() == "1 > 0"
+        assert wrapper.showLabel() is False
+        assert isinstance(wrapper.children()[0], QgsAttributeEditorField)
+        assert wrapper.children()[0].name() == "Field string"
+
+    def test_get_layer_edit_form_does_not_wrap_hidden_field_visibility_expression(
+        self, sample_vector_layer_def
+    ):
+        fields = [
+            {
+                **field_def,
+                "widget_type": "Hidden"
+                if field_def["name"] == "Field string"
+                else field_def["widget_type"],
+            }
+            for field_def in sample_vector_layer_def["fields"]
+        ]
+        sample_vector_layer_def = {
+            **sample_vector_layer_def,
+            "fields": fields,
+            "form_config": [
+                {
+                    "item_id": "main_tab",
+                    "label": "Main",
+                    "type": "tab",
+                    "children": [
+                        {
+                            "item_id": "conditional_hidden_field",
+                            "field_name": "Field string",
+                            "type": "field",
+                            "visibility_expression": "1 > 0",
+                        }
+                    ],
+                }
+            ],
+        }
+
+        form_config = get_layer_edit_form(
+            create_fields(sample_vector_layer_def),
+            sample_vector_layer_def,
+        )
+        field_item = form_config.tabs()[0].children()[0]
+
+        assert isinstance(field_item, QgsAttributeEditorField)
+        assert field_item.name() == "Field string"
+
     def test_prune_form_definition_removes_hidden_container(
         self, sample_vector_layer_def, caplog
     ):
