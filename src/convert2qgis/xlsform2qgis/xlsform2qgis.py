@@ -793,8 +793,8 @@ class XlsformConverter:
                     generate_uuid_field_def(),
                 ],
                 custom_properties={
-                    "qfieldsync/cloud_action": "offline",
-                    "qfieldsync/action": "offline",
+                    "QFieldSync/cloud_action": "offline",
+                    "QFieldSync/action": "offline",
                 },
                 display_expression=display_expression,
                 layer_type="vector",
