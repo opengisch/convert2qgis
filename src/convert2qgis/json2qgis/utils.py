@@ -253,10 +253,11 @@ def get_layer_edit_form(  # noqa: PLR0915
             assert form_item_def.field_name is not None
             field_idx = fields.indexOf(form_item_def.field_name)
 
-            assert field_idx != -1, f"Could not find field {form_item_def.field_name}"
+            assert field_idx != -1, f'Could not find field "{form_item_def.field_name}"'
 
             if form_item_def.visibility_expression:
-                parent_container = QgsAttributeEditorContainer("~CONDITIONAL~", parent)
+                parent_title = f"`{form_item_def.field_name}` conditional wrapper"
+                parent_container = QgsAttributeEditorContainer(parent_title, parent)
                 parent_container.setVisibilityExpression(
                     QgsOptionalExpression(
                         QgsExpression(form_item_def.visibility_expression)
