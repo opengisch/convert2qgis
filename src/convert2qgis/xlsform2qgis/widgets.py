@@ -43,6 +43,7 @@ class ParsedRow:
         layer: "WeakDatasetDef | Mapping[str, Any] | None" = None,
         relation: "Mapping[str, Any] | None" = None,
         field: "WeakFieldDef | Mapping[str, Any] | None" = None,
+        virtual_field: "WeakFieldDef | Mapping[str, Any] | None" = None,
         form_field: "WeakFormItemDef | Mapping[str, Any] | None" = None,
         form_container: "Mapping[str, Any] | None" = None,
         geometry_type: Optional[GeometryType] = None,
@@ -52,6 +53,7 @@ class ParsedRow:
         self.layer: WeakDatasetDef = WeakDatasetDef.from_data(layer or {})
         self.relation: dict[str, Any] = dict(relation or {})
         self.field: WeakFieldDef = WeakFieldDef.from_data(field or {})
+        self.virtual_field: WeakFieldDef = WeakFieldDef.from_data(virtual_field or {})
         self.form_field: WeakFormItemDef = WeakFormItemDef.from_data(form_field or {})
         self.form_container: dict[str, Any] = dict(form_container or {})
         self.geometry_type: Optional[GeometryType] = geometry_type
@@ -114,10 +116,10 @@ def register_type(
 
 @register_type(["calculate"])
 def widget_calculate(ctx: WidgetContext) -> ParsedRow:
-    form_item = WeakFieldDef()
+    field_def = WeakFieldDef()
 
     if ctx.row["calculation"]:
-        form_item.update(
+        field_def.update(
             {
                 "default_value": ctx.converter.get_expression(
                     ctx.row["calculation"],
@@ -136,9 +138,9 @@ def widget_calculate(ctx: WidgetContext) -> ParsedRow:
         show_label = False
 
     return ParsedRow(
-        field={
+        virtual_field={
             "widget_type": widget_type,
-            **form_item.to_dict(),
+            **field_def.to_dict(),
         },
         form_field={
             "is_read_only": True,

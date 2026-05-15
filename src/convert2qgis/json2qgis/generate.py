@@ -68,6 +68,7 @@ def generate_vector_dataset_def(**kwargs: Any) -> VectorDatasetDef:
         layer_type="vector",
         datasource_format=VectorLayerDataprovider.GPKG,
         fields=[],
+        virtual_fields=[],
         form_config=[],
         data=[],
         indices=[],

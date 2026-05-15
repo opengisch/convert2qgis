@@ -43,6 +43,7 @@ from convert2qgis.json2qgis.utils import (
     set_layer_custom_properties,
     set_layer_fields,
     set_layer_tree,
+    set_layer_virtual_fields,
     set_project_custom_properties,
     str_to_crs,
 )
@@ -377,6 +378,7 @@ class ProjectCreator:
             f"{new_file}|layername={new_layer}", dataset_def.name, layer_provider_lib
         )
 
+        set_layer_virtual_fields(new_layer, dataset_def)
         set_layer_fields(new_layer, dataset_def)
 
         if dataset_def.data:

@@ -435,6 +435,7 @@ class WeakDatasetDef(DataclassModelMixin):
     crs: CrsDef | None = None
     datasource_format: str | None = None
     fields: list[FieldDef] | None = None
+    virtual_fields: list[FieldDef] | None = None
     form_config: list[FormItemDef] | None = None
     data: list[dict[str, Any]] | None = None
     primary_key: str | None = None
@@ -477,6 +478,7 @@ class VectorDatasetDef(BaseDatasetDef):
     geometry_type: GeometryType = "NoGeometry"
     datasource_format: str = VectorLayerDataprovider.GPKG
     fields: list[FieldDef] = field(default_factory=list)
+    virtual_fields: list[FieldDef] = field(default_factory=list)
     form_config: list[FormItemDef] = field(default_factory=list)
     data: list[dict[str, Any]] = field(default_factory=list)
     primary_key: str = ""
@@ -502,6 +504,9 @@ class VectorDatasetDef(BaseDatasetDef):
                 "datasource_format", VectorLayerDataprovider.GPKG
             ),
             fields=[FieldDef.from_data(item) for item in data.get("fields", [])],
+            virtual_fields=[
+                FieldDef.from_data(item) for item in data.get("virtual_fields", [])
+            ],
             form_config=[
                 FormItemDef.from_data(item) for item in data.get("form_config", [])
             ],

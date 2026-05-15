@@ -864,6 +864,8 @@ class XlsformConverter:
                 result = self._parse_form_row(row)
 
                 dataset_def.fields.extend(result.fields)
+                dataset_def.virtual_fields.extend(result.virtual_fields)
+
                 for form_item_def in result.form_items:
                     self._add_form_item(form_item_def)
 
@@ -1007,17 +1009,27 @@ class XlsformConverter:
 
             result.geometry_type = parsed_row.geometry_type
 
-        if parsed_row.field:
+        if parsed_row.field or parsed_row.virtual_field:
             assert not parsed_row.form_container
+            assert bool(parsed_row.field) != bool(parsed_row.virtual_field)
 
             field = generate_field_def()
+
+            parsed_field = parsed_row.field or parsed_row.virtual_field
             field.update(
                 {
                     **field_default.to_dict(),
-                    **parsed_row.field.to_dict(),
+                    **parsed_field.to_dict(),
                 }
             )
-            result.fields.append(field)
+
+            if parsed_row.field:
+                result.fields.append(field)
+            elif parsed_row.virtual_field:
+                result.virtual_fields.append(field)
+            else:
+                raise AssertionError("Either `field` or `virtual_field` must be set!")
+
             form_item = generate_form_item_def(type="field")
             form_item.update(
                 {

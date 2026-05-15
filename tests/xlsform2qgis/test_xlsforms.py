@@ -549,11 +549,80 @@ class TestConverter:
             "UUID",
             "Field",
             "Field (2)",
-            "Field (3)",
         ]
-        assert survey_layer.fields[3].name == "field_003"
-        assert survey_layer.fields[3].alias == "Field (3)"
-        assert survey_layer.fields[3].widget_type == "TextEdit"
+        assert len(survey_layer.virtual_fields) == 1
+        assert survey_layer.virtual_fields[0].name == "field_003"
+        assert survey_layer.virtual_fields[0].alias == "Field (3)"
+        assert survey_layer.virtual_fields[0].widget_type == "TextEdit"
+
+    def test_xlsform_calculate_rows_are_virtual_fields(self, converter):
+        converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
+            [
+                generate_survey_row(
+                    type="calculate",
+                    name="total_pop",
+                    label="Total population",
+                    calculation="1 + 2",
+                ),
+                generate_survey_row(
+                    type="calculate",
+                    name="internal_total",
+                    calculation="${total_pop} + 1",
+                ),
+            ]
+        )
+
+        converter.convert()
+
+        assert len(converter.vector_datasets) == 1
+
+        survey_layer = converter.vector_datasets[0]
+
+        assert [field.name for field in survey_layer.fields] == ["uuid"]
+        assert [field.name for field in survey_layer.virtual_fields] == [
+            "total_pop",
+            "internal_total",
+        ]
+        assert survey_layer.virtual_fields[0] == generate_field_def(
+            field_id=survey_layer.virtual_fields[0].field_id,
+            type="string",
+            name="total_pop",
+            alias="Total population",
+            widget_type="TextEdit",
+            default_value="1 + 2",
+            set_default_value_on_update=True,
+        )
+        assert survey_layer.virtual_fields[1] == generate_field_def(
+            field_id=survey_layer.virtual_fields[1].field_id,
+            type="string",
+            name="internal_total",
+            widget_type="Hidden",
+            default_value='"total_pop" + 1',
+            set_default_value_on_update=True,
+        )
+        assert len(survey_layer.form_config) == 1
+        assert survey_layer.form_config[0] == generate_form_item_def(
+            item_id=survey_layer.form_config[0].item_id,
+            label="Survey",
+            type="group_box",
+            children=[
+                generate_form_item_def(
+                    item_id=survey_layer.form_config[0].children[0].item_id,
+                    field_name="total_pop",
+                    type="field",
+                    is_read_only=True,
+                    is_label_on_top=True,
+                ),
+                generate_form_item_def(
+                    item_id=survey_layer.form_config[0].children[1].item_id,
+                    field_name="internal_total",
+                    type="field",
+                    show_label=False,
+                    is_read_only=True,
+                    is_label_on_top=True,
+                ),
+            ],
+        )
 
     def test_xlsform_with_group(self, converter):
         converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
@@ -936,7 +1005,8 @@ class TestConverter:
         survey_layer, *_ = sorted_datasets
         survey_layer = cast("VectorDatasetDef", survey_layer)
 
-        assert len(survey_layer.fields) == 21
+        assert len(survey_layer.fields) == 20
+        assert len(survey_layer.virtual_fields) == 1
         assert survey_layer.fields[0] == generate_uuid_field_def(
             field_id=survey_layer.fields[0].field_id,
         )
@@ -1114,8 +1184,8 @@ class TestConverter:
             constraint_expression_description="Must have more than 1 employee",
             constraint_expression_strength="hard",
         )
-        assert survey_layer.fields[12] == generate_field_def(
-            field_id=survey_layer.fields[12].field_id,
+        assert survey_layer.virtual_fields[0] == generate_field_def(
+            field_id=survey_layer.virtual_fields[0].field_id,
             type="string",
             name="employee_total",
             alias="",
@@ -1123,8 +1193,8 @@ class TestConverter:
             default_value='"part_employees" + "full_employees"',
             set_default_value_on_update=True,
         )
-        assert survey_layer.fields[13] == generate_field_def(
-            field_id=survey_layer.fields[13].field_id,
+        assert survey_layer.fields[12] == generate_field_def(
+            field_id=survey_layer.fields[12].field_id,
             type="boolean",
             name="employee_summary",
             alias="",
@@ -1133,8 +1203,8 @@ class TestConverter:
             default_value="",
             set_default_value_on_update=False,
         )
-        assert survey_layer.fields[14] == generate_field_def(
-            field_id=survey_layer.fields[14].field_id,
+        assert survey_layer.fields[13] == generate_field_def(
+            field_id=survey_layer.fields[13].field_id,
             type="string",
             name="salutation",
             alias="Salutation",
@@ -1151,22 +1221,22 @@ class TestConverter:
             default_value="",
             set_default_value_on_update=False,
         )
-        assert survey_layer.fields[15] == generate_field_def(
-            field_id=survey_layer.fields[15].field_id,
+        assert survey_layer.fields[14] == generate_field_def(
+            field_id=survey_layer.fields[14].field_id,
             type="string",
             name="name",
             alias="Name",
             widget_type="TextEdit",
         )
-        assert survey_layer.fields[16] == generate_field_def(
-            field_id=survey_layer.fields[16].field_id,
+        assert survey_layer.fields[15] == generate_field_def(
+            field_id=survey_layer.fields[15].field_id,
             type="string",
             name="address",
             alias="Address",
             widget_type="TextEdit",
         )
-        assert survey_layer.fields[17] == generate_field_def(
-            field_id=survey_layer.fields[17].field_id,
+        assert survey_layer.fields[16] == generate_field_def(
+            field_id=survey_layer.fields[16].field_id,
             type="string",
             name="zip_code",
             alias="Zip code",
@@ -1175,22 +1245,22 @@ class TestConverter:
             constraint_expression_description="",
             constraint_expression_strength="hard",
         )
-        assert survey_layer.fields[18] == generate_field_def(
-            field_id=survey_layer.fields[18].field_id,
+        assert survey_layer.fields[17] == generate_field_def(
+            field_id=survey_layer.fields[17].field_id,
             type="string",
             name="city",
             alias="City",
             widget_type="TextEdit",
         )
-        assert survey_layer.fields[19] == generate_field_def(
-            field_id=survey_layer.fields[19].field_id,
+        assert survey_layer.fields[18] == generate_field_def(
+            field_id=survey_layer.fields[18].field_id,
             type="string",
             name="state",
             alias="State",
             widget_type="TextEdit",
         )
-        assert survey_layer.fields[20] == generate_field_def(
-            field_id=survey_layer.fields[20].field_id,
+        assert survey_layer.fields[19] == generate_field_def(
+            field_id=survey_layer.fields[19].field_id,
             type="string",
             name="comment",
             alias="Would you like to leave a last comment ?",

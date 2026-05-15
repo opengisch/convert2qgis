@@ -328,6 +328,12 @@
           },
           "type": "array"
         },
+        "virtual_fields": {
+          "items": {
+            "$ref": "#/definitions/Field"
+          },
+          "type": "array"
+        },
         "foreign_keys": {
           "items": {},
           "type": "array"
