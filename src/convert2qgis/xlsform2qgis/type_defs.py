@@ -1,7 +1,14 @@
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import TypedDict
+from typing import Optional, TypedDict
 
-from convert2qgis.json2qgis.type_defs import CrsDef, FormItemGroupTypes
+from convert2qgis.json2qgis.type_defs import (
+    CrsDef,
+    FieldDef,
+    FormItemDef,
+    FormItemGroupTypes,
+    GeometryType,
+)
 
 
 class GroupStatus(str, Enum):
@@ -22,6 +29,13 @@ class XlsformSettings(TypedDict):
     default_language: str
     version: str
     instance_name: str
+
+
+@dataclass
+class ParsedSheetRowResult:
+    fields: list[FieldDef] = field(default_factory=list)
+    form_items: list[FormItemDef] = field(default_factory=list)
+    geometry_type: Optional[GeometryType] = None
 
 
 class WeakXlsformSettings(TypedDict, total=False):
