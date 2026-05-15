@@ -425,17 +425,9 @@ class XlsformConverter:
             )
         )
 
-        form_item = generate_form_item_def(
-            item_id=f"tab_item_{layer_id}",
-            type=self.get_form_group_type(),
-            label=layer_name,
-        )
-        self._enter_container(form_item)
-
     def _exit_dataset(self) -> str:
         layer_id = self._layer_ids.pop()
 
-        self._exit_container()
         self._exit_container()
 
         return layer_id
@@ -465,14 +457,39 @@ class XlsformConverter:
 
         return None
 
+    def _get_or_create_root_fields_container(self) -> FormItemDef:
+        current_dataset_def = self._current_dataset()
+        layer_id = self._layer_ids[-1]
+        item_id = f"tab_item_{layer_id}"
+        root_fields_container = self._find_form_item(
+            item_id, current_dataset_def.form_config
+        )
+
+        if root_fields_container is None:
+            root_fields_container = generate_form_item_def(
+                item_id=item_id,
+                type=self.get_form_group_type(),
+                label=current_dataset_def.name,
+            )
+
+            # The root fields container is always inserted at the beginning of the form config.
+            current_dataset_def.form_config.insert(0, root_fields_container)
+
+        return root_fields_container
+
     def _add_form_item(self, form_item_def: FormItemDef) -> None:
         current_dataset_def = self._current_dataset()
         current_container = self._current_container()
 
-        if current_container is None:
-            current_dataset_def.form_config.append(form_item_def)
-        else:
+        if current_container:
             current_container.children.append(form_item_def)
+        else:
+            if form_item_def.type in ("field", "relation", "text"):
+                self._get_or_create_root_fields_container().children.append(
+                    form_item_def
+                )
+            else:
+                current_dataset_def.form_config.append(form_item_def)
 
     def _add_container(self, container_def: FormItemDef) -> None:
         self._add_form_item(container_def)
