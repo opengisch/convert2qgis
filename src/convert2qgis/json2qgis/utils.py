@@ -87,6 +87,73 @@ def get_schema_json() -> dict[str, Any]:
     return cast("dict[str, Any]", json.loads(schema_json))
 
 
+def prune_form_definition(project_def: ProjectDef) -> ProjectDef:
+    form_container_types = ("group_box", "tab", "row")
+
+    def remove_hidden_form_container_items(
+        form_items: list[FormItemDef],
+        fields_by_name: dict[str, FieldDef],
+        *,
+        prune_hidden_fields: bool = False,
+    ) -> list[FormItemDef]:
+        visible_form_items: list[FormItemDef] = []
+
+        for form_item in form_items:
+            if form_item.type == "field":
+                field_def = fields_by_name.get(form_item.field_name or "")
+
+                if (
+                    prune_hidden_fields
+                    and field_def
+                    and field_def.widget_type == "Hidden"
+                ):
+                    continue
+
+                visible_form_items.append(form_item)
+                continue
+
+            if form_item.type not in form_container_types:
+                visible_form_items.append(form_item)
+                continue
+
+            form_item.children = remove_hidden_form_container_items(
+                form_item.children,
+                fields_by_name,
+                prune_hidden_fields=True,
+            )
+
+            if form_item.children:
+                visible_form_items.append(form_item)
+                continue
+
+            logger.warning(
+                "Removing hidden form container `%s` (`%s`) since it has no visible children.",
+                form_item.item_id,
+                form_item.label or form_item.item_id,
+            )
+
+        return visible_form_items
+
+    # Copy the project definition to avoid mutating the original one
+    project_def = ProjectDef.from_data(project_def.to_dict())
+
+    for dataset_def in project_def.all_datasets:
+        if not isinstance(dataset_def, VectorDatasetDef):
+            continue
+
+        fields_by_name = {
+            field_def.name: field_def
+            for field_def in [*dataset_def.fields, *dataset_def.virtual_fields]
+        }
+
+        dataset_def.form_config = remove_hidden_form_container_items(
+            dataset_def.form_config,
+            fields_by_name,
+        )
+
+    return project_def
+
+
 def get_schema_validator() -> Callable[[dict[str, Any]], None]:
     schema = get_schema_json()
 

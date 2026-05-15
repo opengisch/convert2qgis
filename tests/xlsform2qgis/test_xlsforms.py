@@ -1,4 +1,5 @@
 import json
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock
@@ -11,6 +12,7 @@ from convert2qgis.json2qgis.generate import (
     generate_uuid_field_def,
     generate_vector_dataset_def,
 )
+from convert2qgis.json2qgis.type_defs import ProjectDef
 from convert2qgis.xlsform2qgis import xlsform2qgis as xlsform2qgis_module
 from convert2qgis.xlsform2qgis.expressions.functions import SUPPORTED_FUNCTIONS
 from convert2qgis.xlsform2qgis.sheet_parser import ParsedSheetRow
@@ -747,6 +749,270 @@ class TestConverter:
                 )
             ],
         )
+
+    def test_xlsform_removes_empty_group(self, converter, caplog):
+        caplog.set_level(logging.WARNING)
+        converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
+            [
+                generate_survey_row(
+                    type="begin group",
+                    name="group_001",
+                    label="Group 001",
+                ),
+                generate_survey_row(
+                    type="end group",
+                ),
+            ]
+        )
+
+        project_def = ProjectDef.from_data(converter.to_json())
+
+        survey_layer = project_def.datasets[0].vector_datasets[0]
+        warning_messages = [
+            record.message
+            for record in caplog.records
+            if "Removing hidden form container" in record.message
+        ]
+
+        assert survey_layer.form_config == []
+        assert warning_messages == [
+            "Removing hidden form container `item_container_0` (`Group 001`) "
+            "since it has no visible children."
+        ]
+
+    def test_xlsform_removes_group_with_only_hidden_fields(self, converter, caplog):
+        caplog.set_level(logging.WARNING)
+        converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
+            [
+                generate_survey_row(
+                    type="begin group",
+                    name="group_001",
+                    label="Group 001",
+                ),
+                generate_survey_row(
+                    type="hidden",
+                    name="field_001",
+                ),
+                generate_survey_row(
+                    type="end group",
+                ),
+            ]
+        )
+
+        project_def = ProjectDef.from_data(converter.to_json())
+
+        survey_layer = project_def.datasets[0].vector_datasets[0]
+        warning_messages = [
+            record.message
+            for record in caplog.records
+            if "Removing hidden form container" in record.message
+        ]
+
+        assert survey_layer.form_config == []
+        assert [field.name for field in survey_layer.fields] == ["uuid", "field_001"]
+        assert warning_messages == [
+            "Removing hidden form container `item_container_0` (`Group 001`) "
+            "since it has no visible children."
+        ]
+
+    def test_xlsform_removes_nested_hidden_groups(self, converter, caplog):
+        caplog.set_level(logging.WARNING)
+        converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
+            [
+                generate_survey_row(
+                    type="begin group",
+                    name="group_001",
+                    label="Group 001",
+                ),
+                generate_survey_row(
+                    type="begin group",
+                    name="group_001_001",
+                    label="Group 001_001",
+                ),
+                generate_survey_row(
+                    type="hidden",
+                    name="field_001",
+                ),
+                generate_survey_row(
+                    type="end group",
+                ),
+                generate_survey_row(
+                    type="end group",
+                ),
+            ]
+        )
+
+        project_def = ProjectDef.from_data(converter.to_json())
+
+        survey_layer = project_def.datasets[0].vector_datasets[0]
+        warning_messages = [
+            record.message
+            for record in caplog.records
+            if "Removing hidden form container" in record.message
+        ]
+
+        assert survey_layer.form_config == []
+        assert warning_messages == [
+            "Removing hidden form container `item_container_1` (`Group 001_001`) "
+            "since it has no visible children.",
+            "Removing hidden form container `item_container_0` (`Group 001`) "
+            "since it has no visible children.",
+        ]
+
+    def test_xlsform_prunes_hidden_child_group_from_visible_parent(
+        self, converter, caplog
+    ):
+        caplog.set_level(logging.WARNING)
+        converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
+            [
+                generate_survey_row(
+                    type="begin group",
+                    name="group_001",
+                    label="Group 001",
+                ),
+                generate_survey_row(
+                    type="begin group",
+                    name="group_001_001",
+                    label="Group 001_001",
+                ),
+                generate_survey_row(
+                    type="hidden",
+                    name="field_001",
+                ),
+                generate_survey_row(
+                    type="end group",
+                ),
+                generate_survey_row(
+                    type="text",
+                    name="field_002",
+                    label="Field 002",
+                ),
+                generate_survey_row(
+                    type="end group",
+                ),
+            ]
+        )
+
+        project_def = ProjectDef.from_data(converter.to_json())
+
+        survey_layer = project_def.datasets[0].vector_datasets[0]
+        warning_messages = [
+            record.message
+            for record in caplog.records
+            if "Removing hidden form container" in record.message
+        ]
+
+        assert len(survey_layer.form_config) == 1
+        assert survey_layer.form_config[0] == generate_form_item_def(
+            item_id="item_container_0",
+            label="Group 001",
+            type="group_box",
+            children=[
+                generate_form_item_def(
+                    item_id=survey_layer.form_config[0].children[0].item_id,
+                    field_name="field_002",
+                    type="field",
+                    is_label_on_top=True,
+                )
+            ],
+        )
+        assert warning_messages == [
+            "Removing hidden form container `item_container_1` (`Group 001_001`) "
+            "since it has no visible children."
+        ]
+
+    def test_xlsform_keeps_group_with_text_child(self, converter, caplog):
+        caplog.set_level(logging.WARNING)
+        converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
+            [
+                generate_survey_row(
+                    type="begin group",
+                    name="group_001",
+                    label="Group 001",
+                ),
+                generate_survey_row(
+                    type="note",
+                    name="note_001",
+                    label="This group is visible",
+                ),
+                generate_survey_row(
+                    type="end group",
+                ),
+            ]
+        )
+
+        project_def = ProjectDef.from_data(converter.to_json())
+
+        survey_layer = project_def.datasets[0].vector_datasets[0]
+        warning_messages = [
+            record.message
+            for record in caplog.records
+            if "Removing hidden form container" in record.message
+        ]
+
+        assert len(survey_layer.form_config) == 1
+        assert survey_layer.form_config[0] == generate_form_item_def(
+            item_id="item_container_0",
+            label="Group 001",
+            type="group_box",
+            children=[
+                generate_form_item_def(
+                    item_id="item_container_1",
+                    label="This group is visible",
+                    type="text",
+                    is_markdown=False,
+                )
+            ],
+        )
+        assert warning_messages == []
+
+    def test_xlsform_keeps_group_with_relation_child(self, converter, caplog):
+        caplog.set_level(logging.WARNING)
+        converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
+            [
+                generate_survey_row(
+                    type="begin group",
+                    name="group_001",
+                    label="Group 001",
+                ),
+                generate_survey_row(
+                    type="begin repeat",
+                    name="repeat_001",
+                    label="Repeat 001",
+                ),
+                generate_survey_row(
+                    type="end repeat",
+                ),
+                generate_survey_row(
+                    type="end group",
+                ),
+            ]
+        )
+
+        project_def = ProjectDef.from_data(converter.to_json())
+
+        survey_layer = project_def.datasets[0].vector_datasets[0]
+        warning_messages = [
+            record.message
+            for record in caplog.records
+            if "Removing hidden form container" in record.message
+        ]
+
+        assert len(survey_layer.form_config) == 1
+        assert survey_layer.form_config[0] == generate_form_item_def(
+            item_id="item_container_0",
+            label="Group 001",
+            type="group_box",
+            children=[
+                generate_form_item_def(
+                    item_id="relation_1",
+                    field_name="relation_1",
+                    type="relation",
+                    is_label_on_top=True,
+                )
+            ],
+        )
+        assert warning_messages == []
 
     def test_xlsform_with_root_fields_and_group_uses_fallback_only_for_root_fields(
         self, converter

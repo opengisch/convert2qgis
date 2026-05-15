@@ -40,6 +40,7 @@ from convert2qgis.json2qgis.type_defs import (
     WeakFieldDef,
     WeakFormItemDef,
 )
+from convert2qgis.json2qgis.utils import prune_form_definition
 from convert2qgis.xlsform2qgis.converter_utils import (
     build_choices_layer_id,
     build_choices_layer_name,
@@ -802,6 +803,8 @@ class XlsformConverter:
             polymorphic_relations=[],
             version="1.0",
         )
+
+        project_def = prune_form_definition(project_def)
 
         return project_def.to_dict()
 

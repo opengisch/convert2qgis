@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 from qgis.core import (
     Qgis,
@@ -12,6 +14,7 @@ from qgis.core import (
 from qgis.PyQt.QtCore import QMetaType
 
 from convert2qgis.json2qgis.errors import UnknownCrsSystemError
+from convert2qgis.json2qgis.type_defs import ProjectDef
 from convert2qgis.json2qgis.utils import (
     check_output,
     create_field,
@@ -23,6 +26,7 @@ from convert2qgis.json2qgis.utils import (
     get_layer_edit_form,
     get_layer_flags,
     normalize_name,
+    prune_form_definition,
     set_field_constraints,
     set_field_default_value,
     set_field_widget,
@@ -1105,6 +1109,112 @@ class TestUtils:
             == '"Field integer" + 1'
         )
         assert tab.children()[0].name() == "total_pop"
+
+    def test_prune_form_definition_removes_hidden_container(
+        self, sample_vector_layer_def, caplog
+    ):
+        caplog.set_level(logging.WARNING)
+        hidden_field = {
+            **sample_vector_layer_def["fields"][0],
+            "name": "hidden_field",
+            "widget_type": "Hidden",
+        }
+        project_def = ProjectDef.from_data(
+            {
+                "datasets": [
+                    {
+                        "vector_datasets": [
+                            {
+                                **sample_vector_layer_def,
+                                "fields": [hidden_field],
+                                "form_config": [
+                                    {
+                                        "item_id": "hidden_group",
+                                        "label": "Hidden group",
+                                        "type": "group_box",
+                                        "children": [
+                                            {
+                                                "item_id": "hidden_field_item",
+                                                "field_name": "hidden_field",
+                                                "type": "field",
+                                            }
+                                        ],
+                                    }
+                                ],
+                            }
+                        ],
+                        "raster_datasets": [],
+                    }
+                ],
+            }
+        )
+
+        pruned_project_def = prune_form_definition(project_def)
+        [dataset_group] = pruned_project_def.datasets
+        [dataset_def] = dataset_group.vector_datasets
+        warning_messages = [
+            record.message
+            for record in caplog.records
+            if "Removing hidden form container" in record.message
+        ]
+
+        assert dataset_def.form_config == []
+        assert warning_messages == [
+            "Removing hidden form container `hidden_group` (`Hidden group`) "
+            "since it has no visible children."
+        ]
+
+    def test_prune_form_definition_returns_deep_copy(
+        self, sample_vector_layer_def, caplog
+    ):
+        caplog.set_level(logging.WARNING)
+        hidden_field = {
+            **sample_vector_layer_def["fields"][0],
+            "name": "hidden_field",
+            "widget_type": "Hidden",
+        }
+        project_def = ProjectDef.from_data(
+            {
+                "datasets": [
+                    {
+                        "vector_datasets": [
+                            {
+                                **sample_vector_layer_def,
+                                "fields": [hidden_field],
+                                "form_config": [
+                                    {
+                                        "item_id": "hidden_group",
+                                        "label": "Hidden group",
+                                        "type": "group_box",
+                                        "children": [
+                                            {
+                                                "item_id": "hidden_field_item",
+                                                "field_name": "hidden_field",
+                                                "type": "field",
+                                            }
+                                        ],
+                                    }
+                                ],
+                            }
+                        ],
+                        "raster_datasets": [],
+                    }
+                ],
+            }
+        )
+        original_project_def = project_def.to_dict()
+
+        pruned_project_def = prune_form_definition(project_def)
+        [pruned_dataset_group] = pruned_project_def.datasets
+        [pruned_dataset_def] = pruned_dataset_group.vector_datasets
+        [original_dataset_group] = project_def.datasets
+        [original_dataset_def] = original_dataset_group.vector_datasets
+
+        assert pruned_project_def is not project_def
+        assert pruned_dataset_def is not original_dataset_def
+        assert pruned_dataset_def.form_config == []
+        assert project_def.to_dict() == original_project_def
+        assert original_dataset_def.form_config[0].item_id == "hidden_group"
 
     def test_set_layer_virtual_fields(self, sample_vector_layer_def):
         virtual_field = {
