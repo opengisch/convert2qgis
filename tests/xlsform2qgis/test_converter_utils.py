@@ -1,5 +1,6 @@
 from convert2qgis.xlsform2qgis.converter_utils import (
     HTMLStripper,
+    get_unique_label,
     parse_xlsform_range_parameters,
     parse_xlsform_select_from_file_parameters,
     strip_html,
@@ -26,6 +27,20 @@ class TestHTMLStripper:
 
     def test_strip_html_empty(self) -> None:
         assert strip_html("") == ""
+
+
+class TestGetUniqueLabel:
+    def test_empty_label_stays_empty(self) -> None:
+        assert get_unique_label("  ", ["Existing"]) == ""
+
+    def test_returns_label_when_unique(self) -> None:
+        assert get_unique_label(" New Label ", ["Existing"]) == "New Label"
+
+    def test_appends_next_available_suffix_is_2(self) -> None:
+        assert get_unique_label("Label", ["Label"]) == "Label (2)"
+
+    def test_appends_next_available_suffix_is_3(self) -> None:
+        assert get_unique_label("Label", ["Label", "Label (2)"]) == "Label (3)"
 
 
 class TestParseXlsformRangeParameters:
