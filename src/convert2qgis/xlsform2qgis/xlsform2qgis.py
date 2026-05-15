@@ -544,7 +544,7 @@ class XlsformConverter:
 
             label = strip_html(sheet_row["label"] or "")
 
-        return label
+        return label.strip()
 
     def _get_field_def_alias(self, sheet_row: ParsedSheetRow) -> AliasDef:
         alias_str = self._get_label(sheet_row)
