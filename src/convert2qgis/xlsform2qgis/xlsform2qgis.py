@@ -26,7 +26,6 @@ from convert2qgis.json2qgis.type_defs import (
     CrsDef,
     DatasetDef,
     DatasetGroupDef,
-    FieldDef,
     FormItemDef,
     FormItemGroupTypes,
     GeometryType,
@@ -59,6 +58,7 @@ from convert2qgis.xlsform2qgis.type_defs import (
     ConverterSettings,
     GroupStatus,
     LayerStatus,
+    ParsedSheetRowResult,
     XlsformSettings,
 )
 from convert2qgis.xlsform2qgis.widgets import WidgetContext, WidgetRegistry
@@ -861,29 +861,27 @@ class XlsformConverter:
 
                     continue
 
-                row_field_defs, row_form_item_defs, row_geometry_type = (
-                    self._parse_form_row(row)
-                )
+                result = self._parse_form_row(row)
 
-                dataset_def.fields.extend(row_field_defs)
-                for form_item_def in row_form_item_defs:
+                dataset_def.fields.extend(result.fields)
+                for form_item_def in result.form_items:
                     self._add_form_item(form_item_def)
 
                 # TODO @suricactus: find a better place for `max_pixels` logic
                 if row["type"] == "image":
                     max_pixels = self._get_field_settings_max_pixels(row, max_pixels)
 
-                if row_geometry_type:
+                if result.geometry_type:
                     if layer_id in geometry_type_by_layer_id:
                         logger.warning(
                             "Multiple geometry types defined for layer `%s`; using the first one `%s`",
                             dataset_def.name,
-                            row_geometry_type,
+                            geometry_type_by_layer_id[layer_id],
                         )
 
                         continue
 
-                    geometry_type_by_layer_id[layer_id] = row_geometry_type
+                    geometry_type_by_layer_id[layer_id] = result.geometry_type
 
             except Exception:
                 logger.exception(
@@ -925,17 +923,15 @@ class XlsformConverter:
 
     def _parse_form_row(  # noqa: PLR0912, PLR0915
         self, row: ParsedSheetRow
-    ) -> "tuple[list[FieldDef], list[FormItemDef], GeometryType | None]":
-        fields = []
-        form_items = []
-        geometry_type = None
+    ) -> ParsedSheetRowResult:
+        result = ParsedSheetRowResult()
 
         widget_type_cb = self.widget_registry.get(row["type"])
 
         if not widget_type_cb:
             logger.warning("Unsupported xlsform type: %s, skipping!", row["type"])
 
-            return [], [], None
+            return result
 
         # unsupported xlsform column `trigger`
         if row["trigger"]:
@@ -1009,7 +1005,7 @@ class XlsformConverter:
             assert not parsed_row.form_container
             assert not parsed_row.field
 
-            geometry_type = parsed_row.geometry_type
+            result.geometry_type = parsed_row.geometry_type
 
         if parsed_row.field:
             assert not parsed_row.form_container
@@ -1021,7 +1017,7 @@ class XlsformConverter:
                     **parsed_row.field.to_dict(),
                 }
             )
-            fields.append(field)
+            result.fields.append(field)
             form_item = generate_form_item_def(type="field")
             form_item.update(
                 {
@@ -1031,7 +1027,7 @@ class XlsformConverter:
                     "field_name": field.name,
                 }
             )
-            form_items.append(form_item)
+            result.form_items.append(form_item)
         elif (
             parsed_row.form_container
             and parsed_row.group_status == GroupStatus.NONE
@@ -1045,7 +1041,7 @@ class XlsformConverter:
             )
             self._add_container(container_item)
 
-        return fields, form_items, geometry_type
+        return result
 
     def _get_choices_columns(self, list_choices: list[ChoicesDef]) -> list[str]:
         # The additional columns are most likely related to a single choice group,
