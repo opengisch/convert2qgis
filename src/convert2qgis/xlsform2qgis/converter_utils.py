@@ -87,3 +87,19 @@ def build_choices_layer_id(*parts: str) -> str:
     md5_hash = md5(prefix.encode(), usedforsecurity=False).hexdigest()
 
     return f"{prefix}_{md5_hash}"
+
+
+def get_unique_label(label: str, existing_labels: list[str]) -> str:
+    label = label.strip()
+
+    if not label:
+        return label
+
+    unique_label = label
+    # starting from 2, assuming the one without suffix is the first occurrence, and the suffix is only needed for duplicates
+    suffix = 2
+    while unique_label in existing_labels:
+        unique_label = f"{label} ({suffix})"
+        suffix += 1
+
+    return unique_label

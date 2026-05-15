@@ -160,6 +160,38 @@ class TestConverter:
             ],
         }
 
+    def test_get_choices_by_list_uniquifies_duplicate_labels(
+        self, converter: XlsformConverter
+    ):
+        converter.choices_sheet.__iter__.return_value = to_parsed_sheet_rows(  # type: ignore
+            [
+                {
+                    "list_name": "list_001",
+                    "name": "value_001_001",
+                    "label": "Same Label",
+                },
+                {
+                    "list_name": "list_001",
+                    "name": "value_001_002",
+                    "label": "Same Label",
+                },
+                {
+                    "list_name": "list_001",
+                    "name": "value_001_003",
+                    "label": "Same Label",
+                },
+            ]
+        )
+
+        choices_by_list = converter._get_choices_by_list()
+
+        assert [choice.label for choice in choices_by_list["list_001"]] == [
+            "",
+            "Same Label",
+            "Same Label (2)",
+            "Same Label (3)",
+        ]
+
     def test_get_choices_datasets(self, converter):
         converter.choices_sheet.__iter__.return_value = to_parsed_sheet_rows(
             [
@@ -484,6 +516,44 @@ class TestConverter:
             alias="Field English 003",
             widget_type="TextEdit",
         )
+
+    def test_xlsform_duplicate_labels_are_uniquified(self, converter):
+        converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
+            [
+                generate_survey_row(
+                    type="text",
+                    name="field_001",
+                    label="Field",
+                ),
+                generate_survey_row(
+                    type="text",
+                    name="field_002",
+                    label="Field",
+                ),
+                generate_survey_row(
+                    type="calculate",
+                    name="field_003",
+                    label="Field",
+                    calculation="1 + 2",
+                ),
+            ]
+        )
+
+        converter.convert()
+
+        assert len(converter.vector_datasets) == 1
+
+        survey_layer = converter.vector_datasets[0]
+
+        assert [field.alias for field in survey_layer.fields] == [
+            "UUID",
+            "Field",
+            "Field (2)",
+            "Field (3)",
+        ]
+        assert survey_layer.fields[3].name == "field_003"
+        assert survey_layer.fields[3].alias == "Field (3)"
+        assert survey_layer.fields[3].widget_type == "TextEdit"
 
     def test_xlsform_with_group(self, converter):
         converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(

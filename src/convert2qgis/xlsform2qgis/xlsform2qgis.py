@@ -44,6 +44,7 @@ from convert2qgis.json2qgis.type_defs import (
 from convert2qgis.xlsform2qgis.converter_utils import (
     build_choices_layer_id,
     build_choices_layer_name,
+    get_unique_label,
     get_xlsform_type,
     strip_html,
 )
@@ -546,8 +547,24 @@ class XlsformConverter:
 
         return label.strip()
 
+    def get_row_label(self, sheet_row: ParsedSheetRow) -> str:
+        label = self._get_label(sheet_row)
+
+        existing_labels = [f.alias for f in self._current_dataset().fields]
+        unique_label = get_unique_label(label, existing_labels)
+
+        if label != unique_label:
+            logger.warning(
+                "Duplicate label `%s` found in dataset `%s`, renamed to `%s` to ensure uniqueness!",
+                label,
+                self._current_dataset().name,
+                unique_label,
+            )
+
+        return unique_label
+
     def _get_field_def_alias(self, sheet_row: ParsedSheetRow) -> AliasDef:
-        alias_str = self._get_label(sheet_row)
+        alias_str = self.get_row_label(sheet_row)
 
         if not alias_str:
             return AliasSimpleDef()
@@ -1087,10 +1104,22 @@ class XlsformConverter:
             if last_list_name is not None and last_list_name != row["list_name"]:
                 assert row["list_name"] not in choices
 
+            label = self._get_label(row)
+            existing_labels = [c.label for c in choices[row["list_name"]]]
+            unique_label = get_unique_label(label, existing_labels)
+
+            if label != unique_label:
+                logger.warning(
+                    "Duplicate label `%s` found in choices `%s`, renamed to `%s` to ensure uniqueness!",
+                    label,
+                    row["list_name"],
+                    unique_label,
+                )
+
             last_list_name = row["list_name"]
             choice = ChoicesDef(
                 name=str(row["name"]).strip(),
-                label=self._get_label(row),
+                label=unique_label,
                 list_name=row["list_name"],
             )
 
