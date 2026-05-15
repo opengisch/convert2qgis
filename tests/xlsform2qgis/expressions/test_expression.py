@@ -138,6 +138,11 @@ def test_regex_function_conversion(ctx) -> None:
     assert expr.to_qgis() == "regexp_match(\"field\", '^[0-9]+$')"
 
 
+def test_regex_with_digit_keyword(ctx) -> None:
+    expr = Expression("regex(${field}, '^[:digit:]{6}$')", ctx)
+    assert expr.to_qgis() == "regexp_match(\"field\", '^[[:digit:]]{6}$')"
+
+
 def test_today_function_conversion(ctx) -> None:
     expr = Expression("today()", ctx)
     assert expr.to_qgis() == "format_date(now(), 'yyyy-MM-dd')"

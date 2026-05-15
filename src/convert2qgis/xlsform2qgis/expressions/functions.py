@@ -132,7 +132,6 @@ if(
     "indexed-repeat": FunctionSpec(_indexed_repeat_args_count, None),
     "count": FunctionSpec(1, "array_length({1})"),
     "count-non-empty": FunctionSpec(1, "array_length({1}) - count_missing({1})"),
-    "regex": FunctionSpec(2, "regexp_match({1}, {2})"),
     "contains": FunctionSpec(2, "strpos({1}, {2}) > 0"),
     "starts-with": FunctionSpec(2, "left({1}, length({2})) = {2}"),
     "ends-with": FunctionSpec(2, "right({1}, length({2})) = {2}"),
@@ -330,6 +329,17 @@ def string_length(*args: str, ctx: ExpressionContext) -> str:
 @register_function(name="concat", args_count=(1, None))
 def concat(*args: str) -> str:
     return "concat({})".format(_args_to_placeholders(args))
+
+
+@register_function(name="regex")
+def regex(value: str, pattern: str) -> str:
+    pattern = re.sub(
+        r"([^\[])\[:(digit|upper|lower|alpha|alnum|punct|blank|word):\]([^\]])",
+        r"\1[[:\2:]]\3",
+        pattern,
+    )
+
+    return f"regexp_match({value}, {pattern})".replace("{", "{{").replace("}", "}}")
 
 
 @register_function(name="format-date")

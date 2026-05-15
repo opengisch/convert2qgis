@@ -49,7 +49,7 @@ def test_register_function_with_explicit_params():
 
 
 def test_builtin_specs_store_expected_args_count():
-    assert SUPPORTED_FUNCTIONS["regex"].expected_args_count == 2
+    assert SUPPORTED_FUNCTIONS["join"].expected_args_count == 2
     assert SUPPORTED_FUNCTIONS["substr"].expected_args_count == (2, 3)
     assert callable(SUPPORTED_FUNCTIONS["indexed-repeat"].expected_args_count)
 
