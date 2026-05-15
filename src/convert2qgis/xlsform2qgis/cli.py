@@ -37,3 +37,7 @@ def main() -> None:
         json_filename=args.output_json,
         skip_failed_expressions=args.skip_failed_expressions,
     )
+
+
+if __name__ == "__main__":
+    main()
