@@ -5,6 +5,7 @@ from qgis.core import (
     Qgis,
     QgsAttributeEditorContainer,
     QgsAttributeEditorField,
+    QgsEditFormConfig,
     QgsField,
     QgsFieldConstraints,
     QgsMapLayer,
@@ -1069,6 +1070,7 @@ class TestUtils:
             **sample_vector_layer_def["fields"][0],
             "name": "total_pop",
             "alias": "Total population",
+            "alias_expression": "concat('Total ', \"Field integer\")",
             "default_value": '"Field integer" + 1',
         }
         sample_vector_layer_def = {
@@ -1109,6 +1111,11 @@ class TestUtils:
             == '"Field integer" + 1'
         )
         assert tab.children()[0].name() == "total_pop"
+        alias_properties = form_config.dataDefinedFieldProperties("total_pop")
+        alias_property = alias_properties.property(
+            QgsEditFormConfig.DataDefinedProperty.Alias
+        )
+        assert alias_property.asExpression() == "concat('Total ', \"Field integer\")"
 
     def test_get_layer_edit_form_wraps_visible_field_visibility_expression(
         self, sample_vector_layer_def
