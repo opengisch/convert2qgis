@@ -189,67 +189,63 @@
             {
               "column_count": 3,
               "item_id": "main_tab",
-              "parent_id": null,
               "label": "Main",
-              "type": "tab"
-            },
-            {
-              "background_color": "",
-              "column_count": 2,
-              "item_id": "basic_info_group",
-              "is_collapsed": false,
-              "label": "Basic Info",
-              "parent_id": "main_tab",
-              "type": "group_box",
-              "visibility_expression": ""
-            },
-            {
-              "item_id": "caffdaed-fbec-4bf1-a21e-ba84360184e9",
-              "field_name": "uuid",
-              "parent_id": "main_tab",
-              "type": "field"
-            },
-            {
-              "item_id": "61c6b488-9726-4f1b-b6a7-ca3b7c61293b",
-              "field_name": "name",
-              "parent_id": "basic_info_group",
-              "type": "field"
-            },
-            {
-              "item_id": "79002a29-036a-4b1c-baef-49ab49f88a7c",
-              "field_name": "elevation",
-              "parent_id": "basic_info_group",
-              "type": "field"
-            },
-            {
-              "item_id": "c9c7aadc-ff12-4cb0-92a7-f13e0705705a",
-              "field_name": "variant_type",
-              "parent_id": "basic_info_group",
-              "type": "field"
-            },
-            {
-              "item_id": "c5855c64-ef0d-4330-af90-a357a1848016",
-              "field_name": "created_at",
-              "parent_id": "basic_info_group",
-              "type": "field"
-            },
-            {
-              "item_id": "45416464-85cd-43f1-bfa9-b96c15cc76a0",
-              "field_name": "updated_at",
-              "parent_id": "basic_info_group",
-              "type": "field"
+              "type": "tab",
+              "children": [
+                {
+                  "item_id": "caffdaed-fbec-4bf1-a21e-ba84360184e9",
+                  "field_name": "uuid",
+                  "type": "field"
+                },
+                {
+                  "background_color": "",
+                  "column_count": 2,
+                  "item_id": "basic_info_group",
+                  "is_collapsed": false,
+                  "label": "Basic Info",
+                  "type": "group_box",
+                  "visibility_expression": "",
+                  "children": [
+                    {
+                      "item_id": "61c6b488-9726-4f1b-b6a7-ca3b7c61293b",
+                      "field_name": "name",
+                      "type": "field"
+                    },
+                    {
+                      "item_id": "79002a29-036a-4b1c-baef-49ab49f88a7c",
+                      "field_name": "elevation",
+                      "type": "field"
+                    },
+                    {
+                      "item_id": "c9c7aadc-ff12-4cb0-92a7-f13e0705705a",
+                      "field_name": "variant_type",
+                      "type": "field"
+                    },
+                    {
+                      "item_id": "c5855c64-ef0d-4330-af90-a357a1848016",
+                      "field_name": "created_at",
+                      "type": "field"
+                    },
+                    {
+                      "item_id": "45416464-85cd-43f1-bfa9-b96c15cc76a0",
+                      "field_name": "updated_at",
+                      "type": "field"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "item_id": "attachment_tab",
               "label": "Attachment",
-              "parent_id": null,
-              "type": "tab"
-            },
-            {
-              "item_id": "5b93e54f-0f40-4524-aee2-78c6810d7d8a",
-              "field_name": "attachment",
-              "parent_id": "attachment_tab",
-              "type": "field"
+              "type": "tab",
+              "children": [
+                {
+                  "item_id": "5b93e54f-0f40-4524-aee2-78c6810d7d8a",
+                  "field_name": "attachment",
+                  "type": "field"
+                }
+              ]
             }
           ],
           "geometry_type": "Point",
