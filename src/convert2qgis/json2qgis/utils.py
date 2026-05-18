@@ -450,7 +450,7 @@ def get_layer_edit_form(  # noqa: PLR0915
     for form_item_def in dataset_def.form_config:
         add_form_item(form_item_def, root_container)
 
-    for field_def in dataset_def.fields:
+    for field_def in [*dataset_def.fields, *dataset_def.virtual_fields]:
         field_idx = fields.indexOf(field_def.name)
 
         assert field_idx != -1
