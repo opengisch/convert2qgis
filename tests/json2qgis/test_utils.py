@@ -1236,7 +1236,7 @@ class TestUtils:
 
         assert dataset_def.form_config == []
         assert warning_messages == [
-            "Removing hidden form container `hidden_group` (`Hidden group`) "
+            'Removing hidden form container "hidden_group" ("Hidden group") '
             "since it has no visible children."
         ]
 
