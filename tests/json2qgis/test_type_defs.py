@@ -204,6 +204,17 @@ def test_project_creator_accepts_empty_crs_for_no_geometry_layer(tmp_path) -> No
     assert layer.crs().authid() == ""
 
 
+def test_project_creator_rejects_empty_crs_for_spatial_layer() -> None:
+    pytest.importorskip("fastjsonschema")
+
+    project_dict = build_project_dict()
+    project_dict["datasets"][0]["vector_datasets"][0]["geometry_type"] = "Point"
+    project_dict["datasets"][0]["vector_datasets"][0]["crs"] = ""
+
+    with pytest.raises(Qgis2JsonError):
+        ProjectCreator(project_dict)
+
+
 def test_project_creator_validates_raw_dict_before_defaults() -> None:
     pytest.importorskip("fastjsonschema")
 
