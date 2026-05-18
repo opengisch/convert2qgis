@@ -273,21 +273,21 @@ class ProjectCreator:
 
         crs = str_to_crs(dataset_def.crs)
 
-        logger.info('Set layer CRS to "%s"...', crs.authid())
+        logger.debug('Set layer CRS to "%s"...', crs.authid())
 
         layer.setCrs(crs)
 
-        logger.info('Set layer ID to "%s"...', dataset_def.layer_id)
+        logger.debug('Set layer ID to "%s"...', dataset_def.layer_id)
 
         if not layer.setId(dataset_def.layer_id):
             raise Qgis2JsonError(f"Failed to set layer ID: {dataset_def.layer_id}")
 
-        logger.info("Set layer flags...")
+        logger.debug("Set layer flags...")
 
         layer.setFlags(get_layer_flags(layer.flags(), dataset_def))
 
         if dataset_def.custom_properties:
-            logger.info('Set custom properties for layer "%s"...', dataset_def.name)
+            logger.debug('Set custom properties for layer "%s"...', dataset_def.name)
 
             set_layer_custom_properties(layer, dataset_def.custom_properties)
 
