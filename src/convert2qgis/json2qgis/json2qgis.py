@@ -252,6 +252,7 @@ class ProjectCreator:
 
     def _create_layer(self, dataset_def: DatasetDef) -> None:
         layer_type = dataset_def.layer_type
+        is_spatial = True
         if layer_type == "vector":
             assert isinstance(dataset_def, VectorDatasetDef)
             layer = self._create_vector_layer(dataset_def)
@@ -261,6 +262,8 @@ class ProjectCreator:
                 Qgis.GeometryType.Null,
             ):
                 self._has_geometry = True
+            else:
+                is_spatial = False
 
         elif layer_type == "raster":
             assert isinstance(dataset_def, RasterDatasetDef)
@@ -275,7 +278,10 @@ class ProjectCreator:
         else:
             raise NotImplementedError(f"Unsupported layer type: {layer_type}")
 
-        crs = str_to_crs(dataset_def.crs)
+        if is_spatial:
+            crs = str_to_crs(dataset_def.crs)
+        else:
+            crs = str_to_crs(dataset_def.crs, empty_crs_ok=True)
 
         logger.debug('Set layer CRS to "%s"...', crs.authid())
 

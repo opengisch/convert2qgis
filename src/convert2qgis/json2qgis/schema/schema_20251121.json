@@ -357,7 +357,7 @@
       "additionalProperties": false,
       "properties": {
         "crs": {
-          "pattern": "^EPSG:\\d+$",
+          "pattern": "^(EPSG:\\d+)?$",
           "type": "string"
         },
         "custom_properties": {
