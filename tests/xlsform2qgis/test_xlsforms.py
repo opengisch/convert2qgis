@@ -243,7 +243,7 @@ class TestConverter:
                 name="list_list_001",
                 layer_id=choices_datasets[0].layer_id,
                 geometry_type="NoGeometry",
-                crs="EPSG:4326",
+                crs="",
                 custom_properties={
                     "QFieldSync/action": "copy",
                     "QFieldSync/cloud_action": "no_action",
@@ -269,7 +269,7 @@ class TestConverter:
                 name="list_list_002",
                 layer_id=choices_datasets[1].layer_id,
                 geometry_type="NoGeometry",
-                crs="EPSG:4326",
+                crs="",
                 custom_properties={
                     "QFieldSync/action": "copy",
                     "QFieldSync/cloud_action": "no_action",

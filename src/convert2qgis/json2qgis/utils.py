@@ -843,23 +843,27 @@ def set_layer_custom_properties(
 
 
 def str_to_crs(
-    crs_def: str, fallback_crs: "str | None" = None
+    crs_def: str, fallback_crs: "str | None" = None, empty_crs_ok: bool = False
 ) -> QgsCoordinateReferenceSystem:
     """
     Converts a CRS definition string to a `QgsCoordinateReferenceSystem` object.
 
     If the provided CRS definition is invalid and a fallback CRS is provided, it will attempt to use the fallback CRS definition instead.
 
-    Otherswise, an `UnknownCrsSystem` error will be raised.
+    Otherwise, an `UnknownCrsSystem` error will be raised.
 
     Args:
-        crs_def: The CRS definition string. E.g. "EPSG:4326" or a WKT string.
+        crs_def: The CRS definition string. E.g. "EPSG:4326" or a WKT string. May be an empty string if `empty_crs_ok` is `True`.
         fallback_crs: An optional fallback CRS definition string to use if the primary CRS definition is invalid.
+        empty_crs_ok: If True, an empty CRS definition will be considered valid and will return an empty `QgsCoordinateReferenceSystem` object. Defaults to False.
 
     Raises:
         UnknownCrsSystem: If both the primary and fallback CRS definitions are invalid.
 
     """
+    if empty_crs_ok and not crs_def:
+        return QgsCoordinateReferenceSystem()
+
     try:
         crs = QgsCoordinateReferenceSystem(crs_def)
     except Exception as err:

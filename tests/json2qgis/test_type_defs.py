@@ -70,7 +70,7 @@ def build_project_dict() -> dict[str, Any]:
         field_pairs=[RelationFieldPairDef(from_field="uuid", to_field="uuid")],
     )
 
-    return ProjectDef(
+    return ProjectDef(  # type: ignore[no-any-return]
         project=ProjectMetadataDef(
             title="Survey",
             author="Tester",
@@ -189,6 +189,19 @@ def test_project_creator_accepts_dataclass_input() -> None:
     creator = ProjectCreator(project_def)
 
     assert creator.definition is project_def
+
+
+def test_project_creator_accepts_empty_crs_for_no_geometry_layer(tmp_path) -> None:
+    project_dict = build_project_dict()
+    project_dict["datasets"][0]["vector_datasets"][0]["crs"] = ""
+
+    creator = ProjectCreator(project_dict)
+    project = creator.build(tmp_path)
+    layer = project.mapLayer("layer_1")
+
+    assert layer is not None
+    assert not layer.crs().isValid()
+    assert layer.crs().authid() == ""
 
 
 def test_project_creator_validates_raw_dict_before_defaults() -> None:

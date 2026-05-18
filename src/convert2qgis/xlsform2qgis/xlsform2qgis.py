@@ -1237,7 +1237,7 @@ class XlsformConverter:
                 generate_vector_dataset_def(
                     layer_id=layer_id,
                     name=layer_name,
-                    crs="EPSG:4326",
+                    crs="",
                     fields=fields,
                     is_private=True,
                     custom_properties={
