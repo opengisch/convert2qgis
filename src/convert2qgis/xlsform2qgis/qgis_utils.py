@@ -112,6 +112,20 @@ def set_survey_features(  # noqa: PLR0911
     or empty extent if the extent is invalid or cannot be converted,
     or`None` if adding features failed.
     """
+    # NOTE if we don't reload the project before setting the features, we get a weird issue. When `layer.startEditing()` is called on the survey layer,
+    # the data provider immediately gets and error "Cannot reopen datasource survey.gpkg|layername=survey in update mode".
+    project_filename = project.absoluteFilePath()
+    project.clear()
+
+    if not project.read(project_filename):
+        logger.warning(
+            obj.tr(
+                "Failed to read the generated project to set geometries, skipping this step."
+            )
+        )
+
+        return None
+
     survey_layer = project.mapLayer("survey_layer")
 
     if not survey_layer:
