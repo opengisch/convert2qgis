@@ -228,9 +228,10 @@ class ProjectCreator:
 
                 if len(coords) != 4:  # noqa: PLR2004
                     raise ValueError(
-                        'Invalid number of coordinates: expected 4, got %d in "%s"',
-                        len(coords),
-                        extent_coords,
+                        'Invalid number of coordinates: expected 4, got {} in "{}"'.format(
+                            len(coords),
+                            extent_coords,
+                        )
                     )
 
                 p1_x, p1_y, p2_x, p2_y = map(float, coords)
@@ -238,11 +239,13 @@ class ProjectCreator:
                 extent = QgsRectangle(QgsPointXY(p1_x, p1_y), QgsPointXY(p2_x, p2_y))
 
                 if extent.isEmpty() or not extent.isFinite():
-                    raise InvalidExtentError('Invalid WKT extent: "%s"', extent_coords)
+                    raise InvalidExtentError(
+                        'Invalid WKT extent: "{}"'.format(extent_coords)
+                    )
 
                 map_settings.setExtent(extent)
             except Exception as err:
-                logger.warning('Failed to set WKT extent "%s": %s', extent_coords, err)
+                logger.warning("Failed to set WKT extent: %s", err)
 
         map_settings.writeXml(map_canvas_node, document)
 
