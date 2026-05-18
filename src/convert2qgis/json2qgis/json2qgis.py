@@ -61,6 +61,8 @@ schema_validator = get_schema_validator()
 class ProjectCreator:
     _project: QgsProject
     _output_dir: Path
+    _created_files: set[Path]
+    """List of absolute file paths that have been created during the project creation process, used to avoid logging duplicate warnings when a file already exists."""
 
     _has_geometry: bool = False
     """Whether any of the project vector layers has a geometry type."""
@@ -86,6 +88,7 @@ class ProjectCreator:
         self._project = QgsProject()
         self.definition = normalized_definition
         self._output_dir = Path()
+        self._created_files = set()
 
     def build(self, output_dir: PathOrStr) -> QgsProject:
         self._output_dir = Path(output_dir)
@@ -344,11 +347,12 @@ class ProjectCreator:
         abs_file_name = self._output_dir.joinpath(base_name)
 
         if abs_file_name.exists():
-            logger.warning(
-                'File "%s" already exists, if it contains a layer with the "%s" name, the layer will be overwritten!',
-                abs_file_name,
-                normalized_name,
-            )
+            if abs_file_name not in self._created_files:
+                logger.warning(
+                    'File "%s" already exists, if it contains a layer with the "%s" name, the layer will be overwritten!',
+                    abs_file_name,
+                    normalized_name,
+                )
 
             options.actionOnExistingFile = (
                 QgsVectorFileWriter.ActionOnExistingFile.CreateOrOverwriteLayer
@@ -357,6 +361,8 @@ class ProjectCreator:
             options.actionOnExistingFile = (
                 QgsVectorFileWriter.ActionOnExistingFile.CreateOrOverwriteFile
             )
+
+            self._created_files.add(abs_file_name)
 
         write_result, error_message, new_file, new_layer = (
             QgsVectorFileWriter.writeAsVectorFormatV3(
