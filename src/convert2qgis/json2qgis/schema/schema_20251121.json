@@ -357,7 +357,6 @@
       "additionalProperties": false,
       "properties": {
         "crs": {
-          "pattern": "^(EPSG:\\d+)?$",
           "type": "string"
         },
         "custom_properties": {
@@ -454,6 +453,34 @@
         "geometry_type",
         "name",
         "layer_type"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "geometry_type": {
+                "const": "NoGeometry"
+              }
+            },
+            "required": [
+              "geometry_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "crs": {
+                "pattern": "^(EPSG:\\d+)?$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "crs": {
+                "pattern": "^EPSG:\\d+$"
+              }
+            }
+          }
+        }
       ],
       "title": "Vector Dataset",
       "type": "object"
