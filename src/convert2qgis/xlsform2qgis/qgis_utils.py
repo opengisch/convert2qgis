@@ -2,7 +2,9 @@ import atexit
 import gc
 import logging
 import os
+import sqlite3
 import tempfile
+from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
 from qgis.core import (
@@ -146,12 +148,34 @@ def set_survey_features(  # noqa: PLR0911
         )
         return None
 
-    if not survey_layer.startEditing():
+    if not survey_layer.isEditable() and not survey_layer.startEditing():
         logger.warning(
             obj.tr(
                 "Failed to start editing the survey layer within the generated project to set geometries, skipping this step."
             )
         )
+        return None
+
+    data_provider = survey_layer.dataProvider()
+    if data_provider is None or not bool(
+        data_provider.capabilities() & Qgis.VectorProviderCapability.AddFeatures
+    ):
+        logger.warning(
+            obj.tr(
+                "The data provider of the survey layer within the generated project does not support adding features, skipping this step."
+            )
+        )
+
+        return None
+
+    if data_provider.hasErrors():
+        logger.warning(
+            obj.tr(
+                "The data provider of the survey layer within the generated project has errors before adding features, skipping this step: %s"
+            ),
+            ", ".join(data_provider.errors()),
+        )
+
         return None
 
     request = QgsFeatureRequest()
@@ -176,11 +200,14 @@ def set_survey_features(  # noqa: PLR0911
     if not survey_layer.commitChanges():
         logger.warning(
             obj.tr(
-                "Failed to commit changes to the survey layer within the generated project after setting geometries, skipping this step."
-            )
+                "Failed to commit changes to the survey layer within the generated project after setting geometries, skipping this step: %s"
+            ),
+            ", ".join(survey_layer.commitErrors()),
         )
 
         return None
+
+    flush_gpkg_wal(survey_layer)
 
     return transform_bounding_box(
         survey_layer.extent(),
@@ -306,6 +333,25 @@ def set_project_extent(
         project_extent = transform.transformBoundingBox(project_extent)
 
     return project_extent
+
+
+def flush_gpkg_wal(layer: QgsVectorLayer) -> None:
+    """Flushes the WAL file of a GPKG database to make sure all changes are written to the main file."""
+    data_provider = layer.dataProvider()
+
+    if data_provider is None or data_provider.storageType() != "GPKG":
+        return
+
+    filename = layer.source().split("|")[0]
+    path = Path(filename).parent.joinpath(str(filename) + "-wal")
+
+    if path.exists() and path.stat().st_size > 0:
+        conn = sqlite3.connect(str(filename))
+
+        with conn:
+            logger.debug('Flushing GPKG WAL file for layer "%s"', layer.name())
+
+            conn.execute("PRAGMA wal_checkpoint")
 
 
 class LoggingSignals(QObject):

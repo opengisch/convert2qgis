@@ -215,6 +215,11 @@ def convert_xlsform_to_qgis_project(  # noqa: PLR0913
     project = creator.build(output_dir)
 
     if survey_features is not None and survey_features.featureCount() >= 1:
+        logger.info(
+            "Prefilling the project with %d survey features from the provided layer...",
+            survey_features.featureCount(),
+        )
+
         set_survey_features(project, survey_features)
 
     return project
