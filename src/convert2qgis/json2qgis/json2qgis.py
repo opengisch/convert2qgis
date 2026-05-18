@@ -59,8 +59,15 @@ schema_validator = get_schema_validator()
 
 
 class ProjectCreator:
+    definition: ProjectDef
+    """The project definition as a normalized dataclass instance to create a QGIS project from."""
+
     _project: QgsProject
+    """The QGIS project instance being created."""
+
     _output_dir: Path
+    """Absolute path to the output directory where the project file and any associated files (e.g. GPKG files for vector layers) will be written."""
+
     _created_files: set[Path]
     """List of absolute file paths that have been created during the project creation process, used to avoid logging duplicate warnings when a file already exists."""
 
