@@ -228,9 +228,10 @@ class ProjectCreator:
 
                 if len(coords) != 4:  # noqa: PLR2004
                     raise ValueError(
-                        'Invalid number of coordinates: expected 4, got %d in "%s"',
-                        len(coords),
-                        extent_coords,
+                        'Invalid number of coordinates: expected 4, got {} in "{}"'.format(
+                            len(coords),
+                            extent_coords,
+                        )
                     )
 
                 p1_x, p1_y, p2_x, p2_y = map(float, coords)
@@ -238,11 +239,13 @@ class ProjectCreator:
                 extent = QgsRectangle(QgsPointXY(p1_x, p1_y), QgsPointXY(p2_x, p2_y))
 
                 if extent.isEmpty() or not extent.isFinite():
-                    raise InvalidExtentError('Invalid WKT extent: "%s"', extent_coords)
+                    raise InvalidExtentError(
+                        'Invalid WKT extent: "{}"'.format(extent_coords)
+                    )
 
                 map_settings.setExtent(extent)
             except Exception as err:
-                logger.warning('Failed to set WKT extent "%s": %s', extent_coords, err)
+                logger.warning("Failed to set WKT extent: %s", err)
 
         map_settings.writeXml(map_canvas_node, document)
 
@@ -273,21 +276,21 @@ class ProjectCreator:
 
         crs = str_to_crs(dataset_def.crs)
 
-        logger.info('Set layer CRS to "%s"...', crs.authid())
+        logger.debug('Set layer CRS to "%s"...', crs.authid())
 
         layer.setCrs(crs)
 
-        logger.info('Set layer ID to "%s"...', dataset_def.layer_id)
+        logger.debug('Set layer ID to "%s"...', dataset_def.layer_id)
 
         if not layer.setId(dataset_def.layer_id):
             raise Qgis2JsonError(f"Failed to set layer ID: {dataset_def.layer_id}")
 
-        logger.info("Set layer flags...")
+        logger.debug("Set layer flags...")
 
         layer.setFlags(get_layer_flags(layer.flags(), dataset_def))
 
         if dataset_def.custom_properties:
-            logger.info('Set custom properties for layer "%s"...', dataset_def.name)
+            logger.debug('Set custom properties for layer "%s"...', dataset_def.name)
 
             set_layer_custom_properties(layer, dataset_def.custom_properties)
 
