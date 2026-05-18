@@ -127,7 +127,7 @@ def prune_form_definition(project_def: ProjectDef) -> ProjectDef:
                 continue
 
             logger.warning(
-                "Removing hidden form container `%s` (`%s`) since it has no visible children.",
+                'Removing hidden form container "%s" ("%s") since it has no visible children.',
                 form_item.item_id,
                 form_item.label or form_item.item_id,
             )
@@ -194,7 +194,7 @@ def check_output(
             try:
                 validate(output)
             except Exception:
-                logger.exception("Error during function '%s' execution!", func.__name__)
+                logger.exception('Error during function "%s" execution!', func.__name__)
                 raise
 
             return output
@@ -404,7 +404,7 @@ def get_layer_edit_form(  # noqa: PLR0915
                     item_label = markdown.markdown(item_label)
                 else:
                     logger.warning(
-                        "Markdown support is not available. Text item '%s' will not be rendered as HTML, but as raw markdown.",
+                        'Markdown support is not available. Text item "%s" will not be rendered as HTML, but as raw markdown.',
                         item_label,
                     )
 
@@ -518,7 +518,7 @@ def set_layer_fields(
         field_idx = fields.indexOf("fid")
 
         logger.info(
-            "Hiding 'fid' field for layer '%s' since it's a GeoPackage layer...",
+            'Hiding "fid" field for layer "%s" since it\'s a GeoPackage layer...',
             fields.names(),
         )
 
@@ -533,7 +533,7 @@ def set_layer_fields(
 
         if field_idx == -1:
             logger.warning(
-                "Field '%s' not found in layer '%s'. Skipping field configuration.",
+                'Field "%s" not found in layer "%s". Skipping field configuration.',
                 field_name,
                 dataset_def.name,
             )
@@ -865,7 +865,7 @@ def str_to_crs(
     except Exception as err:
         if fallback_crs:
             logger.warning(
-                "Failed to create CRS from definition '%s', attempting to use fallback CRS definition '%s'... Error: %s",
+                'Failed to create CRS from definition "%s", attempting to use fallback CRS definition "%s"... Error: %s',
                 crs_def,
                 fallback_crs,
                 err,
@@ -878,7 +878,7 @@ def str_to_crs(
     if not crs.isValid():
         if fallback_crs:
             logger.warning(
-                "CRS created from definition '%s' is invalid, attempting to use fallback CRS definition '%s'...",
+                'CRS created from definition "%s" is invalid, attempting to use fallback CRS definition "%s"...',
                 crs_def,
                 fallback_crs,
             )
