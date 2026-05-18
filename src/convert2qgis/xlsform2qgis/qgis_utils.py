@@ -26,7 +26,7 @@ from qgis.PyQt.QtCore import QObject, pyqtSignal
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-logger = logging.getLogger(__package__)
+logger = logging.getLogger(__name__)
 
 obj = QObject()
 

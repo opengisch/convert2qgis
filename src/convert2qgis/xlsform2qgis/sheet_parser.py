@@ -14,7 +14,7 @@ from convert2qgis.json2qgis.type_defs import (
     PathOrStr,
 )
 
-logger = logging.getLogger(__package__)
+logger = logging.getLogger(__name__)
 
 XLSFORM_COLS_BY_SHEET_NAME = {
     "survey": [
