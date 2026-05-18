@@ -168,6 +168,28 @@ def set_survey_features(  # noqa: PLR0911
         )
         return None
 
+    data_provider = survey_layer.dataProvider()
+    if data_provider is None or not bool(
+        data_provider.capabilities() & Qgis.VectorProviderCapability.AddFeatures
+    ):
+        logger.warning(
+            obj.tr(
+                "The data provider of the survey layer within the generated project does not support adding features, skipping this step."
+            )
+        )
+
+        return None
+
+    if data_provider.hasErrors():
+        logger.warning(
+            obj.tr(
+                "The data provider of the survey layer within the generated project has errors before adding features, skipping this step: %s"
+            ),
+            ", ".join(data_provider.errors()),
+        )
+
+        return None
+
     request = QgsFeatureRequest()
     request.setDestinationCrs(survey_layer.crs(), project.transformContext())
     features_iterator = cast("Iterable[QgsFeature]", features.getFeatures(request))
@@ -190,8 +212,9 @@ def set_survey_features(  # noqa: PLR0911
     if not survey_layer.commitChanges():
         logger.warning(
             obj.tr(
-                "Failed to commit changes to the survey layer within the generated project after setting geometries, skipping this step."
-            )
+                "Failed to commit changes to the survey layer within the generated project after setting geometries, skipping this step: %s"
+            ),
+            ", ".join(survey_layer.commitErrors()),
         )
 
         return None
