@@ -152,6 +152,61 @@ def test_vector_layer_round_trip() -> None:
     assert dataset_def.to_dict() == layer_dict
 
 
+def test_vector_layer_round_trip_with_row_form_container() -> None:
+    layer_dict = generate_vector_dataset_def(
+        layer_id="layer_1",
+        name="Survey",
+        geometry_type="NoGeometry",
+        fields=[
+            generate_field_def(
+                field_id="field_1",
+                name="uuid",
+                type="string",
+                widget_type="TextEdit",
+            )
+        ],
+        form_config=[
+            generate_form_item_def(
+                item_id="tab_1",
+                type="tab",
+                label="Survey",
+                children=[
+                    generate_form_item_def(
+                        item_id="row_1",
+                        type="row",
+                        label="Row",
+                        children=[
+                            generate_form_item_def(
+                                item_id="form_1",
+                                type="field",
+                                field_name="uuid",
+                            )
+                        ],
+                    )
+                ],
+            )
+        ],
+        primary_key="uuid",
+    ).to_dict()
+
+    dataset_def = VectorDatasetDef.from_data(layer_dict)
+    ProjectCreator(
+        {
+            **build_project_dict(),
+            "datasets": [
+                {
+                    "vector_datasets": [
+                        layer_dict,
+                    ],
+                    "raster_datasets": [],
+                }
+            ],
+        }
+    )
+
+    assert dataset_def.to_dict() == layer_dict
+
+
 def test_project_round_trip() -> None:
     project_dict = build_project_dict()
 

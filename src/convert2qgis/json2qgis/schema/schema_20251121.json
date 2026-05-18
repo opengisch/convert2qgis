@@ -192,7 +192,8 @@
         "type": {
           "enum": [
             "tab",
-            "group_box"
+            "group_box",
+            "row"
           ],
           "type": "string"
         },
