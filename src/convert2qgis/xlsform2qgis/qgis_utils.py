@@ -160,7 +160,7 @@ def set_survey_features(  # noqa: PLR0911
         )
         return None
 
-    if not survey_layer.startEditing():
+    if not survey_layer.isEditable() and not survey_layer.startEditing():
         logger.warning(
             obj.tr(
                 "Failed to start editing the survey layer within the generated project to set geometries, skipping this step."
