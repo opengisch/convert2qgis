@@ -270,6 +270,9 @@ class XlsformConverter:
     _container_ids: "list[str | None]"
     """Stack to keep track of the current parent container ids while parsing the survey sheet, to be able to assign form items to the correct parent container. Whenever a new container is defined, its id is pushed to the stack, and whenever a container definition ends, it is popped from the stack. The value `None` is used to represent the root level, where there is no parent container."""
 
+    _max_pixels: Optional[int]
+    """Keep track of the maximum pixels for image fields, to be able to set it as a project level property if at least one image field is present in the survey."""
+
     def __init__(
         self,
         survey_sheet: ParsedSheet,
@@ -329,6 +332,8 @@ class XlsformConverter:
         self.widget_registry = WidgetRegistry()
 
         self._field_compatibilities = {}
+
+        self._max_pixels = None
 
     def is_valid(self) -> bool:
         if not self.survey_sheet.layer.isValid():
@@ -775,7 +780,7 @@ class XlsformConverter:
         project_def = ProjectDef(
             project=ProjectMetadataDef(
                 custom_properties={
-                    "qfieldsync/maximumImageWidthHeight": 0,
+                    "qfieldsync/maximumImageWidthHeight": self._max_pixels or 0,
                     "qfieldsync/initialMapMode": "digitize",
                     "qfieldsync/featureFormWizardModeEnabled": True,
                 },
@@ -835,7 +840,6 @@ class XlsformConverter:
 
     def build_survey_form(self) -> None:
         # use the top most "layer_id" from the stack to find the respective layer definition
-        max_pixels: Optional[int] = None
         geometry_type_by_layer_id: dict[str, GeometryType] = {}
 
         for row in self.survey_sheet:
@@ -864,7 +868,7 @@ class XlsformConverter:
 
                 # TODO @suricactus: find a better place for `max_pixels` logic
                 if row["type"] == "image":
-                    max_pixels = self._get_field_settings_max_pixels(row, max_pixels)
+                    self._update_max_pixels(row)
 
                 if result.geometry_type:
                     if layer_id in geometry_type_by_layer_id:
@@ -1259,12 +1263,10 @@ class XlsformConverter:
 
         return ""
 
-    def _get_field_settings_max_pixels(
-        self, row: ParsedSheetRow, previous_max_pixels: "int | None"
-    ) -> "int | None":
+    def _update_max_pixels(self, row: ParsedSheetRow) -> None:
         # the current image field does not have parameters set, return the previous value
         if not row["parameters"]:
-            return previous_max_pixels
+            return
 
         image_max_pixels_matches = re.search(
             r"max-pixels=\s*([0-9]+)", row["parameters"], flags=re.IGNORECASE
@@ -1272,18 +1274,19 @@ class XlsformConverter:
 
         # the current image field does not have max-pixels parameter, return the previous value
         if not image_max_pixels_matches:
-            return previous_max_pixels
+            return
 
         image_max_pixels = int(image_max_pixels_matches.group(1))
 
         # the current image field has the same max-pixels parameter as the previous one, return the value
-        if image_max_pixels == previous_max_pixels:
-            return previous_max_pixels
+        if image_max_pixels == self._max_pixels:
+            return
 
-        if previous_max_pixels is None:
-            return image_max_pixels
-        else:
-            logger.warning(
-                "Due to the presence of a mix of image attributes having max-pixels parameter of varying values, the largest max-pixels value will be applied"
-            )
-            return max(image_max_pixels, previous_max_pixels)
+        if self._max_pixels is None:
+            self._max_pixels = image_max_pixels
+            return
+
+        logger.warning(
+            "Due to the presence of a mix of image attributes having max-pixels parameter of varying values, the largest max-pixels value will be applied"
+        )
+        self._max_pixels = max(image_max_pixels, self._max_pixels)
