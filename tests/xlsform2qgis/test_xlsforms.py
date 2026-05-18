@@ -249,6 +249,9 @@ class TestConverter:
                     "QFieldSync/cloud_action": "no_action",
                 },
                 is_private=True,
+                is_identifiable=False,
+                is_searchable=False,
+                is_removable=False,
                 data=choices_data_by_list.get("list_001", []),
                 fields=[
                     generate_field_def(
@@ -275,6 +278,9 @@ class TestConverter:
                     "QFieldSync/cloud_action": "no_action",
                 },
                 is_private=True,
+                is_identifiable=False,
+                is_searchable=False,
+                is_removable=False,
                 data=choices_data_by_list.get("list_002", []),
                 fields=[
                     generate_field_def(

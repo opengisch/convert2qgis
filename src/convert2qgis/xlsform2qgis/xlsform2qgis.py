@@ -1245,6 +1245,9 @@ class XlsformConverter:
                         "QFieldSync/action": "copy",
                     },
                     data=data,
+                    is_identifiable=False,
+                    is_searchable=False,
+                    is_removable=False,
                 )
             )
 
