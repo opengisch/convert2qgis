@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 from typing import Any
 
@@ -96,15 +95,7 @@ class ProjectCreator:
 
         self._output_dir.mkdir(parents=True, exist_ok=True)
 
-        previous_cwd = os.getcwd()
-
-        try:
-            # TODO @suricactus: ugly hack as hell, otherwise the `QgsVectorFileWriter` writes wrong paths. Find a better way to handle this!
-            os.chdir(self._output_dir)
-
-            return self._create_project()
-        finally:
-            os.chdir(previous_cwd)
+        return self._create_project()
 
     def _create_project(self) -> QgsProject:
         project_title = self._get_project_title()
