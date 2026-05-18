@@ -519,7 +519,7 @@ def set_layer_fields(
 
         logger.info(
             'Hiding "fid" field for layer "%s" since it\'s a GeoPackage layer...',
-            fields.names(),
+            layer.name(),
         )
 
         assert field_idx != -1
