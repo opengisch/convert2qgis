@@ -180,7 +180,7 @@ class ProjectCreator:
         # NOTE: Connect to the `writeProject` signal to set the project extent before the project is written to disk.
         self._project.writeProject.connect(self._process_project_write)
 
-        project_filename = f"{normalize_name(project_title)}.qgz"
+        project_filename = f"{self._output_dir}/{normalize_name(project_title)}.qgz"
 
         logger.info('Writing project to "%s"...', project_filename)
 
@@ -346,11 +346,19 @@ class ProjectCreator:
         driver_ext = driver_name.value.lower()
 
         if self._consolidate_gpkgs and driver_name == VectorLayerDataprovider.GPKG:
-            file_name = f"{normalize_name(self._get_project_title())}.gpkg"
+            base_name = f"{normalize_name(self._get_project_title())}.gpkg"
         else:
-            file_name = normalized_name + "." + driver_ext
+            base_name = normalized_name + "." + driver_ext
 
-        if Path(file_name).exists():
+        abs_file_name = self._output_dir.joinpath(base_name)
+
+        if abs_file_name.exists():
+            logger.warning(
+                'File "%s" already exists, if it contains a layer with the "%s" name, the layer will be overwritten!',
+                abs_file_name,
+                normalized_name,
+            )
+
             options.actionOnExistingFile = (
                 QgsVectorFileWriter.ActionOnExistingFile.CreateOrOverwriteLayer
             )
@@ -362,7 +370,7 @@ class ProjectCreator:
         write_result, error_message, new_file, new_layer = (
             QgsVectorFileWriter.writeAsVectorFormatV3(
                 layer,
-                file_name,
+                str(abs_file_name),
                 self._project.transformContext(),
                 options,
             )
@@ -373,12 +381,14 @@ class ProjectCreator:
                 f"Error writing vector layer: {write_result} {error_message}"
             )
 
-        assert new_file == file_name
+        assert new_file == str(abs_file_name)
         assert new_layer == normalized_name
 
         # TODO @suricactus: this way of loading a layer will work fine for GPKG, but might be problematic for other formats.
         new_layer = QgsVectorLayer(
-            f"{new_file}|layername={new_layer}", dataset_def.name, layer_provider_lib
+            f"{abs_file_name}|layername={new_layer}",
+            dataset_def.name,
+            layer_provider_lib,
         )
 
         set_layer_virtual_fields(new_layer, dataset_def)
