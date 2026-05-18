@@ -116,6 +116,41 @@ class TestConverter:
         assert result == project_json
         assert json.loads(json_filename.read_text()) == project_json
 
+    def test_to_json_sets_largest_image_max_pixels_project_property(
+        self, converter, caplog
+    ):
+        caplog.set_level(logging.WARNING)
+        converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
+            [
+                generate_survey_row(
+                    type="image",
+                    name="photo_001",
+                    parameters="max-pixels=1024",
+                ),
+                generate_survey_row(
+                    type="image",
+                    name="photo_002",
+                    parameters="max-pixels=2048",
+                ),
+            ]
+        )
+
+        project_json = converter.to_json()
+
+        assert (
+            project_json["project"]["custom_properties"][
+                "qfieldsync/maximumImageWidthHeight"
+            ]
+            == 2048
+        )
+        assert [
+            record.message
+            for record in caplog.records
+            if "max-pixels parameter of varying values" in record.message
+        ] == [
+            "Due to the presence of a mix of image attributes having max-pixels parameter of varying values, the largest max-pixels value will be applied"
+        ]
+
     def test_get_choices_by_list(self, converter: XlsformConverter):
         converter.choices_sheet.__iter__.return_value = to_parsed_sheet_rows(  # type: ignore
             [
