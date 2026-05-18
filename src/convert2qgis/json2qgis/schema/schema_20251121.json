@@ -4,7 +4,11 @@
   "definitions": {
     "CustomProperties": {
       "additionalProperties": {
-        "type": ["string", "number", "boolean"]
+        "type": [
+          "string",
+          "number",
+          "boolean"
+        ]
       },
       "type": "object"
     },
@@ -23,10 +27,18 @@
           "constraint_expression",
           "constraint_expression_description"
         ],
-        "is_not_null": ["is_not_null_strength"],
-        "is_not_null_strength": ["is_not_null"],
-        "is_unique": ["is_unique_strength"],
-        "is_unique_strength": ["is_unique"]
+        "is_not_null": [
+          "is_not_null_strength"
+        ],
+        "is_not_null_strength": [
+          "is_not_null"
+        ],
+        "is_unique": [
+          "is_unique_strength"
+        ],
+        "is_unique_strength": [
+          "is_unique"
+        ]
       },
       "properties": {
         "alias": {
@@ -45,7 +57,11 @@
           "type": "string"
         },
         "constraint_expression_strength": {
-          "enum": ["hard", "soft", "not_set"],
+          "enum": [
+            "hard",
+            "soft",
+            "not_set"
+          ],
           "type": "string"
         },
         "default_value": {
@@ -58,14 +74,22 @@
           "type": "boolean"
         },
         "is_not_null_strength": {
-          "enum": ["hard", "soft", "not_set"],
+          "enum": [
+            "hard",
+            "soft",
+            "not_set"
+          ],
           "type": "string"
         },
         "is_unique": {
           "type": "boolean"
         },
         "is_unique_strength": {
-          "enum": ["hard", "soft", "not_set"],
+          "enum": [
+            "hard",
+            "soft",
+            "not_set"
+          ],
           "type": "string"
         },
         "length": {
@@ -84,7 +108,14 @@
           "type": "boolean"
         },
         "type": {
-          "enum": ["string", "integer", "real", "boolean", "datetime", "date"],
+          "enum": [
+            "string",
+            "integer",
+            "real",
+            "boolean",
+            "datetime",
+            "date"
+          ],
           "type": "string"
         },
         "widget_config": {
@@ -159,7 +190,10 @@
           "type": "string"
         },
         "type": {
-          "enum": ["tab", "group_box"],
+          "enum": [
+            "tab",
+            "group_box"
+          ],
           "type": "string"
         },
         "visibility_expression": {
@@ -172,7 +206,11 @@
           "type": "array"
         }
       },
-      "required": ["item_id", "type", "label"],
+      "required": [
+        "item_id",
+        "type",
+        "label"
+      ],
       "title": "Form Item Container",
       "type": "object"
     },
@@ -197,14 +235,21 @@
           "type": "boolean"
         },
         "type": {
-          "enum": ["field", "relation"],
+          "enum": [
+            "field",
+            "relation"
+          ],
           "type": "string"
         },
         "visibility_expression": {
           "type": "string"
         }
       },
-      "required": ["item_id", "type", "field_name"],
+      "required": [
+        "item_id",
+        "type",
+        "field_name"
+      ],
       "title": "Form Item Field",
       "type": "object"
     },
@@ -221,7 +266,9 @@
           "type": "boolean"
         },
         "type": {
-          "enum": ["text"],
+          "enum": [
+            "text"
+          ],
           "type": "string"
         },
         "label": {
@@ -234,7 +281,11 @@
           "type": "string"
         }
       },
-      "required": ["item_id", "type", "label"],
+      "required": [
+        "item_id",
+        "type",
+        "label"
+      ],
       "title": "Form Item Text",
       "type": "object"
     },
@@ -296,7 +347,10 @@
           "type": "array"
         }
       },
-      "required": ["vector_datasets", "raster_datasets"],
+      "required": [
+        "vector_datasets",
+        "raster_datasets"
+      ],
       "type": "object"
     },
     "VectorDataset": {
@@ -316,7 +370,10 @@
           "type": "array"
         },
         "datasource_format": {
-          "enum": ["gpkg", "memory"],
+          "enum": [
+            "gpkg",
+            "memory"
+          ],
           "type": "string"
         },
         "display_expression": {
@@ -415,7 +472,9 @@
           "type": "string"
         },
         "datasource_format": {
-          "enum": ["wms"],
+          "enum": [
+            "wms"
+          ],
           "type": "string"
         },
         "is_identifiable": {
@@ -466,17 +525,26 @@
           "type": "string"
         },
         "legend_item_type": {
-          "enum": ["group", "layer"],
+          "enum": [
+            "group",
+            "layer"
+          ],
           "type": "string"
         }
       },
-      "required": ["item_id", "name", "legend_item_type"],
+      "required": [
+        "item_id",
+        "name",
+        "legend_item_type"
+      ],
       "title": "Child",
       "type": "object"
     },
     "LegendTreeLayer": {
       "allOf": [
-        { "$ref": "#/definitions/LegendTreeItemBase" },
+        {
+          "$ref": "#/definitions/LegendTreeItemBase"
+        },
         {
           "type": "object",
           "properties": {
@@ -488,13 +556,17 @@
               "const": "layer"
             }
           },
-          "required": ["layer_id"]
+          "required": [
+            "layer_id"
+          ]
         }
       ]
     },
     "LegendTreeGroup": {
       "allOf": [
-        { "$ref": "#/definitions/LegendTreeItemBase" },
+        {
+          "$ref": "#/definitions/LegendTreeItemBase"
+        },
         {
           "type": "object",
           "properties": {
@@ -516,14 +588,20 @@
               "const": "group"
             }
           },
-          "required": ["children"]
+          "required": [
+            "children"
+          ]
         }
       ]
     },
     "LegendTreeItem": {
       "oneOf": [
-        { "$ref": "#/definitions/LegendTreeGroup" },
-        { "$ref": "#/definitions/LegendTreeLayer" }
+        {
+          "$ref": "#/definitions/LegendTreeGroup"
+        },
+        {
+          "$ref": "#/definitions/LegendTreeLayer"
+        }
       ],
       "unevaluatedProperties": false
     },
@@ -541,7 +619,10 @@
                 "type": "string"
               }
             },
-            "required": ["from_field", "to_field"],
+            "required": [
+              "from_field",
+              "to_field"
+            ],
             "title": "FieldPair",
             "type": "object"
           },
@@ -557,7 +638,10 @@
           "type": "string"
         },
         "strength": {
-          "enum": ["association", "composition"],
+          "enum": [
+            "association",
+            "composition"
+          ],
           "type": "string"
         },
         "to_field": {
@@ -607,7 +691,9 @@
           "type": "string"
         }
       },
-      "required": ["title"],
+      "required": [
+        "title"
+      ],
       "title": "Project",
       "type": "object"
     },
@@ -625,7 +711,10 @@
                 "type": "string"
               }
             },
-            "required": ["from_field", "to_field"],
+            "required": [
+              "from_field",
+              "to_field"
+            ],
             "title": "FieldPair",
             "type": "object"
           },
@@ -641,14 +730,22 @@
           "type": "string"
         },
         "strength": {
-          "enum": ["association", "composition"],
+          "enum": [
+            "association",
+            "composition"
+          ],
           "type": "string"
         },
         "to_layer_id": {
           "type": "string"
         }
       },
-      "required": ["relation_id", "name", "from_layer_id", "to_layer_id"],
+      "required": [
+        "relation_id",
+        "name",
+        "from_layer_id",
+        "to_layer_id"
+      ],
       "title": "Relation",
       "type": "object"
     },
@@ -712,7 +809,10 @@
               "type": "boolean"
             },
             "StorageAuthConfigId": {
-              "type": ["null", "string"]
+              "type": [
+                "null",
+                "string"
+              ]
             },
             "StorageMode": {
               "type": "integer"
@@ -763,7 +863,11 @@
               "type": "string"
             },
             "text_display_method": {
-              "enum": [0, 1, 2],
+              "enum": [
+                0,
+                1,
+                2
+              ],
               "type": "integer"
             },
             "unchecked_state": {
