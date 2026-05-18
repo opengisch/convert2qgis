@@ -2,7 +2,9 @@ import atexit
 import gc
 import logging
 import os
+import sqlite3
 import tempfile
+from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
 from qgis.core import (
@@ -219,6 +221,8 @@ def set_survey_features(  # noqa: PLR0911
 
         return None
 
+    flush_gpkg_wal(survey_layer)
+
     return transform_bounding_box(
         survey_layer.extent(),
         survey_layer.crs(),
@@ -343,6 +347,25 @@ def set_project_extent(
         project_extent = transform.transformBoundingBox(project_extent)
 
     return project_extent
+
+
+def flush_gpkg_wal(layer: QgsVectorLayer) -> None:
+    """Flushes the WAL file of a GPKG database to make sure all changes are written to the main file."""
+    data_provider = layer.dataProvider()
+
+    if data_provider is None or data_provider.storageType() != "GPKG":
+        return
+
+    filename = layer.source().split("|")[0]
+    path = Path(filename).parent.joinpath(str(filename) + "-wal")
+
+    if path.exists() and path.stat().st_size > 0:
+        conn = sqlite3.connect(str(filename))
+
+        with conn:
+            logger.debug('Flushing GPKG WAL file for layer "%s"', layer.name())
+
+            conn.execute("PRAGMA wal_checkpoint")
 
 
 class LoggingSignals(QObject):
