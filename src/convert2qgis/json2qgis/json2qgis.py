@@ -8,7 +8,6 @@ from qgis.core import (
     QgsFeature,
     QgsMapLayer,
     QgsMapSettings,
-    QgsPointXY,
     QgsProject,
     QgsRasterLayer,
     QgsRectangle,
@@ -35,10 +34,12 @@ from convert2qgis.json2qgis.utils import (
     create_fields,
     create_polymorphic_relation,
     create_relation,
+    get_extent_or_defaults,
     get_layer_edit_form,
     get_layer_flags,
     get_schema_validator,
     normalize_name,
+    parse_extent_str,
     set_layer_custom_properties,
     set_layer_fields,
     set_layer_tree,
@@ -220,33 +221,20 @@ class ProjectCreator:
         map_settings.setDestinationCrs(self._get_project_crs())
         map_settings.setOutputSize(QSize(500, 500))
 
+        extent = QgsRectangle()
+
         extent_coords = self.definition.project.extent
         if extent_coords.strip():
-            logger.info('Attempting to set project extent to "%s"', extent_coords)
-
             try:
-                coords = extent_coords.split(",")
-
-                if len(coords) != 4:  # noqa: PLR2004
-                    raise ValueError(
-                        'Invalid number of coordinates: expected 4, got {} in "{}"'.format(
-                            len(coords),
-                            extent_coords,
-                        )
-                    )
-
-                p1_x, p1_y, p2_x, p2_y = map(float, coords)
-
-                extent = QgsRectangle(QgsPointXY(p1_x, p1_y), QgsPointXY(p2_x, p2_y))
-
-                if extent.isEmpty() or not extent.isFinite():
-                    raise InvalidExtentError(
-                        'Invalid WKT extent: "{}"'.format(extent_coords)
-                    )
-
-                map_settings.setExtent(extent)
-            except Exception as err:
+                extent = parse_extent_str(extent_coords)
+            except (ValueError, InvalidExtentError) as err:
                 logger.warning("Failed to set WKT extent: %s", err)
+
+        extent = get_extent_or_defaults(self._project, extent)
+
+        logger.info("Setting project extent to: %s.", extent.toString())
+
+        map_settings.setExtent(extent)
 
         map_settings.writeXml(map_canvas_node, document)
 

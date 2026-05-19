@@ -5,16 +5,20 @@ from qgis.core import (
     Qgis,
     QgsAttributeEditorContainer,
     QgsAttributeEditorField,
+    QgsCoordinateReferenceSystem,
     QgsEditFormConfig,
     QgsField,
     QgsFieldConstraints,
     QgsMapLayer,
+    QgsPointXY,
     QgsProject,
+    QgsRectangle,
     QgsVectorLayer,
 )
 from qgis.PyQt.QtCore import QMetaType
 
 from convert2qgis.json2qgis.errors import (
+    InvalidExtentError,
     MissingFieldError,
     UnexpectedSchemaValueError,
     UnknownCrsSystemError,
@@ -28,9 +32,11 @@ from convert2qgis.json2qgis.utils import (
     create_relation,
     get_attribute_form_container_type,
     get_constraint_strength,
+    get_extent_or_defaults,
     get_layer_edit_form,
     get_layer_flags,
     normalize_name,
+    parse_extent_str,
     prune_form_definition,
     set_field_constraints,
     set_field_default_value,
@@ -459,6 +465,48 @@ class TestUtils:
         """Test get_attribute_form_container_type with unsupported type."""
         with pytest.raises(NotImplementedError):
             get_attribute_form_container_type("unsupported")
+
+    def test_parse_extent_str(self):
+        extent = parse_extent_str("1,2,3,4")
+
+        assert extent.xMinimum() == pytest.approx(1)
+        assert extent.yMinimum() == pytest.approx(2)
+        assert extent.xMaximum() == pytest.approx(3)
+        assert extent.yMaximum() == pytest.approx(4)
+
+    def test_parse_extent_str_rejects_wrong_coordinate_count(self):
+        with pytest.raises(
+            ValueError,
+            match='Invalid number of coordinates: expected 4, got 3 in "1,2,3"',
+        ):
+            parse_extent_str("1,2,3")
+
+    def test_parse_extent_str_rejects_empty_extent(self):
+        with pytest.raises(InvalidExtentError, match='Invalid WKT extent: "1,1,1,1"'):
+            parse_extent_str("1,1,1,1")
+
+    def test_get_extent_or_defaults_pads_small_projected_extent(self):
+        project = QgsProject()
+        project.setCrs(QgsCoordinateReferenceSystem("EPSG:3857"))
+        input_extent = QgsRectangle(QgsPointXY(0, 0), QgsPointXY(10, 20))
+
+        extent = get_extent_or_defaults(project, input_extent)
+
+        assert input_extent.width() == pytest.approx(10)
+        assert input_extent.height() == pytest.approx(20)
+        assert extent.width() == pytest.approx(210)
+        assert extent.height() == pytest.approx(210)
+
+    def test_get_extent_or_defaults_uses_europe_for_empty_wgs84_extent(self):
+        project = QgsProject()
+        project.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
+
+        extent = get_extent_or_defaults(project, QgsRectangle())
+
+        assert extent.xMinimum() == pytest.approx(-9.88)
+        assert extent.yMinimum() == pytest.approx(33.41)
+        assert extent.xMaximum() == pytest.approx(40.97)
+        assert extent.yMaximum() == pytest.approx(61.11)
 
     def test_create_field_def_as_string(self, sample_field_def):
         """Test creation of a FieldDef TypedDict."""
