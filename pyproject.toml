@@ -95,6 +95,9 @@ ignore = [
     # https://docs.astral.sh/ruff/rules/missing-todo-link/
     # NOTE this should be ideally commented out, having a TODO with a task is a must
     "TD003",
+    # https://docs.astral.sh/ruff/rules/non-self-return-type/
+    # NOTE: temporarily disabled until we have the `typing.Self` from Python 3.11
+    "PYI034",
 ]
 
 [tool.ruff.lint.mccabe]
