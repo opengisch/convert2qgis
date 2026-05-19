@@ -138,7 +138,10 @@ def widget_calculate(ctx: WidgetContext) -> ParsedRow:
         show_label = False
 
     return ParsedRow(
-        virtual_field={
+        # NOTE ideally we should use a virtual field for `calculate` types,
+        # but for compatibility with existing XLSForms tools, we should create
+        # a real field with the calculation as default value, and set it to read-only in the form.
+        field={
             "widget_type": widget_type,
             **field_def.to_dict(),
         },
