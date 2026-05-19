@@ -395,7 +395,7 @@ class XlsformConverter:
                 should_strip_tags=should_strip_tags,
             )
         except ParseError:
-            logger.exception(
+            logger.error(
                 "Failed to parse expression `%s` for field `%s`!",
                 expression_str,
                 current_field,
@@ -604,7 +604,7 @@ class XlsformConverter:
         # you cannot define both `calculation` and `default` at the same time, in such case use only `calculation`
         if sheet_row["calculation"] and sheet_row["default"]:
             logger.warning(
-                "Both `calculation` and `default` are set for field `%s`; only calculation will be used",
+                "Both `calculation` and `default` are set for field `%s`; only calculation will be used.",
                 field_name,
             )
 
@@ -887,7 +887,7 @@ class XlsformConverter:
                     geometry_type_by_layer_id[layer_id] = result.geometry_type
 
             except Exception:
-                logger.exception(
+                logger.error(
                     "Failed to parse row with type `%s` and name `%s` at row index %d!",
                     row["type"],
                     row["name"],
@@ -1070,32 +1070,32 @@ class XlsformConverter:
         return result
 
     def _prune_field_definition(self, field_def: FieldDef) -> None:
-        if field_def.widget_type != "Hidden":
-            return
+        # NOTE Hidden fields should not be required, have a constraint expression or be unique,
+        # as they are not visible in the form and the user cannot interact with them.
+        if field_def.widget_type == "Hidden":
+            if field_def.is_not_null_strength == "hard":
+                logger.debug(
+                    "Field `%s` has not null constraint strength set to `hard` but has a `Hidden` widget; this will prevent saving the form, therefore the constraint strength will be downgraded to `soft`!",
+                    field_def.name,
+                )
 
-        if field_def.is_not_null_strength == "hard":
-            logger.warning(
-                "Field `%s` has not null constraint strength set to `hard` but has a `Hidden` widget; this will prevent saving the form, therefore the constraint strength will be downgraded to `soft`!",
-                field_def.name,
-            )
+                field_def.is_not_null_strength = "soft"
 
-            field_def.is_not_null_strength = "soft"
+            if field_def.constraint_expression_strength == "hard":
+                logger.debug(
+                    "Field `%s` has constraint expression strength set to `hard` but has a `Hidden` widget; this is not a valid combination and the constraint expression will be downgraded to `soft`!",
+                    field_def.name,
+                )
 
-        if field_def.constraint_expression_strength == "hard":
-            logger.warning(
-                "Field `%s` has constraint expression strength set to `hard` but has a `Hidden` widget; this is not a valid combination and the constraint expression will be downgraded to `soft`!",
-                field_def.name,
-            )
+                field_def.constraint_expression_strength = "soft"
 
-            field_def.constraint_expression_strength = "soft"
+            if field_def.is_unique_strength == "hard":
+                logger.debug(
+                    "Field `%s` has unique constraint strength set to `hard` but has a `Hidden` widget; this is not a valid combination and the unique constraint will be downgraded to `soft`!",
+                    field_def.name,
+                )
 
-        if field_def.is_unique_strength == "hard":
-            logger.warning(
-                "Field `%s` has unique constraint strength set to `hard` but has a `Hidden` widget; this is not a valid combination and the unique constraint will be downgraded to `soft`!",
-                field_def.name,
-            )
-
-            field_def.is_unique_strength = "soft"
+                field_def.is_unique_strength = "soft"
 
     def _get_choices_columns(self, list_choices: list[ChoicesDef]) -> list[str]:
         # The additional columns are most likely related to a single choice group,
