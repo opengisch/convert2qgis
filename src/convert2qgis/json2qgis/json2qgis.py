@@ -459,9 +459,19 @@ class ProjectCreator:
 
             features.append(feature)
 
-        layer_data_provider.addFeatures(features)
+        is_add_features_success, _features = layer_data_provider.addFeatures(features)
+
+        if not is_add_features_success:
+            raise Qgis2JsonError(
+                f'Failed to add feature data to layer "{dataset_def.name}".'
+            )
+
         layer.updateExtents()
-        layer.commitChanges()
+
+        if not layer.commitChanges():
+            raise Qgis2JsonError(
+                f'Failed to commit feature data to layer "{dataset_def.name}".'
+            )
 
     def _set_relations(self) -> None:
         relation_manager = self._project.relationManager()
