@@ -698,7 +698,7 @@ class XlsformConverter:
         }
 
     def _check_xlsform_type_compatibility(self, xlsform_type: str) -> None:
-        if xlsform_type in ("barcode",):
+        if xlsform_type == "barcode":
             if not self._field_compatibilities.get("barcode"):
                 self._field_compatibilities["barcode"] = True
 
@@ -1070,7 +1070,7 @@ class XlsformConverter:
         return result
 
     def _prune_field_definition(self, field_def: FieldDef) -> None:
-        if field_def.widget_type not in ("Hidden",):
+        if field_def.widget_type != "Hidden":
             return
 
         if field_def.is_not_null_strength == "hard":
