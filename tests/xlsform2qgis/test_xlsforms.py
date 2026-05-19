@@ -24,6 +24,7 @@ from convert2qgis.json2qgis.utils import (
 )
 from convert2qgis.xlsform2qgis import xlsform2qgis as xlsform2qgis_module
 from convert2qgis.xlsform2qgis.expressions.functions import SUPPORTED_FUNCTIONS
+from convert2qgis.xlsform2qgis.qgis_utils import set_survey_features
 from convert2qgis.xlsform2qgis.sheet_parser import ParsedSheetRow
 from convert2qgis.xlsform2qgis.xlsform2qgis import (
     XlsformConverter,
@@ -115,6 +116,25 @@ class TestConverter:
 
         assert result == project_json
         assert json.loads(json_filename.read_text()) == project_json
+
+    def test_set_survey_features_skips_multipoint_source_for_point_layer(self, caplog):
+        project = MagicMock()
+        survey_layer = QgsVectorLayer("Point?crs=EPSG:4326", "survey_layer", "memory")
+        source_layer = QgsVectorLayer("MultiPoint?crs=EPSG:4326", "source", "memory")
+        project.mapLayer.return_value = survey_layer
+        caplog.set_level(logging.WARNING, logger="convert2qgis.xlsform2qgis.qgis_utils")
+
+        extent = set_survey_features(project, source_layer)
+
+        assert extent is None
+        assert survey_layer.featureCount() == 0
+        assert [
+            record.message
+            for record in caplog.records
+            if "different geometry type" in record.message
+        ] == [
+            "The provided features have a different geometry type than the survey layer within the generated project when trying to set geometries, skipping this step."
+        ]
 
     def test_to_json_sets_largest_image_max_pixels_project_property(
         self, converter, caplog
@@ -1133,24 +1153,44 @@ class TestConverter:
         assert repeat_form.children[0].children == []
 
     @pytest.mark.parametrize(
-        ("xlsform_type", "expected_geometry"),
+        ("use_multipart_geoms", "xlsform_type", "expected_geometry"),
         [
-            ("geopoint", "Point"),
-            ("start-geopoint", "Point"),
-            ("start-geotrace", "LineString"),
-            ("geotrace", "LineString"),
-            ("geoshape", "Polygon"),
-            ("start-geoshape", "Polygon"),
+            (False, "geopoint", "Point"),
+            (False, "start-geopoint", "Point"),
+            (False, "start-geotrace", "LineString"),
+            (False, "geotrace", "LineString"),
+            (False, "geoshape", "Polygon"),
+            (False, "start-geoshape", "Polygon"),
+            (True, "geopoint", "MultiPoint"),
+            (True, "start-geopoint", "MultiPoint"),
+            (True, "start-geotrace", "MultiLineString"),
+            (True, "geotrace", "MultiLineString"),
+            (True, "geoshape", "MultiPolygon"),
+            (True, "start-geoshape", "MultiPolygon"),
         ],
     )
-    def test_xlsform_geometry(self, converter, xlsform_type, expected_geometry):
-        converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
+    def test_xlsform_geometry(
+        self, use_multipart_geoms, xlsform_type, expected_geometry
+    ):
+        survey_sheet = MagicMock()
+        choices_sheet = MagicMock()
+        settings_sheet = MagicMock()
+        survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
             [
                 generate_survey_row(
                     type=xlsform_type,
                     name=f"{xlsform_type}_001",
                 ),
             ]
+        )
+        converter = XlsformConverter(
+            survey_sheet,
+            choices_sheet,
+            settings_sheet,
+            settings={
+                "basemap_url": "",
+                "use_multipart_geoms": use_multipart_geoms,
+            },
         )
 
         converter.convert()

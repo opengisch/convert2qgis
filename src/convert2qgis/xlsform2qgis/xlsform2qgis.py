@@ -264,6 +264,9 @@ class XlsformConverter:
     _project_extent: str
     """The project extent of the output project as a list of coordinates (xmin, ymin, xmax, ymax) in project CRS."""
 
+    _use_multipart_geoms: bool
+    """Whether XLSForm geometry types should be stored using their multipart equivalent."""
+
     _layer_ids: list[str]
     """Stack to keep track of the current layer ids while parsing the survey sheet, to be able to assign fields and form items to the correct layer. Whenever a new layer is defined, its id is pushed to the stack, and whenever a layer definition ends, it is popped from the stack."""
 
@@ -295,6 +298,7 @@ class XlsformConverter:
         self._project_crs = settings.get("crs") or "EPSG:3857"
         self._project_author = settings.get("author") or ""
         self._project_extent = settings.get("extent", "").strip() or ""
+        self._use_multipart_geoms = settings.get("use_multipart_geoms", True)
         self._xlsform_settings = {
             **self._get_xlsform_settings(),
             **cast("XlsformSettings", settings.get("xlsform_settings", {})),
@@ -898,7 +902,18 @@ class XlsformConverter:
             assert dataset_def is not None
             assert geometry_type is not None
 
-            dataset_def.geometry_type = geometry_type
+            dataset_geometry_type = geometry_type
+            if self._use_multipart_geoms:
+                multipart_geometry_types: dict[GeometryType, GeometryType] = {
+                    "Point": "MultiPoint",
+                    "LineString": "MultiLineString",
+                    "Polygon": "MultiPolygon",
+                }
+                dataset_geometry_type = multipart_geometry_types.get(
+                    geometry_type, geometry_type
+                )
+
+            dataset_def.geometry_type = dataset_geometry_type
 
     def add_basemap_layer(self) -> None:
         layer_id = "basemap_layer"
