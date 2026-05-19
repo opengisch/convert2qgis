@@ -37,7 +37,9 @@ from qgis.PyQt.QtGui import QColor
 
 from convert2qgis.json2qgis.errors import (
     InvalidCustomPropertyError,
+    MissingFieldError,
     Qgis2JsonError,
+    UnexpectedSchemaValueError,
     UnknownCrsSystemError,
 )
 from convert2qgis.json2qgis.type_defs import (
@@ -322,12 +324,23 @@ def get_layer_edit_form(  # noqa: PLR0915
         item_label = form_item_def.label
 
         if item_type == "field":
-            assert form_item_def.field_name is not None
+            if not form_item_def.field_name:
+                raise UnexpectedSchemaValueError(
+                    f'Form item "{form_item_def.item_id}" is missing field_name.'
+                )
+
             field_idx = fields.indexOf(form_item_def.field_name)
 
-            assert field_idx != -1, f'Could not find field "{form_item_def.field_name}"'
+            if field_idx == -1:
+                raise MissingFieldError(
+                    f'Could not find field "{form_item_def.field_name}"'
+                )
 
-            field_def = field_defs_by_name[form_item_def.field_name]
+            field_def = field_defs_by_name.get(form_item_def.field_name)
+            if field_def is None:
+                raise UnexpectedSchemaValueError(
+                    f'Could not find field definition "{form_item_def.field_name}"'
+                )
 
             if (
                 form_item_def.visibility_expression
@@ -370,7 +383,11 @@ def get_layer_edit_form(  # noqa: PLR0915
             return None
 
         if item_type == "relation":
-            assert form_item_def.field_name is not None
+            if not form_item_def.field_name:
+                raise UnexpectedSchemaValueError(
+                    f'Form item "{form_item_def.item_id}" is missing relation id.'
+                )
+
             if form_item_def.visibility_expression:
                 parent_container = QgsAttributeEditorContainer("", parent)
                 parent_container.setVisibilityExpression(
@@ -453,7 +470,10 @@ def get_layer_edit_form(  # noqa: PLR0915
     for field_def in [*dataset_def.fields, *dataset_def.virtual_fields]:
         field_idx = fields.indexOf(field_def.name)
 
-        assert field_idx != -1
+        if field_idx == -1:
+            raise MissingFieldError(
+                f'Could not find field "{field_def.name}" while setting alias expression.'
+            )
 
         if field_def.alias_expression:
             prop = QgsProperty()

@@ -2,7 +2,7 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
-from qgis.core import Qgis, QgsProject, QgsVectorLayer
+from qgis.core import Qgis, QgsProject, QgsVectorFileWriter, QgsVectorLayer
 
 from convert2qgis.json2qgis.errors import Qgis2JsonError
 from convert2qgis.json2qgis.generate import (
@@ -291,6 +291,36 @@ def test_project_creator_accepts_valid_project_crs() -> None:
     creator = ProjectCreator(project_dict)
 
     assert creator.definition.project.crs == "EPSG:7801"
+
+
+def test_project_creator_raises_for_unexpected_vector_writer_output(
+    tmp_path, monkeypatch
+) -> None:
+    project_def = ProjectDef.from_data(build_project_dict())
+    [dataset_group] = project_def.datasets
+    [dataset_def] = dataset_group.vector_datasets
+    creator = ProjectCreator(project_def)
+    creator._output_dir = tmp_path
+
+    def write_vector_layer(*_args: object) -> tuple[object, str, str, str]:
+        return (
+            QgsVectorFileWriter.WriterError.NoError,
+            "",
+            str(tmp_path / "unexpected.gpkg"),
+            "unexpected_layer",
+        )
+
+    monkeypatch.setattr(
+        QgsVectorFileWriter,
+        "writeAsVectorFormatV3",
+        write_vector_layer,
+    )
+
+    with pytest.raises(
+        Qgis2JsonError,
+        match='Unexpected vector writer output for layer "Survey"',
+    ):
+        creator._create_vector_layer(dataset_def)
 
 
 def test_project_creator_validates_raw_dict_before_defaults() -> None:
