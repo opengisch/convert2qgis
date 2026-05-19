@@ -713,7 +713,7 @@
         },
         "crs": {
           "type": "string",
-          "pattern": "EPSG:\\d+"
+          "pattern": "^EPSG:\\d+$"
         },
         "extent": {
           "type": "string"

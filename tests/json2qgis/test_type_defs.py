@@ -270,6 +270,27 @@ def test_project_creator_rejects_empty_crs_for_spatial_layer() -> None:
         ProjectCreator(project_dict)
 
 
+def test_project_creator_rejects_malformed_project_crs() -> None:
+    pytest.importorskip("fastjsonschema")
+
+    project_dict = build_project_dict()
+    project_dict["project"]["crs"] = "invalid EPSG:4326 value"
+
+    with pytest.raises(Qgis2JsonError):
+        ProjectCreator(project_dict)
+
+
+def test_project_creator_accepts_valid_project_crs() -> None:
+    pytest.importorskip("fastjsonschema")
+
+    project_dict = build_project_dict()
+    project_dict["project"]["crs"] = "EPSG:7801"
+
+    creator = ProjectCreator(project_dict)
+
+    assert creator.definition.project.crs == "EPSG:7801"
+
+
 def test_project_creator_validates_raw_dict_before_defaults() -> None:
     pytest.importorskip("fastjsonschema")
 
