@@ -604,7 +604,7 @@ class XlsformConverter:
         # you cannot define both `calculation` and `default` at the same time, in such case use only `calculation`
         if sheet_row["calculation"] and sheet_row["default"]:
             logger.warning(
-                "Both `calculation` and `default` are set for field `%s`; only calculation will be used",
+                "Both `calculation` and `default` are set for field `%s`; only calculation will be used.",
                 field_name,
             )
 
