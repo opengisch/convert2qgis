@@ -1153,24 +1153,44 @@ class TestConverter:
         assert repeat_form.children[0].children == []
 
     @pytest.mark.parametrize(
-        ("xlsform_type", "expected_geometry"),
+        ("use_multipart_geoms", "xlsform_type", "expected_geometry"),
         [
-            ("geopoint", "Point"),
-            ("start-geopoint", "Point"),
-            ("start-geotrace", "LineString"),
-            ("geotrace", "LineString"),
-            ("geoshape", "Polygon"),
-            ("start-geoshape", "Polygon"),
+            (False, "geopoint", "Point"),
+            (False, "start-geopoint", "Point"),
+            (False, "start-geotrace", "LineString"),
+            (False, "geotrace", "LineString"),
+            (False, "geoshape", "Polygon"),
+            (False, "start-geoshape", "Polygon"),
+            (True, "geopoint", "MultiPoint"),
+            (True, "start-geopoint", "MultiPoint"),
+            (True, "start-geotrace", "MultiLineString"),
+            (True, "geotrace", "MultiLineString"),
+            (True, "geoshape", "MultiPolygon"),
+            (True, "start-geoshape", "MultiPolygon"),
         ],
     )
-    def test_xlsform_geometry(self, converter, xlsform_type, expected_geometry):
-        converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
+    def test_xlsform_geometry(
+        self, use_multipart_geoms, xlsform_type, expected_geometry
+    ):
+        survey_sheet = MagicMock()
+        choices_sheet = MagicMock()
+        settings_sheet = MagicMock()
+        survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
             [
                 generate_survey_row(
                     type=xlsform_type,
                     name=f"{xlsform_type}_001",
                 ),
             ]
+        )
+        converter = XlsformConverter(
+            survey_sheet,
+            choices_sheet,
+            settings_sheet,
+            settings={
+                "basemap_url": "",
+                "use_multipart_geoms": use_multipart_geoms,
+            },
         )
 
         converter.convert()

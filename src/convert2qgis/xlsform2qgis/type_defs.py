@@ -68,3 +68,6 @@ class ConverterSettings(TypedDict, total=False):
 
     author: str
     """Name of the author of the project generated from the XLSForm definition."""
+
+    use_multipart_geoms: bool
+    """Whether XLSForm geometry types should be stored using their multipart equivalent."""
