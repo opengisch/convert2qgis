@@ -395,7 +395,7 @@ class XlsformConverter:
                 should_strip_tags=should_strip_tags,
             )
         except ParseError:
-            logger.exception(
+            logger.error(
                 "Failed to parse expression `%s` for field `%s`!",
                 expression_str,
                 current_field,
@@ -887,7 +887,7 @@ class XlsformConverter:
                     geometry_type_by_layer_id[layer_id] = result.geometry_type
 
             except Exception:
-                logger.exception(
+                logger.error(
                     "Failed to parse row with type `%s` and name `%s` at row index %d!",
                     row["type"],
                     row["name"],

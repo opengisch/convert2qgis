@@ -98,6 +98,9 @@ ignore = [
     # https://docs.astral.sh/ruff/rules/non-self-return-type/
     # NOTE: temporarily disabled until we have the `typing.Self` from Python 3.11
     "PYI034",
+    # https://docs.astral.sh/ruff/rules/error-instead-of-exception/
+    # In our case most of the time we want the exception to be logged as regular error, not full exception
+    "TRY400",
 ]
 
 [tool.ruff.lint.mccabe]
