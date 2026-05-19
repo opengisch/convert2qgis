@@ -1,7 +1,8 @@
 from typing import Any
+from unittest.mock import MagicMock
 
 import pytest
-from qgis.core import QgsProject, QgsVectorLayer
+from qgis.core import Qgis, QgsProject, QgsVectorLayer
 
 from convert2qgis.json2qgis.errors import Qgis2JsonError
 from convert2qgis.json2qgis.generate import (
@@ -20,6 +21,7 @@ from convert2qgis.json2qgis.type_defs import (
     RelationFieldPairDef,
     VectorDatasetDef,
 )
+from convert2qgis.json2qgis.utils import create_fields
 
 
 def build_project_dict() -> dict[str, Any]:
@@ -369,3 +371,75 @@ def test_project_creator_sets_polymorphic_relations() -> None:
     assert relation_manager is not None
     assert relation_manager.polymorphicRelation("poly_rel_1").isValid()
     project.clear()
+
+
+def test_project_creator_raises_when_vector_data_insert_fails() -> None:
+    creator = ProjectCreator(build_project_dict())
+    dataset_def = generate_vector_dataset_def(
+        name="Survey",
+        fields=[
+            generate_field_def(
+                name="name",
+                type="string",
+                widget_type="TextEdit",
+            )
+        ],
+        data=[
+            {
+                "name": "Test",
+            }
+        ],
+    )
+    provider = MagicMock()
+    provider.isValid.return_value = True
+    provider.addFeatures.return_value = (False, [])
+    layer = MagicMock()
+    layer.dataProvider.return_value = provider
+    layer.geometryType.return_value = Qgis.GeometryType.Null
+    layer.fields.return_value = create_fields(dataset_def)
+
+    with pytest.raises(
+        Qgis2JsonError,
+        match='Failed to add feature data to layer "Survey"',
+    ):
+        creator._add_vector_layer_data(layer, dataset_def)
+
+    provider.addFeatures.assert_called_once()
+    layer.commitChanges.assert_not_called()
+
+
+def test_project_creator_raises_when_vector_data_commit_fails() -> None:
+    creator = ProjectCreator(build_project_dict())
+    dataset_def = generate_vector_dataset_def(
+        name="Survey",
+        fields=[
+            generate_field_def(
+                name="name",
+                type="string",
+                widget_type="TextEdit",
+            )
+        ],
+        data=[
+            {
+                "name": "Test",
+            }
+        ],
+    )
+    provider = MagicMock()
+    provider.isValid.return_value = True
+    provider.addFeatures.return_value = (True, [])
+    layer = MagicMock()
+    layer.dataProvider.return_value = provider
+    layer.geometryType.return_value = Qgis.GeometryType.Null
+    layer.fields.return_value = create_fields(dataset_def)
+    layer.commitChanges.return_value = False
+
+    with pytest.raises(
+        Qgis2JsonError,
+        match='Failed to commit feature data to layer "Survey"',
+    ):
+        creator._add_vector_layer_data(layer, dataset_def)
+
+    provider.addFeatures.assert_called_once()
+    layer.updateExtents.assert_called_once()
+    layer.commitChanges.assert_called_once()
