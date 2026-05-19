@@ -17,7 +17,6 @@ from qgis.core import (
     QgsFeatureRequest,
     QgsFeatureSink,
     QgsFeatureSource,
-    QgsFeedback,
     QgsProject,
     QgsRectangle,
     QgsVectorLayer,
@@ -269,9 +268,7 @@ def transform_bounding_box(
         return QgsRectangle()
 
 
-def set_project_extent(
-    project: QgsProject, input_extent: QgsRectangle, feedback: QgsFeedback
-) -> QgsRectangle:
+def set_project_extent(project: QgsProject, input_extent: QgsRectangle) -> QgsRectangle:
     """Sets project extent to given `input_extent`."""
     project_extent = QgsRectangle(input_extent)
 
@@ -297,11 +294,11 @@ def set_project_extent(
 
     if project_extent.isEmpty():
         if project.crs().authid() == "EPSG:3857":
-            feedback.pushInfo(obj.tr("Defaulting to world project extents."))
+            logger.info(obj.tr("Defaulting to world project extents."))
 
             project_extent = QgsRectangle(-9.88, 33.41, 40.97, 61.11)
         else:
-            feedback.pushInfo(
+            logger.info(
                 obj.tr(
                     "Defaulting to project extents determined by the coordinate system."
                 )
