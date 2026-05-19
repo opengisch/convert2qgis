@@ -672,9 +672,6 @@
           ],
           "type": "string"
         },
-        "to_field": {
-          "type": "string"
-        },
         "to_layer_expression": {
           "type": "string"
         },
