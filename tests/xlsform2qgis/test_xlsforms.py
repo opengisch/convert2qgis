@@ -700,7 +700,7 @@ class TestConverter:
     def test_prune_field_definition_downgrades_hidden_hard_constraints(
         self, converter, caplog
     ):
-        caplog.set_level(logging.WARNING)
+        caplog.set_level(logging.DEBUG, logger="convert2qgis.xlsform2qgis.xlsform2qgis")
         field = generate_field_def(
             name="hidden_field",
             widget_type="Hidden",
