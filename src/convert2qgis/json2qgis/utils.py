@@ -13,6 +13,7 @@ from qgis.core import (
     QgsAttributeEditorRelation,
     QgsAttributeEditorTextElement,
     QgsCoordinateReferenceSystem,
+    QgsCoordinateTransform,
     QgsDefaultValue,
     QgsEditFormConfig,
     QgsEditorWidgetSetup,
@@ -25,10 +26,12 @@ from qgis.core import (
     QgsMapLayer,
     QgsObjectCustomProperties,
     QgsOptionalExpression,
+    QgsPointXY,
     QgsPolymorphicRelation,
     QgsProject,
     QgsProperty,
     QgsPropertyCollection,
+    QgsRectangle,
     QgsRelation,
     QgsVectorLayer,
 )
@@ -37,6 +40,7 @@ from qgis.PyQt.QtGui import QColor
 
 from convert2qgis.json2qgis.errors import (
     InvalidCustomPropertyError,
+    InvalidExtentError,
     MissingFieldError,
     Qgis2JsonError,
     UnexpectedSchemaValueError,
@@ -912,3 +916,90 @@ def str_to_crs(
             raise UnknownCrsSystemError(f"Invalid CRS: {crs_def}")
 
     return crs
+
+
+def parse_extent_str(extent_str: str) -> QgsRectangle:
+    if not extent_str.strip():
+        return QgsRectangle()
+
+    logger.info('Attempting to set project extent to "%s"', extent_str)
+
+    coords = extent_str.split(",")
+
+    if len(coords) != 4:  # noqa: PLR2004
+        raise ValueError(
+            'Invalid number of coordinates: expected 4, got {} in "{}"'.format(
+                len(coords),
+                extent_str,
+            )
+        )
+
+    p1_x, p1_y, p2_x, p2_y = map(float, coords)
+
+    extent = QgsRectangle(QgsPointXY(p1_x, p1_y), QgsPointXY(p2_x, p2_y))
+
+    if extent.isEmpty() or not extent.isFinite():
+        raise InvalidExtentError('Invalid WKT extent: "{}"'.format(extent_str))
+
+    return extent
+
+
+def get_extent_or_defaults(
+    project: QgsProject, input_extent: QgsRectangle
+) -> QgsRectangle:
+    """Sets project extent to given `input_extent`."""
+    extent = QgsRectangle(input_extent)
+
+    if not input_extent.isEmpty():
+        if (
+            project.crs().mapUnits() != Qgis.DistanceUnit.Unknown
+            and project.crs().mapUnits() != Qgis.DistanceUnit.Degrees
+        ):
+            min_extent_size = 200
+
+            # Ensure the initial project extent is not too zoomed in
+            if extent.width() < min_extent_size:
+                w_padding = (min_extent_size - extent.width()) / 2
+                extent.setXMinimum(extent.xMinimum() - w_padding)
+                extent.setXMaximum(extent.xMaximum() + w_padding)
+
+            if extent.height() < min_extent_size:
+                h_padding = (min_extent_size - extent.height()) / 2
+                extent.setYMinimum(extent.yMinimum() - h_padding)
+                extent.setYMaximum(extent.yMaximum() + h_padding)
+
+            extent.scale(1.05)
+
+    if extent.isEmpty():
+        # NOTE both the European and the CRS extents are in WGS84
+        europe_extent = QgsRectangle(-9.88, 33.41, 40.97, 61.11)
+        crs_extent = project.crs().bounds()
+
+        if crs_extent.contains(europe_extent):
+            logger.info("Defaulting to Europe project extents.")
+
+            extent = europe_extent
+        else:
+            logger.info(
+                "Defaulting to project extents determined by the coordinate system."
+            )
+
+            extent = crs_extent
+
+            h_padding = extent.height() / 2
+            w_padding = extent.width() / 2
+            if w_padding < h_padding:
+                extent.setYMinimum(extent.yMinimum() + h_padding - w_padding)
+                extent.setYMaximum(extent.yMinimum() + h_padding + w_padding)
+            else:
+                extent.setXMinimum(extent.xMinimum() + w_padding - h_padding)
+                extent.setXMaximum(extent.xMinimum() + w_padding + h_padding)
+
+        transform = QgsCoordinateTransform(
+            QgsCoordinateReferenceSystem("EPSG:4326"),
+            project.crs(),
+            project.transformContext(),
+        )
+        extent = transform.transformBoundingBox(extent)
+
+    return extent
