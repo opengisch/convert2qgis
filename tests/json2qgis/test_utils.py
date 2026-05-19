@@ -14,8 +14,12 @@ from qgis.core import (
 )
 from qgis.PyQt.QtCore import QMetaType
 
-from convert2qgis.json2qgis.errors import UnknownCrsSystemError
-from convert2qgis.json2qgis.type_defs import ProjectDef
+from convert2qgis.json2qgis.errors import (
+    MissingFieldError,
+    UnexpectedSchemaValueError,
+    UnknownCrsSystemError,
+)
+from convert2qgis.json2qgis.type_defs import FormItemDef, ProjectDef
 from convert2qgis.json2qgis.utils import (
     check_output,
     create_field,
@@ -1116,6 +1120,92 @@ class TestUtils:
             QgsEditFormConfig.DataDefinedProperty.Alias
         )
         assert alias_property.asExpression() == "concat('Total ', \"Field integer\")"
+
+    def test_get_layer_edit_form_raises_for_unknown_form_field(
+        self, sample_vector_layer_def
+    ):
+        sample_vector_layer_def = {
+            **sample_vector_layer_def,
+            "form_config": [
+                {
+                    "item_id": "main_tab",
+                    "label": "Main",
+                    "type": "tab",
+                    "children": [
+                        {
+                            "item_id": "missing_field_item",
+                            "field_name": "missing_field",
+                            "type": "field",
+                        }
+                    ],
+                }
+            ],
+        }
+
+        with pytest.raises(
+            MissingFieldError,
+            match='Could not find field "missing_field"',
+        ):
+            get_layer_edit_form(
+                create_fields(sample_vector_layer_def),
+                sample_vector_layer_def,
+            )
+
+    def test_get_layer_edit_form_raises_for_field_item_without_field_name(
+        self, sample_vector_layer_def
+    ):
+        sample_vector_layer_def = {
+            **sample_vector_layer_def,
+            "form_config": [
+                FormItemDef(
+                    item_id="main_tab",
+                    label="Main",
+                    type="tab",
+                    children=[
+                        FormItemDef(
+                            item_id="missing_field_name_item",
+                            type="field",
+                            field_name=None,
+                        )
+                    ],
+                )
+            ],
+        }
+
+        with pytest.raises(
+            UnexpectedSchemaValueError,
+            match=r'Form item "missing_field_name_item" is missing field_name\.',
+        ):
+            get_layer_edit_form(
+                create_fields(sample_vector_layer_def),
+                sample_vector_layer_def,
+            )
+
+    def test_get_layer_edit_form_raises_for_missing_alias_field(
+        self, sample_vector_layer_def
+    ):
+        sample_vector_layer_def = {
+            **sample_vector_layer_def,
+            "fields": [
+                {
+                    **sample_vector_layer_def["fields"][0],
+                    "alias_expression": "concat('Field ', $id)",
+                }
+            ],
+            "form_config": [],
+        }
+        fields = create_fields(
+            {
+                **sample_vector_layer_def,
+                "fields": [],
+            }
+        )
+
+        with pytest.raises(
+            MissingFieldError,
+            match=r'Could not find field "Field integer" while setting alias expression\.',
+        ):
+            get_layer_edit_form(fields, sample_vector_layer_def)
 
     def test_get_layer_edit_form_wraps_visible_field_visibility_expression(
         self, sample_vector_layer_def

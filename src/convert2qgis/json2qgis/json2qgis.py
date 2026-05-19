@@ -391,8 +391,12 @@ class ProjectCreator:
                 f"Error writing vector layer: {write_result} {error_message}"
             )
 
-        assert new_file == str(abs_file_name)
-        assert new_layer == normalized_name
+        if new_file != str(abs_file_name) or new_layer != normalized_name:
+            raise Qgis2JsonError(
+                f'Unexpected vector writer output for layer "{dataset_def.name}": '
+                f'expected file "{abs_file_name}" and layer "{normalized_name}", '
+                f'got file "{new_file}" and layer "{new_layer}".'
+            )
 
         # TODO @suricactus: this way of loading a layer will work fine for GPKG, but might be problematic for other formats.
         new_layer = QgsVectorLayer(
