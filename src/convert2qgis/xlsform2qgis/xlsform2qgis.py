@@ -249,11 +249,11 @@ class XlsformConverter:
     _field_compatibilities: dict[str, bool]
     """Keep track of the compatibility of different XLSForm field types with QGIS and QField, to be able to emit warnings and info messages during the conversion process."""
 
-    _form_group_type: FormItemGroupTypes = "group_box"
-    """The form group type to use for non-root groups in the form. By default it is set to `group_box`, but it can be set to `tab` if the user prefers a more tabbed form structure."""
+    _use_groups_as_tabs: bool
+    """Whether to add top-level XLSForm groups as root form items instead of nesting them under the fallback Survey container."""
 
-    _root_form_group_type: FormItemGroupTypes
-    """Similar to `_form_group_type`, but specifically for the root level form groups, to allow more flexibility in the form structure definition. By default it is set to `tab` to encourage better form organization, but it can be set to `group_box` if the user prefers a flatter form structure."""
+    _form_group_type: FormItemGroupTypes = "group_box"
+    """The form group type to use for groups in the form. By default it is set to `group_box`, but it can be set to `tab` if the user prefers a more tabbed form structure."""
 
     _project_crs: CrsDef
     """The project CRS to be defined on the output project."""
@@ -294,7 +294,7 @@ class XlsformConverter:
 
         # settings
         self._form_group_type = settings.get("form_group_type") or "group_box"
-        self._root_form_group_type = settings.get("root_form_group_type") or "tab"
+        self._use_groups_as_tabs = settings.get("use_groups_as_tabs", True)
         self._project_crs = settings.get("crs") or "EPSG:3857"
         self._project_author = settings.get("author") or ""
         self._project_extent = settings.get("extent", "").strip() or ""
@@ -362,7 +362,8 @@ class XlsformConverter:
 
     def get_form_group_type(self) -> FormItemGroupTypes:
         if len(self._container_ids) == 0 or self._container_ids[-1] is None:
-            return self._root_form_group_type
+            if self._use_groups_as_tabs:
+                return "tab"
 
         return self._form_group_type
 
@@ -471,7 +472,7 @@ class XlsformConverter:
         if root_fields_container is None:
             root_fields_container = generate_form_item_def(
                 item_id=item_id,
-                type=self.get_form_group_type(),
+                type="tab",
                 label=current_dataset_def.name,
             )
 
@@ -483,6 +484,9 @@ class XlsformConverter:
     def _add_form_item(self, form_item_def: FormItemDef) -> None:
         current_dataset_def = self._current_dataset()
         current_container = self._current_container()
+
+        if not self._use_groups_as_tabs and current_container is None:
+            current_container = self._get_or_create_root_fields_container()
 
         if current_container:
             current_container.children.append(form_item_def)
