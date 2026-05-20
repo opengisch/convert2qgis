@@ -250,10 +250,7 @@ class XlsformConverter:
     """Keep track of the compatibility of different XLSForm field types with QGIS and QField, to be able to emit warnings and info messages during the conversion process."""
 
     _form_group_type: FormItemGroupTypes = "group_box"
-    """The form group type to use for non-root groups in the form. By default it is set to `group_box`, but it can be set to `tab` if the user prefers a more tabbed form structure."""
-
-    _root_form_group_type: FormItemGroupTypes
-    """Similar to `_form_group_type`, but specifically for the root level form groups, to allow more flexibility in the form structure definition. By default it is set to `tab` to encourage better form organization, but it can be set to `group_box` if the user prefers a flatter form structure."""
+    """The form group type to use for groups in the form. By default it is set to `group_box`, but it can be set to `tab` if the user prefers a more tabbed form structure."""
 
     _project_crs: CrsDef
     """The project CRS to be defined on the output project."""
@@ -294,7 +291,6 @@ class XlsformConverter:
 
         # settings
         self._form_group_type = settings.get("form_group_type") or "group_box"
-        self._root_form_group_type = settings.get("root_form_group_type") or "tab"
         self._project_crs = settings.get("crs") or "EPSG:3857"
         self._project_author = settings.get("author") or ""
         self._project_extent = settings.get("extent", "").strip() or ""
@@ -361,9 +357,6 @@ class XlsformConverter:
         return None
 
     def get_form_group_type(self) -> FormItemGroupTypes:
-        if len(self._container_ids) == 0 or self._container_ids[-1] is None:
-            return self._root_form_group_type
-
         return self._form_group_type
 
     def _get_expression_context(

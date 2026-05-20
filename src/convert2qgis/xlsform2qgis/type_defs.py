@@ -54,9 +54,6 @@ class ConverterSettings(TypedDict, total=False):
     form_group_type: FormItemGroupTypes
     """How the groups in the XLSForm Survey form should be represented. E.g. groups or tabs."""
 
-    root_form_group_type: FormItemGroupTypes
-    """How the root groups in the XLSForm Survey form should be represented. E.g. groups or tabs."""
-
     basemap_url: str
     """A valid XYZ layer definition. If not provided, a default basemap will be used. If an empty string is provided, no basemap will be used."""
 

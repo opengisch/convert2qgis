@@ -78,7 +78,6 @@ def converter():
         settings={
             "basemap_url": "",
             "form_group_type": "group_box",
-            "root_form_group_type": "group_box",
         },
     )
 
@@ -450,8 +449,7 @@ class TestConverter:
         converter = XlsformConverter(survey_sheet, choices_sheet, settings_sheet)
 
         assert converter._form_group_type == "group_box"
-        assert converter._root_form_group_type == "tab"
-        assert converter.get_form_group_type() == "tab"
+        assert converter.get_form_group_type() == "group_box"
 
         # simulate there is a new group in the survey sheet
 
@@ -470,13 +468,11 @@ class TestConverter:
             settings_sheet,
             settings={
                 "form_group_type": "tab",
-                "root_form_group_type": "group_box",
             },
         )
 
         assert converter._form_group_type == "tab"
-        assert converter._root_form_group_type == "group_box"
-        assert converter.get_form_group_type() == "group_box"
+        assert converter.get_form_group_type() == "tab"
 
         # simulate there is a new group in the survey sheet
         converter._container_ids.append("item_container_id_here")
@@ -1521,7 +1517,7 @@ class TestConverter:
         assert survey_layer.form_config[0] == generate_form_item_def(
             item_id="item_container_0",
             label="Introduction page",
-            type="tab",
+            type="group_box",
             children=[
                 generate_form_item_def(
                     item_id="item_container_1",
@@ -1545,7 +1541,7 @@ class TestConverter:
         assert survey_layer.form_config[1] == generate_form_item_def(
             item_id="item_container_6",
             label="Statisfaction evaluation page",
-            type="tab",
+            type="group_box",
             visibility_expression=format_selected_expr("recommend", "yes"),
             children=[
                 generate_form_item_def(
@@ -1619,7 +1615,7 @@ class TestConverter:
         assert survey_layer.form_config[2] == generate_form_item_def(
             item_id="item_container_17",
             label="Company details page",
-            type="tab",
+            type="group_box",
             children=[
                 generate_form_item_def(
                     item_id="item_container_18",
@@ -1662,7 +1658,7 @@ class TestConverter:
         assert survey_layer.form_config[3] == generate_form_item_def(
             item_id="item_container_25",
             label="Contact details page",
-            type="tab",
+            type="group_box",
             children=[
                 generate_form_item_def(
                     item_id="item_container_26",
