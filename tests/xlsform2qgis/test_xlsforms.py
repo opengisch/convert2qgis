@@ -449,12 +449,16 @@ class TestConverter:
         converter = XlsformConverter(survey_sheet, choices_sheet, settings_sheet)
 
         assert converter._form_group_type == "group_box"
-        assert converter.get_form_group_type() == "group_box"
 
-        # simulate there is a new group in the survey sheet
+        # empty stack means the next container is a root form item
+        assert converter.get_form_group_type() == "tab"
 
+        # None marks the current dataset root
+        converter._container_ids.append(None)
+        assert converter.get_form_group_type() == "tab"
+
+        # an item id marks a nested form container
         converter._container_ids.append("item_container_id_here")
-
         assert converter.get_form_group_type() == "group_box"
 
     def test_xlsform_form_group_type_configured(self):
@@ -472,12 +476,41 @@ class TestConverter:
         )
 
         assert converter._form_group_type == "tab"
+
+        # empty stack means the next container is a root form item
         assert converter.get_form_group_type() == "tab"
+
+        # None marks the current dataset root
+        converter._container_ids.append(None)
+        assert converter.get_form_group_type() == "tab"
+
+        # an item id marks a nested form container
+        converter._container_ids.append("item_container_id_here")
+
+        assert converter.get_form_group_type() == "tab"
+
+    def test_xlsform_form_group_type_without_tab_grouping(self):
+        survey_sheet = MagicMock()
+        choices_sheet = MagicMock()
+        settings_sheet = MagicMock()
+
+        converter = XlsformConverter(
+            survey_sheet,
+            choices_sheet,
+            settings_sheet,
+            settings={
+                "form_group_type": "group_box",
+                "use_groups_as_tabs": False,
+            },
+        )
+
+        assert converter._form_group_type == "group_box"
+        assert converter.get_form_group_type() == "group_box"
 
         # simulate there is a new group in the survey sheet
         converter._container_ids.append("item_container_id_here")
 
-        assert converter.get_form_group_type() == "tab"
+        assert converter.get_form_group_type() == "group_box"
 
     def test_xlsform_with_text_field(self, converter):
         converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
@@ -515,7 +548,7 @@ class TestConverter:
         assert survey_layer.form_config[0] == generate_form_item_def(
             item_id=survey_form_tab,
             label="Survey",
-            type="group_box",
+            type="tab",
             children=[
                 generate_form_item_def(
                     item_id=survey_layer.form_config[0].children[0].item_id,
@@ -673,7 +706,7 @@ class TestConverter:
         assert survey_layer.form_config[0] == generate_form_item_def(
             item_id=survey_layer.form_config[0].item_id,
             label="Survey",
-            type="group_box",
+            type="tab",
             children=[
                 generate_form_item_def(
                     item_id=survey_layer.form_config[0].children[0].item_id,
@@ -888,7 +921,7 @@ class TestConverter:
         assert survey_layer.form_config[0] == generate_form_item_def(
             item_id="item_container_0",
             label="Group 001",
-            type="group_box",
+            type="tab",
             children=[
                 generate_form_item_def(
                     item_id=survey_layer.form_config[0].children[0].item_id,
@@ -949,7 +982,7 @@ class TestConverter:
         assert survey_layer.form_config[0] == generate_form_item_def(
             item_id="item_container_0",
             label="Group 001",
-            type="group_box",
+            type="tab",
             children=[
                 generate_form_item_def(
                     item_id="item_container_1",
@@ -1011,7 +1044,7 @@ class TestConverter:
         assert survey_layer.form_config[0] == generate_form_item_def(
             item_id="tab_item_survey_layer",
             label="Survey",
-            type="group_box",
+            type="tab",
             children=[
                 generate_form_item_def(
                     item_id=survey_layer.form_config[0].children[0].item_id,
@@ -1030,13 +1063,76 @@ class TestConverter:
         assert survey_layer.form_config[1] == generate_form_item_def(
             item_id="item_container_1",
             label="Group 001",
-            type="group_box",
+            type="tab",
             children=[
                 generate_form_item_def(
                     item_id=survey_layer.form_config[1].children[0].item_id,
                     field_name="field_002",
                     type="field",
                     is_label_on_top=True,
+                )
+            ],
+        )
+
+    def test_xlsform_without_tab_grouping_wraps_root_groups_in_survey_tab(self):
+        survey_sheet = MagicMock()
+        choices_sheet = MagicMock()
+        settings_sheet = MagicMock()
+        converter = XlsformConverter(
+            survey_sheet,
+            choices_sheet,
+            settings_sheet,
+            settings={
+                "basemap_url": "",
+                "form_group_type": "group_box",
+                "use_groups_as_tabs": False,
+            },
+        )
+        converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(  # type: ignore[attr-defined]
+            [
+                generate_survey_row(
+                    type="begin group",
+                    name="group_001",
+                    label="Group 001",
+                ),
+                generate_survey_row(
+                    type="text",
+                    name="field_001",
+                    label="Field 001",
+                ),
+                generate_survey_row(
+                    type="end group",
+                ),
+            ]
+        )
+
+        converter.convert()
+
+        assert len(converter.vector_datasets) == 1
+
+        survey_layer = converter.vector_datasets[0]
+
+        assert len(survey_layer.form_config) == 1
+        assert survey_layer.form_config[0] == generate_form_item_def(
+            item_id="tab_item_survey_layer",
+            label="Survey",
+            type="tab",
+            children=[
+                generate_form_item_def(
+                    item_id="item_container_0",
+                    label="Group 001",
+                    type="group_box",
+                    children=[
+                        generate_form_item_def(
+                            item_id=survey_layer.form_config[0]
+                            .children[0]
+                            .children[0]
+                            .item_id,
+                            field_name="field_001",
+                            type="field",
+                            is_label_on_top=True,
+                        )
+                    ],
                 )
             ],
         )
@@ -1128,7 +1224,7 @@ class TestConverter:
 
         assert len(survey_layer.form_config) == 1
         survey_form = survey_layer.form_config[0]
-        assert survey_form.type == "group_box"
+        assert survey_form.type == "tab"
         assert survey_form.field_name is None
         assert survey_form.label == "Survey"
         assert len(survey_form.children) == 2
@@ -1141,7 +1237,7 @@ class TestConverter:
 
         assert len(repeat_layer.form_config) == 1
         repeat_form = repeat_layer.form_config[0]
-        assert repeat_form.type == "group_box"
+        assert repeat_form.type == "tab"
         assert repeat_form.field_name is None
         assert repeat_form.label == "Group 001_001"
         assert len(repeat_form.children) == 1
@@ -1517,7 +1613,7 @@ class TestConverter:
         assert survey_layer.form_config[0] == generate_form_item_def(
             item_id="item_container_0",
             label="Introduction page",
-            type="group_box",
+            type="tab",
             children=[
                 generate_form_item_def(
                     item_id="item_container_1",
@@ -1541,7 +1637,7 @@ class TestConverter:
         assert survey_layer.form_config[1] == generate_form_item_def(
             item_id="item_container_6",
             label="Statisfaction evaluation page",
-            type="group_box",
+            type="tab",
             visibility_expression=format_selected_expr("recommend", "yes"),
             children=[
                 generate_form_item_def(
@@ -1615,7 +1711,7 @@ class TestConverter:
         assert survey_layer.form_config[2] == generate_form_item_def(
             item_id="item_container_17",
             label="Company details page",
-            type="group_box",
+            type="tab",
             children=[
                 generate_form_item_def(
                     item_id="item_container_18",
@@ -1658,7 +1754,7 @@ class TestConverter:
         assert survey_layer.form_config[3] == generate_form_item_def(
             item_id="item_container_25",
             label="Contact details page",
-            type="group_box",
+            type="tab",
             children=[
                 generate_form_item_def(
                     item_id="item_container_26",

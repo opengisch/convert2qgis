@@ -54,6 +54,9 @@ class ConverterSettings(TypedDict, total=False):
     form_group_type: FormItemGroupTypes
     """How the groups in the XLSForm Survey form should be represented. E.g. groups or tabs."""
 
+    use_groups_as_tabs: bool
+    """Whether top-level XLSForm groups should be root form items instead of being nested under the fallback Survey container."""
+
     basemap_url: str
     """A valid XYZ layer definition. If not provided, a default basemap will be used. If an empty string is provided, no basemap will be used."""
 
