@@ -299,7 +299,7 @@ def get_layer_flags(
     else:
         flags &= ~QgsMapLayer.LayerFlag.Private  # type: ignore[reportOperatorIssue]
 
-    return flags
+    return QgsMapLayer.LayerFlag(flags)
 
 
 def get_layer_edit_form(  # noqa: PLR0915
