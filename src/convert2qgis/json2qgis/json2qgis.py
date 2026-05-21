@@ -426,14 +426,12 @@ class ProjectCreator:
 
         if not bool(layer_data_provider) or not layer_data_provider.isValid():
             raise UnknownVectorLayerDataproviderError(
-                "Failed to get data provider for layer 1: %s", dataset_def.name
+                f"Failed to get data provider for layer 1: {dataset_def.name}"
             )
 
         if layer.geometryType() != Qgis.GeometryType.Null:
             raise NotImplementedError(
-                "Cannot edit geometry layer: %s has geometry %s",
-                dataset_def.name,
-                layer.geometryType(),
+                f'Cannot edit geometry layer: "{dataset_def.name}" has geometry "{layer.geometryType()}"',
             )
 
         layer_data = dataset_def.data
