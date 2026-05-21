@@ -113,10 +113,6 @@ def parse_xlsform_sheets(
     if not xlsform_filename.exists():
         raise FileNotFoundError(f"XLSForm file not found: {xlsform_filename}")
 
-    xlsform_filename = Path(xlsform_filename)
-    if not xlsform_filename.exists():
-        raise FileNotFoundError("XLSForm file not found: %s", xlsform_filename)
-
     try:
         survey_sheet = ParsedSheet("survey", xlsform_filename)
         choices_sheet = ParsedSheet("choices", xlsform_filename)
