@@ -49,11 +49,12 @@ from convert2qgis.xlsform2qgis.converter_utils import (
     strip_html,
 )
 from convert2qgis.xlsform2qgis.errors import InvalidXlsformFileError
+from convert2qgis.xlsform2qgis.expressions.errors import ParseError, TokenizationError
 from convert2qgis.xlsform2qgis.expressions.expression import (
     Expression,
     ExpressionContext,
 )
-from convert2qgis.xlsform2qgis.expressions.parser import ParseError, ParserType
+from convert2qgis.xlsform2qgis.expressions.parser import ParserType
 from convert2qgis.xlsform2qgis.qgis_utils import set_survey_features
 from convert2qgis.xlsform2qgis.sheet_parser import ParsedSheet, ParsedSheetRow
 from convert2qgis.xlsform2qgis.type_defs import (
@@ -382,11 +383,12 @@ class XlsformConverter:
                 self._get_expression_context(current_field, parser_type),
                 should_strip_tags=should_strip_tags,
             )
-        except ParseError:
+        except (ParseError, TokenizationError) as err:
             logger.error(
-                "Failed to parse expression `%s` for field `%s`!",
+                "Failed to parse expression `%s` for field `%s`: %s",
                 expression_str,
                 current_field,
+                err,
             )
 
             if self._skip_failed_expressions:
