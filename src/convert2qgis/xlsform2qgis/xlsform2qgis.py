@@ -48,11 +48,13 @@ from convert2qgis.xlsform2qgis.converter_utils import (
     get_xlsform_type,
     strip_html,
 )
+from convert2qgis.xlsform2qgis.errors import InvalidXlsformFileError
+from convert2qgis.xlsform2qgis.expressions.errors import ParseError, TokenizationError
 from convert2qgis.xlsform2qgis.expressions.expression import (
     Expression,
     ExpressionContext,
 )
-from convert2qgis.xlsform2qgis.expressions.parser import ParseError, ParserType
+from convert2qgis.xlsform2qgis.expressions.parser import ParserType
 from convert2qgis.xlsform2qgis.qgis_utils import set_survey_features
 from convert2qgis.xlsform2qgis.sheet_parser import ParsedSheet, ParsedSheetRow
 from convert2qgis.xlsform2qgis.type_defs import (
@@ -99,10 +101,6 @@ _DEFAULT_BASEMAP_URL = "type=xyz&tilePixelRatio=1&url=https://tile.openstreetmap
 _DEFAULT_BASEMAP_NAME = "OpenStreetMap"
 
 
-class XlsformConverterError(Exception):
-    """Base error class for XLSForm conversion errors."""
-
-
 def parse_xlsform_sheets(
     xlsform_filename: PathOrStr,
 ) -> tuple[ParsedSheet, ParsedSheet, ParsedSheet]:
@@ -113,14 +111,9 @@ def parse_xlsform_sheets(
     if not xlsform_filename.exists():
         raise FileNotFoundError(f"XLSForm file not found: {xlsform_filename}")
 
-    try:
-        survey_sheet = ParsedSheet("survey", xlsform_filename)
-        choices_sheet = ParsedSheet("choices", xlsform_filename)
-        settings_sheet = ParsedSheet("settings", xlsform_filename)
-    except ValueError as err:
-        raise XlsformConverterError(
-            f'Expected the provided spreadsheet to contain sheets named "survey", "choices" and "settings", but got an error: {err}',
-        ) from err
+    survey_sheet = ParsedSheet("survey", xlsform_filename)
+    choices_sheet = ParsedSheet("choices", xlsform_filename)
+    settings_sheet = ParsedSheet("settings", xlsform_filename)
 
     return (survey_sheet, choices_sheet, settings_sheet)
 
@@ -149,7 +142,7 @@ def convert_xlsform(
             json_filename=json_filename,
         )
 
-    raise ValueError("Either `output_dir` or `json_filename` must be provided!")
+    raise AssertionError("Either `output_dir` or `json_filename` must be provided!")
 
 
 def write_project_json(project_json: dict[str, Any], json_filename: PathOrStr) -> None:
@@ -180,7 +173,7 @@ def convert_xlsform_to_json(
     )
 
     if not converter.is_valid():
-        raise ValueError("Invalid XLSForm file!")
+        raise InvalidXlsformFileError("Invalid XLSForm file!")
 
     project_json = converter.to_json()
 
@@ -390,11 +383,12 @@ class XlsformConverter:
                 self._get_expression_context(current_field, parser_type),
                 should_strip_tags=should_strip_tags,
             )
-        except ParseError:
+        except (ParseError, TokenizationError) as err:
             logger.error(
-                "Failed to parse expression `%s` for field `%s`!",
+                "Failed to parse expression `%s` for field `%s`: %s",
                 expression_str,
                 current_field,
+                err,
             )
 
             if self._skip_failed_expressions:
@@ -433,13 +427,13 @@ class XlsformConverter:
 
     def _current_dataset(self) -> VectorDatasetDef:
         if not self._layer_ids:
-            raise ValueError("No layers defined yet!")
+            raise AssertionError("No layers defined yet!")
 
         layer_id = self._layer_ids[-1]
         dataset_def = self.find_vector_dataset(layer_id)
 
         if not dataset_def:
-            raise ValueError(f"Current layer with id {layer_id} not found!")
+            raise AssertionError(f"Current layer with id {layer_id} not found!")
 
         return dataset_def
 
@@ -511,7 +505,7 @@ class XlsformConverter:
 
     def _current_container(self) -> "FormItemDef | None":
         if not self._container_ids:
-            raise ValueError("No form containers defined yet!")
+            raise AssertionError("No form containers defined yet!")
 
         if self._container_ids[-1] is None:
             return None
@@ -885,6 +879,13 @@ class XlsformConverter:
 
                     geometry_type_by_layer_id[layer_id] = result.geometry_type
 
+            except NotImplementedError as err:
+                logger.error(
+                    "Functionality not implemented for row with type `%s` and name `%s`: %s",
+                    row["type"],
+                    row["name"],
+                    str(err),
+                )
             except Exception:
                 logger.error(
                     "Failed to parse row with type `%s` and name `%s` at row index %d!",

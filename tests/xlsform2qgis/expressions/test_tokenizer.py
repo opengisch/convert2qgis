@@ -1,10 +1,13 @@
 import pytest
 
+from convert2qgis.xlsform2qgis.expressions.errors import TokenizationError
 from convert2qgis.xlsform2qgis.expressions.tokenizer import (
-    Token,
-    TokenType,
     tokenize_expression,
     tokenize_template,
+)
+from convert2qgis.xlsform2qgis.expressions.type_defs import (
+    Token,
+    TokenType,
 )
 
 
@@ -168,7 +171,7 @@ class TestTokenizerOperators:
         ]
 
     def test_unsupported_operator(self):
-        with pytest.raises(ValueError, match="Unexpected character: /"):
+        with pytest.raises(TokenizationError, match="Unexpected character: /"):
             _tokens("4 / 2 = 2")
 
 
@@ -196,19 +199,19 @@ class TestTokenizerPositions:
 
 class TestTokenizerErrors:
     def test_unterminated_variable(self):
-        with pytest.raises(ValueError, match="Unexpected character: \\$"):
+        with pytest.raises(TokenizationError, match="Unexpected character: \\$"):
             _tokens("${missing")
 
     def test_unterminated_string(self):
-        with pytest.raises(ValueError, match="Unexpected character: '"):
+        with pytest.raises(TokenizationError, match="Unexpected character: '"):
             _tokens("'missing")
 
     def test_unsupported_operator(self):
-        with pytest.raises(ValueError, match="Unexpected character: !"):
+        with pytest.raises(TokenizationError, match="Unexpected character: !"):
             _tokens("!")
 
     def test_unexpected_character(self):
-        with pytest.raises(ValueError, match="Unexpected character: @"):
+        with pytest.raises(TokenizationError, match="Unexpected character: @"):
             _tokens("@")
 
 

@@ -200,7 +200,7 @@ def check_output(
             try:
                 validate(output)
             except Exception:
-                logger.exception('Error during function "%s" execution!', func.__name__)
+                logger.error('Error during function "%s" execution!', func.__name__)
                 raise
 
             return output

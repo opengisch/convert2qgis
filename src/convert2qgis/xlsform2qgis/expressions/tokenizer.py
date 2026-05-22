@@ -1,29 +1,10 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
-from enum import Enum
+import unicodedata
 
-
-class TokenType(str, Enum):
-    VARIABLE = "variable"
-    IDENT = "ident"
-    NUMBER = "number"
-    STRING = "string"
-    OPERATOR = "operator"
-    PUNCTUATION = "punctuation"
-    CURRENT = "current"
-    EOF = "eof"
-
-
-@dataclass(frozen=True)
-class Token:
-    type: TokenType
-    value: str
-    raw_value: str
-    start: int
-    end: int
-
+from convert2qgis.xlsform2qgis.expressions.errors import TokenizationError
+from convert2qgis.xlsform2qgis.expressions.type_defs import Token, TokenType
 
 OPERATORS: set[str] = {
     # math operators, see https://docs.getodk.org/form-operators-functions/#math-operators
@@ -115,7 +96,10 @@ def tokenize(expression: str, lexicon: Lexicon, is_template: bool) -> list[Token
                 best_type = token_type
 
         if best_match is None or best_type is None:
-            raise ValueError(f"Unexpected character: {expression[pos]}")
+            char_name = unicodedata.name(expression[pos], "UNKNOWN CHARACTER")
+            raise TokenizationError(
+                f"Unexpected character: {expression[pos]} ({char_name}) at position {pos}"
+            )
 
         start = pos
         end = best_match.end()

@@ -1,5 +1,6 @@
 import pytest
 
+from convert2qgis.xlsform2qgis.expressions.errors import ParseError
 from convert2qgis.xlsform2qgis.expressions.parser import (
     BinaryOp,
     BracketList,
@@ -8,7 +9,6 @@ from convert2qgis.xlsform2qgis.expressions.parser import (
     Identifier,
     Literal,
     LiteralType,
-    ParseError,
     Template,
     UnaryOp,
     Variable,
