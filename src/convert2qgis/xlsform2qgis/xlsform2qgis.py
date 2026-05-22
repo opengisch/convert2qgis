@@ -48,6 +48,7 @@ from convert2qgis.xlsform2qgis.converter_utils import (
     get_xlsform_type,
     strip_html,
 )
+from convert2qgis.xlsform2qgis.errors import InvalidXlsformFileError
 from convert2qgis.xlsform2qgis.expressions.expression import (
     Expression,
     ExpressionContext,
@@ -171,7 +172,7 @@ def convert_xlsform_to_json(
     )
 
     if not converter.is_valid():
-        raise ValueError("Invalid XLSForm file!")
+        raise InvalidXlsformFileError("Invalid XLSForm file!")
 
     project_json = converter.to_json()
 

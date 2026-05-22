@@ -7,3 +7,7 @@ class Xlsform2QgisError(Convert2QgisBaseError):
 
 class XlsformSheetParserError(Xlsform2QgisError):
     """Raised when parsing XLSForm sheets."""
+
+
+class InvalidXlsformFileError(Xlsform2QgisError):
+    """Raised when the XLSForm file is invalid."""
