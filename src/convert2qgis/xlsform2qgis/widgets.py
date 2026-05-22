@@ -17,7 +17,6 @@ from convert2qgis.xlsform2qgis.converter_utils import (
     get_xlsform_type,
     parse_xlsform_range_parameters,
     parse_xlsform_select_from_file_parameters,
-    strip_html,
 )
 from convert2qgis.xlsform2qgis.expressions.expression import QgisRenderType
 from convert2qgis.xlsform2qgis.expressions.parser import ParserType
@@ -497,7 +496,7 @@ def widget_geometry(ctx: WidgetContext) -> ParsedRow:
 @register_type(["begin group", "begin_group"])
 def widget_begin_group(ctx: WidgetContext) -> ParsedRow:
     container_id = f"item_container_{ctx.row.idx}"
-    label = strip_html(ctx.row["label"])
+    label = ctx.converter.get_row_label(ctx.row)
 
     return ParsedRow(
         form_container={
@@ -519,7 +518,7 @@ def widget_end_group(_ctx: WidgetContext) -> ParsedRow:
 @register_type(["note"])
 def widget_note(ctx: WidgetContext) -> ParsedRow:
     container_id = f"item_container_{ctx.row.idx}"
-    label_expr_str = ctx.row["label"] or ""
+    label_expr_str = ctx.converter.get_row_label(ctx.row)
     label_expr = ctx.converter.get_expression(
         label_expr_str, str(ctx.row["name"]), ParserType.TEMPLATE
     )
