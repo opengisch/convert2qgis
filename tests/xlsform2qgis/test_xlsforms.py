@@ -23,6 +23,7 @@ from convert2qgis.json2qgis.utils import (
     set_layer_virtual_fields,
 )
 from convert2qgis.xlsform2qgis import xlsform2qgis as xlsform2qgis_module
+from convert2qgis.xlsform2qgis.errors import XlsformSheetParserError
 from convert2qgis.xlsform2qgis.expressions.functions import SUPPORTED_FUNCTIONS
 from convert2qgis.xlsform2qgis.qgis_utils import set_survey_features
 from convert2qgis.xlsform2qgis.sheet_parser import ParsedSheetRow
@@ -511,6 +512,23 @@ class TestConverter:
         converter._container_ids.append("item_container_id_here")
 
         assert converter.get_form_group_type() == "group_box"
+
+    def test_xlsform_select_type_details_reject_spaces(self, converter):
+        converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
+            [
+                generate_survey_row(
+                    type="select_one invalid list",
+                    name="choice_field",
+                    label="Choice field",
+                )
+            ]
+        )
+
+        with pytest.raises(
+            XlsformSheetParserError,
+            match='The type details of field "choice_field" of type "select_one": invalid list',
+        ):
+            converter.convert()
 
     def test_xlsform_with_text_field(self, converter):
         converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
