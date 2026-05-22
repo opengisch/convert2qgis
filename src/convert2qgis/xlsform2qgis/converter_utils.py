@@ -78,12 +78,12 @@ def get_xlsform_type(raw_xls_type: str) -> str:
     return xlsform_type
 
 
-def build_choices_layer_name(*parts: str) -> str:
-    return "_".join(["list", *parts])
+def build_choices_layer_name(part: str) -> str:
+    return f"list_{part}"
 
 
-def build_choices_layer_id(*parts: str) -> str:
-    prefix = build_choices_layer_name(*parts)
+def build_choices_layer_id(part: str) -> str:
+    prefix = build_choices_layer_name(part)
     md5_hash = md5(prefix.encode(), usedforsecurity=False).hexdigest()
 
     return f"{prefix}_{md5_hash}"
