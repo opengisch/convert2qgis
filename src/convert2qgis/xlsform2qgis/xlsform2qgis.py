@@ -140,7 +140,7 @@ def convert_xlsform(
             json_filename=json_filename,
         )
 
-    raise ValueError("Either `output_dir` or `json_filename` must be provided!")
+    raise AssertionError("Either `output_dir` or `json_filename` must be provided!")
 
 
 def write_project_json(project_json: dict[str, Any], json_filename: PathOrStr) -> None:
@@ -424,13 +424,13 @@ class XlsformConverter:
 
     def _current_dataset(self) -> VectorDatasetDef:
         if not self._layer_ids:
-            raise ValueError("No layers defined yet!")
+            raise AssertionError("No layers defined yet!")
 
         layer_id = self._layer_ids[-1]
         dataset_def = self.find_vector_dataset(layer_id)
 
         if not dataset_def:
-            raise ValueError(f"Current layer with id {layer_id} not found!")
+            raise AssertionError(f"Current layer with id {layer_id} not found!")
 
         return dataset_def
 
@@ -502,7 +502,7 @@ class XlsformConverter:
 
     def _current_container(self) -> "FormItemDef | None":
         if not self._container_ids:
-            raise ValueError("No form containers defined yet!")
+            raise AssertionError("No form containers defined yet!")
 
         if self._container_ids[-1] is None:
             return None
