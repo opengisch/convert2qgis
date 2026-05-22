@@ -392,9 +392,17 @@ def widget_select_from_file(ctx: WidgetContext) -> ParsedRow:
         "select_one_from_file",
         "select_multiple_from_file",
     ):
-        list_key, list_value = parse_xlsform_select_from_file_parameters(
-            ctx.row["parameters"]
-        )
+        list_key, list_value = "", ""
+        if ctx.row["parameters"]:
+            list_key, list_value = parse_xlsform_select_from_file_parameters(
+                ctx.row["parameters"]
+            )
+
+        if not list_key:
+            list_key = "name"
+
+        if not list_value:
+            list_value = "label"
 
         raise NotImplementedError(
             "select_from_file and select_multiple_from_file not implemented yet"
