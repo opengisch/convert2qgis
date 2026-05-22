@@ -99,10 +99,6 @@ _DEFAULT_BASEMAP_URL = "type=xyz&tilePixelRatio=1&url=https://tile.openstreetmap
 _DEFAULT_BASEMAP_NAME = "OpenStreetMap"
 
 
-class XlsformConverterError(Exception):
-    """Base error class for XLSForm conversion errors."""
-
-
 def parse_xlsform_sheets(
     xlsform_filename: PathOrStr,
 ) -> tuple[ParsedSheet, ParsedSheet, ParsedSheet]:
@@ -113,14 +109,9 @@ def parse_xlsform_sheets(
     if not xlsform_filename.exists():
         raise FileNotFoundError(f"XLSForm file not found: {xlsform_filename}")
 
-    try:
-        survey_sheet = ParsedSheet("survey", xlsform_filename)
-        choices_sheet = ParsedSheet("choices", xlsform_filename)
-        settings_sheet = ParsedSheet("settings", xlsform_filename)
-    except ValueError as err:
-        raise XlsformConverterError(
-            f'Expected the provided spreadsheet to contain sheets named "survey", "choices" and "settings", but got an error: {err}',
-        ) from err
+    survey_sheet = ParsedSheet("survey", xlsform_filename)
+    choices_sheet = ParsedSheet("choices", xlsform_filename)
+    settings_sheet = ParsedSheet("settings", xlsform_filename)
 
     return (survey_sheet, choices_sheet, settings_sheet)
 

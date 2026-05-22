@@ -13,6 +13,7 @@ from qgis.PyQt.QtCore import QVariant
 from convert2qgis.json2qgis.type_defs import (
     PathOrStr,
 )
+from convert2qgis.xlsform2qgis.errors import XlsformSheetParserError
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +66,7 @@ class ParsedSheet:
         self.indices = defaultdict(lambda: -1)
 
         if self.name not in XLSFORM_COLS_BY_SHEET_NAME:
-            raise ValueError(f"Unexpected sheet name {self.name}!")
+            raise XlsformSheetParserError(f"Unexpected sheet name {self.name}!")
 
         self.layer = QgsVectorLayer(
             str(xlsform_filename)
@@ -75,7 +76,9 @@ class ParsedSheet:
         )
 
         if not self.layer.isValid():
-            raise ValueError(f"Failed to load layer from: {xlsform_filename}")
+            raise XlsformSheetParserError(
+                f"Failed to load layer from: {xlsform_filename}"
+            )
 
         fields_names: list[Union[str, QVariant]] = self.layer.fields().names()
 
@@ -87,10 +90,14 @@ class ParsedSheet:
             if self.layer.featureCount() > 1:
                 fields_names = self.layer.getFeature(1).attributes()
             else:
-                raise ValueError("Could not determine xlsform column headers!")
+                raise XlsformSheetParserError(
+                    "Could not determine xlsform column headers!"
+                )
 
         if not len(fields_names) >= 2:  # noqa: PLR2004
-            raise ValueError("Sheet must have at least 2 columns: 'type', 'name'")
+            raise XlsformSheetParserError(
+                "Sheet must have at least 2 columns: 'type', 'name'"
+            )
 
         for index, field_name in enumerate(fields_names):
             if isinstance(field_name, QVariant):
