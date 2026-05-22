@@ -462,9 +462,6 @@ def widget_select_from_file(ctx: WidgetContext) -> ParsedRow:
             "widget_config": {
                 "Layer": layer_id,
                 "LayerName": type_details,
-                # TODO @suricactus: confirm these are not required properties, as we already have the layer ID above
-                # "LayerProviderName": "ogr",
-                # "LayerSource": value_layer[0].source(),
                 "Key": list_key,
                 "Value": list_value,
                 "AllowNull": False,
