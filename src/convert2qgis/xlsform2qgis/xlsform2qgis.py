@@ -876,6 +876,13 @@ class XlsformConverter:
 
                     geometry_type_by_layer_id[layer_id] = result.geometry_type
 
+            except NotImplementedError as err:
+                logger.error(
+                    "Functionality not implemented for row with type `%s` and name `%s`: %s",
+                    row["type"],
+                    row["name"],
+                    str(err),
+                )
             except Exception:
                 logger.error(
                     "Failed to parse row with type `%s` and name `%s` at row index %d!",
