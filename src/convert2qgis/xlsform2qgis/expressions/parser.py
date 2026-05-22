@@ -3,12 +3,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
+from convert2qgis.xlsform2qgis.expressions.errors import ParseError
 from convert2qgis.xlsform2qgis.expressions.functions import SUPPORTED_FUNCTIONS
 from convert2qgis.xlsform2qgis.expressions.tokenizer import (
-    Token,
-    TokenType,
     tokenize_expression,
     tokenize_template,
+)
+from convert2qgis.xlsform2qgis.expressions.type_defs import (
+    Token,
+    TokenType,
 )
 
 
@@ -89,32 +92,6 @@ class BracketList(AstNode):
 @dataclass(frozen=True)
 class Template(AstNode):
     elements: list[AstNode]
-
-
-class ParseError(Exception):
-    message: str
-    position: int | None = None
-    token: Token | None = None
-
-    def __init__(
-        self, message: str, position: int | None = None, token: Token | None = None
-    ) -> None:
-        self.message = message
-        self.position = position
-        self.token = token
-
-        super().__init__(self.__str__())
-
-    def __str__(self) -> str:
-        msg = self.message
-
-        if self.token:
-            msg += f" `{self.token.raw_value}`"
-
-        if self.position is not None:
-            msg += f" at position {self.position}"
-
-        return msg
 
 
 OPENING_BRACKET = "("

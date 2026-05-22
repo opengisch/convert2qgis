@@ -4,12 +4,13 @@ from typing import TYPE_CHECKING, cast
 import pytest
 
 from convert2qgis.json2qgis.type_defs import ChoicesDef
+from convert2qgis.xlsform2qgis.expressions.errors import ParseError, TokenizationError
 from convert2qgis.xlsform2qgis.expressions.expression import (
     Expression,
     ExpressionContext,
     QgisRenderType,
 )
-from convert2qgis.xlsform2qgis.expressions.parser import ParseError, ParserType
+from convert2qgis.xlsform2qgis.expressions.parser import ParserType
 from convert2qgis.xlsform2qgis.expressions.utils import (
     convert_date_format,
     convert_datetime_format,
@@ -234,7 +235,7 @@ def test_complex_expression_rendering(ctx: ExpressionContext) -> None:
 
 
 def test_fails_on_unsupported_operator(ctx: ExpressionContext) -> None:
-    with pytest.raises(ValueError, match=re.escape("Unexpected character: ^")):
+    with pytest.raises(TokenizationError, match=re.escape("Unexpected character: ^")):
         Expression("1 ^ 2", ctx)
 
 
