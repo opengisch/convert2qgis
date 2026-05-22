@@ -89,6 +89,10 @@ def build_choices_layer_id(part: str) -> str:
     return f"{prefix}_{md5_hash}"
 
 
+def normalize_whitespace(text: str) -> str:
+    return re.sub(r"\s+", " ", text).strip()
+
+
 def get_unique_label(label: str, existing_labels: list[str]) -> str:
     label = label.strip()
 

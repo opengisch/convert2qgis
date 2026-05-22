@@ -1,6 +1,8 @@
 from convert2qgis.xlsform2qgis.converter_utils import (
     HTMLStripper,
+    build_choices_layer_id,
     get_unique_label,
+    normalize_whitespace,
     parse_xlsform_range_parameters,
     parse_xlsform_select_from_file_parameters,
     strip_html,
@@ -27,6 +29,23 @@ class TestHTMLStripper:
 
     def test_strip_html_empty(self) -> None:
         assert strip_html("") == ""
+
+
+class TestBuildChoicesLayerId:
+    def test_build_choices_layer_id(self) -> None:
+        layer_id = build_choices_layer_id("child")
+        assert layer_id == "list_child_267f55e1e3792be4bd18341b0fe30e17"
+
+
+class NormalizeWhitespaceTest:
+    def test_normalize_whitespace(self) -> None:
+        assert normalize_whitespace("Hello World") == "Hello World"
+        assert normalize_whitespace("  Hello World  ") == "Hello World"
+        assert normalize_whitespace("  Hello   World  ") == "Hello World"
+        assert normalize_whitespace("\tHello\nWorld\t") == "Hello World"
+        assert normalize_whitespace("\tHello\t\t  \tWorld\t") == "Hello World"
+        assert normalize_whitespace("NoExtraSpaces") == "NoExtraSpaces"
+        assert normalize_whitespace("   ") == ""
 
 
 class TestGetUniqueLabel:

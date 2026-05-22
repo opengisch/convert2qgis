@@ -15,6 +15,7 @@ from convert2qgis.json2qgis.type_defs import (
 from convert2qgis.xlsform2qgis.converter_utils import (
     build_choices_layer_id,
     get_xlsform_type,
+    normalize_whitespace,
     parse_xlsform_range_parameters,
     parse_xlsform_select_from_file_parameters,
 )
@@ -384,8 +385,10 @@ def widget_media(ctx: WidgetContext) -> ParsedRow:
 )
 def widget_select_from_file(ctx: WidgetContext) -> ParsedRow:
     dataset = WeakDatasetDef()
-    xlsform_type, *type_details = str(ctx.row["type"]).strip().split(" ")
-    layer_id = build_choices_layer_id(*type_details)
+    xlsform_type, type_details = normalize_whitespace(str(ctx.row["type"])).split(
+        " ", 2
+    )
+    layer_id = build_choices_layer_id(type_details)
 
     if xlsform_type in (
         "select_one_from_file",
@@ -451,7 +454,7 @@ def widget_select_from_file(ctx: WidgetContext) -> ParsedRow:
             "widget_type": "ValueRelation",
             "widget_config": {
                 "Layer": layer_id,
-                "LayerName": type_details[0],
+                "LayerName": type_details,
                 # TODO @suricactus: confirm these are not required properties, as we already have the layer ID above
                 # "LayerProviderName": "ogr",
                 # "LayerSource": value_layer[0].source(),
