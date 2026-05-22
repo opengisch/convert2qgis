@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 
 from convert2qgis.xlsform2qgis.expressions.errors import TokenizationError
 from convert2qgis.xlsform2qgis.expressions.type_defs import Token, TokenType
@@ -95,7 +96,10 @@ def tokenize(expression: str, lexicon: Lexicon, is_template: bool) -> list[Token
                 best_type = token_type
 
         if best_match is None or best_type is None:
-            raise TokenizationError(f"Unexpected character: {expression[pos]}")
+            char_name = unicodedata.name(expression[pos], "UNKNOWN CHARACTER")
+            raise TokenizationError(
+                f"Unexpected character: {expression[pos]} ({char_name}) at position {pos}"
+            )
 
         start = pos
         end = best_match.end()
