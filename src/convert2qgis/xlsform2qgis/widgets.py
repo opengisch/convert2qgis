@@ -19,6 +19,7 @@ from convert2qgis.xlsform2qgis.converter_utils import (
     parse_xlsform_range_parameters,
     parse_xlsform_select_from_file_parameters,
 )
+from convert2qgis.xlsform2qgis.errors import XlsformSheetParserError
 from convert2qgis.xlsform2qgis.expressions.expression import QgisRenderType
 from convert2qgis.xlsform2qgis.expressions.parser import ParserType
 from convert2qgis.xlsform2qgis.sheet_parser import ParsedSheetRow
@@ -386,8 +387,14 @@ def widget_media(ctx: WidgetContext) -> ParsedRow:
 def widget_select_from_file(ctx: WidgetContext) -> ParsedRow:
     dataset = WeakDatasetDef()
     xlsform_type, type_details = normalize_whitespace(str(ctx.row["type"])).split(
-        " ", 2
+        " ", 1
     )
+
+    if " " in type_details:
+        raise XlsformSheetParserError(
+            f'The type details of field "{ctx.row["name"]}" of type "{xlsform_type}": {type_details}'
+        )
+
     layer_id = build_choices_layer_id(type_details)
 
     if xlsform_type in (
