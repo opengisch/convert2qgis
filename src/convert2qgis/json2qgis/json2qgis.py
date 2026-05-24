@@ -138,7 +138,7 @@ class ProjectCreator:
             assert isinstance(dataset_def, VectorDatasetDef)
             layer = self._project.mapLayer(dataset_def.layer_id)
 
-            assert layer
+            assert layer is not None
             assert isinstance(layer, QgsVectorLayer)
 
             layer.setEditFormConfig(
@@ -159,7 +159,7 @@ class ProjectCreator:
 
             display_settings = self._project.displaySettings()
 
-            assert display_settings
+            assert display_settings is not None
 
             # Display coordinates in WGS84 to provide a more useful experience for the average person
             display_settings.setCoordinateType(Qgis.CoordinateDisplayType.CustomCrs)

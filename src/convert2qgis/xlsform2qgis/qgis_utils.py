@@ -86,7 +86,7 @@ def stop_app() -> None:
 
     project = QgsProject.instance()
 
-    assert project
+    assert project is not None
 
     project.clear()
 
