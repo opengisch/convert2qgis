@@ -733,7 +733,7 @@ def set_layer_tree(
 
     tree_root = project.layerTreeRoot()
 
-    assert tree_root, "Failed to get layer tree root. Very unlikely error."
+    assert tree_root is not None, "Failed to get layer tree root. Very unlikely error."
 
     tree_root.clear()
 
