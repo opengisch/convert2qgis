@@ -377,6 +377,9 @@ class XlsformConverter:
         *,
         should_strip_tags: bool = True,
     ) -> Expression:
+        # be tolerant of ‘’ by replacing them with ''
+        expression_str = expression_str.replace("‘", "'")
+        expression_str = expression_str.replace("’", "'")
         try:
             return Expression(
                 expression_str,
