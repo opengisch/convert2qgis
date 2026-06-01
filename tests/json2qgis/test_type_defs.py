@@ -293,6 +293,26 @@ def test_project_creator_accepts_valid_project_crs() -> None:
     assert creator.definition.project.crs == "EPSG:7801"
 
 
+def test_project_creator_accepts_time_field_type() -> None:
+    pytest.importorskip("fastjsonschema")
+
+    project_dict = build_project_dict()
+    project_dict["datasets"][0]["vector_datasets"][0]["fields"].append(
+        generate_field_def(
+            field_id="field_time",
+            name="appointment_time",
+            type="time",
+            widget_type="DateTime",
+        ).to_dict()
+    )
+
+    creator = ProjectCreator(project_dict)
+
+    dataset_def = creator.definition.datasets[0].vector_datasets[0]
+    assert dataset_def.fields[-1].name == "appointment_time"
+    assert dataset_def.fields[-1].type == "time"
+
+
 def test_project_creator_raises_for_unexpected_vector_writer_output(
     tmp_path, monkeypatch
 ) -> None:

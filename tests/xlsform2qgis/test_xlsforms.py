@@ -577,6 +577,57 @@ class TestConverter:
             ],
         )
 
+    def test_xlsform_with_time_field(self, converter):
+        converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
+            [
+                generate_survey_row(
+                    type="time",
+                    name="appointment_time",
+                    label="Appointment time",
+                )
+            ]
+        )
+
+        converter.convert()
+
+        assert len(converter.vector_datasets) == 1
+
+        survey_layer = converter.vector_datasets[0]
+
+        assert len(survey_layer.fields) == 2
+        assert survey_layer.fields[0] == generate_uuid_field_def(
+            field_id=survey_layer.fields[0].field_id,
+        )
+        assert survey_layer.fields[1] == generate_field_def(
+            field_id=survey_layer.fields[1].field_id,
+            type="time",
+            name="appointment_time",
+            alias="Appointment time",
+            widget_type="DateTime",
+            widget_config={
+                "field_format_overwrite": True,
+                "display_format": "HH:mm:ss",
+                "field_format": "HH:mm:ss",
+                "allow_null": True,
+                "calendar_popup": True,
+            },
+        )
+
+        assert len(survey_layer.form_config) == 1
+        assert survey_layer.form_config[0] == generate_form_item_def(
+            item_id=survey_layer.form_config[0].item_id,
+            label="Survey",
+            type="tab",
+            children=[
+                generate_form_item_def(
+                    item_id=survey_layer.form_config[0].children[0].item_id,
+                    field_name="appointment_time",
+                    type="field",
+                    is_label_on_top=True,
+                )
+            ],
+        )
+
     def test_xlsform_label(self, converter):
         converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
             [
