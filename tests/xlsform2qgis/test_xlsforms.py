@@ -1334,13 +1334,9 @@ class TestConverter:
             == "concat(\"lname\", '-', \"fname\", '-', uuid(format:='WithoutBraces'))"
         )
 
-    @pytest.fixture
-    def xlsform_filename(self):
-        return str(Path(__file__).parent / "data/service_rating.xlsx")
-
-    def test_xlsform_survey_rating_file(self, xlsform_filename: str):
+    def test_xlsform_survey_rating_file(self):
         survey_sheet, choices_sheet, settings_sheet = parse_xlsform_sheets(
-            xlsform_filename
+            str(Path(__file__).parent / "data/service_rating.xlsx")
         )
 
         converter = XlsformConverter(
@@ -1835,4 +1831,51 @@ class TestConverter:
                     type="field",
                 ),
             ],
+        )
+
+    def test_xlsform_missing_choices_file(self):
+        survey_sheet, choices_sheet, settings_sheet = parse_xlsform_sheets(
+            str(Path(__file__).parent / "data/missing_choices.xlsx")
+        )
+
+        converter = XlsformConverter(
+            survey_sheet,
+            choices_sheet,
+            settings_sheet,
+            settings={
+                "basemap_url": "",
+            },
+        )
+
+        converter.convert()
+
+        assert len(converter.all_datasets) == 1
+
+        sorted_datasets = sorted(converter.all_datasets, key=lambda ml: ml.name)
+
+        survey_layer, *_ = sorted_datasets
+        survey_layer = cast("VectorDatasetDef", survey_layer)
+
+        assert len(survey_layer.fields) == 3
+        assert survey_layer.virtual_fields == []
+        assert survey_layer.fields[0] == generate_uuid_field_def(
+            field_id=survey_layer.fields[0].field_id,
+        )
+        assert survey_layer.fields[1] == generate_field_def(
+            field_id=survey_layer.fields[1].field_id,
+            type="string",
+            name="comment",
+            alias="A comment",
+            widget_type="TextEdit",
+            widget_config={},
+            is_not_null=False,
+        )
+        assert survey_layer.fields[2] == generate_field_def(
+            field_id=survey_layer.fields[2].field_id,
+            type="string",
+            name="missing_choices",
+            alias="A missing choices list turned into a text",
+            widget_type="TextEdit",
+            widget_config={},
+            is_not_null=False,
         )
