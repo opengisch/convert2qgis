@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, ClassVar, Optional
@@ -30,6 +31,8 @@ from convert2qgis.xlsform2qgis.type_defs import (
 
 if TYPE_CHECKING:
     from convert2qgis.xlsform2qgis.xlsform2qgis import XlsformConverter
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -389,6 +392,21 @@ def widget_select_from_file(ctx: WidgetContext) -> ParsedRow:
     xlsform_type, type_details = normalize_whitespace(str(ctx.row["type"])).split(
         " ", 1
     )
+
+    or_other_string = ""
+    if type_details.endswith("or_other") or type_details.endswith("or other"):
+        # the length is always the same, no matter if underscore or space is used, so we can just remove the last 9 characters
+        suffix_len = len("or_other")
+        or_other_string = type_details[-suffix_len:]
+        type_details = type_details[:-suffix_len].rstrip()
+
+    if or_other_string:
+        logger.warning(
+            'The "%s" suffix is not supported yet for fields of type "%s": %s',
+            or_other_string,
+            xlsform_type,
+            ctx.row["type"],
+        )
 
     if " " in type_details:
         raise XlsformSheetParserError(

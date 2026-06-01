@@ -530,6 +530,51 @@ class TestConverter:
         ):
             converter.convert()
 
+    @pytest.mark.parametrize(
+        ("type_suffix", "warning_suffix"),
+        [
+            ("or_other", "or_other"),
+            ("or other", "or other"),
+        ],
+    )
+    def test_xlsform_select_or_other_suffix_uses_base_choice_list(
+        self, converter, caplog, type_suffix, warning_suffix
+    ):
+        caplog.set_level(logging.WARNING, logger="convert2qgis.xlsform2qgis.widgets")
+        converter.choices_sheet.__iter__.return_value = to_parsed_sheet_rows(
+            [
+                {
+                    "list_name": "list_001",
+                    "name": "value_001",
+                    "label": "Value 001",
+                },
+            ]
+        )
+        converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
+            [
+                generate_survey_row(
+                    type=f"select_one list_001 {type_suffix}",
+                    name="choice_field",
+                    label="Choice field",
+                )
+            ]
+        )
+
+        converter.convert()
+
+        choices_layer = converter.vector_datasets[0]
+        survey_layer = converter.vector_datasets[1]
+
+        assert survey_layer.fields[1].widget_config["Layer"] == choices_layer.layer_id
+        assert survey_layer.fields[1].widget_config["LayerName"] == "list_001"
+        assert [
+            record.message
+            for record in caplog.records
+            if "not supported yet" in record.message
+        ] == [
+            f'The "{warning_suffix}" suffix is not supported yet for fields of type "select_one": select_one list_001 {type_suffix}'
+        ]
+
     def test_xlsform_with_text_field(self, converter):
         converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
             [
