@@ -114,7 +114,8 @@
             "real",
             "boolean",
             "datetime",
-            "date"
+            "date",
+            "time"
           ],
           "type": "string"
         },

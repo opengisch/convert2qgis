@@ -266,6 +266,7 @@ def get_field_type(type_name: str) -> QMetaType.Type:
         "boolean": QMetaType.Type.Bool,
         "date": QMetaType.Type.QDate,
         "datetime": QMetaType.Type.QDateTime,
+        "time": QMetaType.Type.QTime,
     }
 
     if type_name not in type_map:

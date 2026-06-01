@@ -569,6 +569,26 @@ class TestUtils:
         assert field.precision() == 0
         assert field.comment() == "This is a test real field"
 
+    def test_create_field_def_as_time(self, sample_field_def):
+        """Test creation of a FieldDef TypedDict."""
+        sample_field_def.update(
+            {
+                "name": "Field Time",
+                "type": "time",
+                "length": 0,
+                "precision": 0,
+                "comment": "This is a test time field",
+            }
+        )
+
+        field = create_field(sample_field_def)
+
+        assert field.name() == "Field Time"
+        assert field.type() == QMetaType.Type.QTime
+        assert field.length() == 0
+        assert field.precision() == 0
+        assert field.comment() == "This is a test time field"
+
     def test_set_field_default_value_no_default(self, sample_field, sample_field_def):
         """Test setting default value for a field."""
         sample_field_def.update(
