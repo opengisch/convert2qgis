@@ -62,19 +62,42 @@ class TestTokenizerBasics:
 
 
 class TestTokenizerStrings:
-    def test_single_quoted_string(self):
-        tokens = _tokens("'hello'")
+    @pytest.mark.parametrize(
+        ("expression", "raw_value", "value"),
+        [
+            # Opening: [U+0027] Apostrophe; Closing: [U+0027] Apostrophe: ''
+            ("'hello'", "'hello'", "hello"),
+            # Opening: [U+0022] Quotation Mark; Closing: [U+0022] Quotation Mark: ""
+            ('"hello"', '"hello"', "hello"),
+            # Opening: [U+2018] Left Single Quotation Mark; Closing: [U+2019] Right Single Quotation Mark: \u2018\u2019
+            ("\u2018hello\u2019", "\u2018hello\u2019", "hello"),
+            # Opening: [U+201A] Single Low-9 Quotation Mark; Closing: [U+2019] Right Single Quotation Mark: \u201A\u2019
+            ("\u201ahello\u2019", "\u201ahello\u2019", "hello"),
+            # Opening: [U+201A] Single Low-9 Quotation Mark; Closing: [U+201B] Single High-Reversed-9 Quotation Mark: \u201A\u201B
+            ("\u201ahello\u201b", "\u201ahello\u201b", "hello"),
+            # Opening: [U+201C] Left Double Quotation Mark; Closing: [U+201D] Right Double Quotation Mark: “”
+            ("\u201chello\u201d", "\u201chello\u201d", "hello"),
+            # Opening: [U+201E] Double Low-9 Quotation Mark; Closing: [U+201D] Right Double Quotation Mark: „”
+            ("\u201ehello\u201d", "\u201ehello\u201d", "hello"),
+            # Opening: [U+201E] Double Low-9 Quotation Mark; Closing: [U+201F] Double High-Reversed-9 Quotation Mark: „‟
+            ("\u201ehello\u201f", "\u201ehello\u201f", "hello"),
+        ],
+    )
+    def test_quoted_string(self, expression, raw_value, value):
+        tokens = _tokens(expression)
         token = _strip_eof(tokens)[0]
-        assert token.type == TokenType.STRING
-        assert token.value == "hello"
-        assert token.raw_value == "'hello'"
 
-    def test_double_quoted_string(self):
-        tokens = _tokens('"hello"')
-        token = _strip_eof(tokens)[0]
         assert token.type == TokenType.STRING
-        assert token.value == "hello"
-        assert token.raw_value == '"hello"'
+        assert token.value == value
+        assert token.raw_value == raw_value
+
+    def test_poorly_quoted_string(self):
+        with pytest.raises(TokenizationError, match='Unexpected character: "'):
+            _tokens('"unmatched”')
+
+    def test_unterminated_string(self):
+        with pytest.raises(TokenizationError, match="Unexpected character: '"):
+            _tokens("'unterminated")
 
     def test_string_with_escaped_quote(self):
         tokens = _tokens("'it\\'s'")
