@@ -434,7 +434,15 @@ def widget_select_from_file(ctx: WidgetContext) -> ParsedRow:
     list_key = "name"
     list_value = "label"
 
-    assert ctx.converter.find_vector_dataset(layer_id)
+    if not ctx.converter.find_vector_dataset(layer_id):
+        # The list was missing, fallback to a simple text edit
+        return ParsedRow(
+            field={
+                "type": "string",
+                "widget_type": "TextEdit",
+                "widget_config": {},
+            },
+        )
 
     filter_expressions = []
     choice_filter_expr = ctx.converter.get_expression(
