@@ -34,7 +34,34 @@ PUNCTUATION: set[str] = {
 Lexicon = tuple[tuple[TokenType, re.Pattern[str]], ...]
 
 EXPRESSION_LEXICON: Lexicon = (
-    (TokenType.STRING, re.compile(r"'(?:\\.|[^'\\])*'|\"(?:\\.|[^\"\\])*\"")),
+    (
+        TokenType.STRING,
+        re.compile(
+            # Opening: [U+0027] Apostrophe: '
+            # Closing: [U+0027] Apostrophe: '
+            r"'(?:\\.|[^'\\])*'"
+            # Opening: [U+0022] Quotation Mark: "
+            # Closing: [U+0022] Quotation Mark: "
+            r'|"(?:\\.|[^"\\])*"'
+            # allow the more exotic quotes; unicode notation is used, as ruff complains with RUF001 in comments
+            # Opening: [U+2018] Left Single Quotation Mark: \u2018
+            # Closing: [U+2019] Right Single Quotation Mark: \u2019
+            r"|‘(?:\\.|[^’\\])*’"  # noqa: RUF001
+            # Opening: [U+201A] Single Low-9 Quotation Mark; \u201A
+            # Closing: [U+201B] Single High-Reversed-9 Quotation Mark: \u201B
+            # OR
+            # Closing: [U+2019] Right Single Quotation Mark: \u2019
+            r"|‚(?:\\.|[^’‛\\])*(?:’|‛)"  # noqa: RUF001
+            # Opening: [U+201C] Left Double Quotation Mark: “
+            # Closing: [U+201D] Right Double Quotation Mark: ”
+            r"|“(?:\\.|[^”\\])*”"
+            # Opening: [U+201E] Double Low-9 Quotation Mark: „
+            # Closing: [U+201F] Double High-Reversed-9 Quotation Mark: ‟
+            # OR
+            # Closing: [U+201D] Right Double Quotation Mark: ”
+            r"|„(?:\\.|[^”‟\\])*(?:”|‟)"
+        ),
+    ),
     (TokenType.VARIABLE, re.compile(r"\$\{[^}]*\}")),
     (TokenType.NUMBER, re.compile(r"\d+(?:\.\d+)?|\.\d+")),
     (TokenType.CURRENT, re.compile(r"\.")),
