@@ -1021,7 +1021,7 @@ class TestConverter:
             ],
         )
 
-    def test_xlsform_with_root_fields_and_group_uses_fallback_only_for_root_fields(
+    def test_xlsform_with_root_fields_and_group_uses_groupless_begin_and_end(
         self, converter
     ):
         converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
@@ -1058,21 +1058,15 @@ class TestConverter:
 
         survey_layer = converter.vector_datasets[0]
 
-        assert len(survey_layer.form_config) == 2
+        assert len(survey_layer.form_config) == 3
         assert survey_layer.form_config[0] == generate_form_item_def(
-            item_id="tab_item_survey_layer",
+            item_id="tab_item_survey_layer_0",
             label="Survey",
             type="tab",
             children=[
                 generate_form_item_def(
                     item_id=survey_layer.form_config[0].children[0].item_id,
                     field_name="field_001",
-                    type="field",
-                    is_label_on_top=True,
-                ),
-                generate_form_item_def(
-                    item_id=survey_layer.form_config[0].children[1].item_id,
-                    field_name="field_003",
                     type="field",
                     is_label_on_top=True,
                 ),
@@ -1089,6 +1083,157 @@ class TestConverter:
                     type="field",
                     is_label_on_top=True,
                 )
+            ],
+        )
+        assert survey_layer.form_config[2] == generate_form_item_def(
+            item_id="tab_item_survey_layer_2",
+            label="Survey",
+            type="tab",
+            children=[
+                generate_form_item_def(
+                    item_id=survey_layer.form_config[2].children[0].item_id,
+                    field_name="field_003",
+                    type="field",
+                    is_label_on_top=True,
+                ),
+            ],
+        )
+
+    def test_xlsform_with_root_fields_and_group_uses_groupless_end(self, converter):
+        converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
+            [
+                generate_survey_row(
+                    type="begin group",
+                    name="group_001",
+                    label="Group 001",
+                ),
+                generate_survey_row(
+                    type="text",
+                    name="field_001",
+                    label="Field 001",
+                ),
+                generate_survey_row(
+                    type="end group",
+                ),
+                generate_survey_row(
+                    type="text",
+                    name="field_002",
+                    label="Field 002",
+                ),
+                generate_survey_row(
+                    type="text",
+                    name="field_003",
+                    label="Field 003",
+                ),
+            ]
+        )
+
+        converter.convert()
+
+        assert len(converter.vector_datasets) == 1
+
+        survey_layer = converter.vector_datasets[0]
+
+        assert len(survey_layer.form_config) == 2
+        assert survey_layer.form_config[0] == generate_form_item_def(
+            item_id="item_container_0",
+            label="Group 001",
+            type="tab",
+            children=[
+                generate_form_item_def(
+                    item_id=survey_layer.form_config[0].children[0].item_id,
+                    field_name="field_001",
+                    type="field",
+                    is_label_on_top=True,
+                ),
+            ],
+        )
+        assert survey_layer.form_config[1] == generate_form_item_def(
+            item_id="tab_item_survey_layer_1",
+            label="Survey",
+            type="tab",
+            children=[
+                generate_form_item_def(
+                    item_id=survey_layer.form_config[1].children[0].item_id,
+                    field_name="field_002",
+                    type="field",
+                    is_label_on_top=True,
+                ),
+                generate_form_item_def(
+                    item_id=survey_layer.form_config[1].children[1].item_id,
+                    field_name="field_003",
+                    type="field",
+                    is_label_on_top=True,
+                ),
+            ],
+        )
+
+    def test_xlsform_with_root_fields_and_group_uses_groupless_begin(self, converter):
+        converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
+            [
+                generate_survey_row(
+                    type="text",
+                    name="field_001",
+                    label="Field 001",
+                ),
+                generate_survey_row(
+                    type="text",
+                    name="field_002",
+                    label="Field 002",
+                ),
+                generate_survey_row(
+                    type="begin group",
+                    name="group_001",
+                    label="Group 001",
+                ),
+                generate_survey_row(
+                    type="text",
+                    name="field_003",
+                    label="Field 003",
+                ),
+                generate_survey_row(
+                    type="end group",
+                ),
+            ]
+        )
+
+        converter.convert()
+
+        assert len(converter.vector_datasets) == 1
+
+        survey_layer = converter.vector_datasets[0]
+
+        assert len(survey_layer.form_config) == 2
+        assert survey_layer.form_config[0] == generate_form_item_def(
+            item_id="tab_item_survey_layer_0",
+            label="Survey",
+            type="tab",
+            children=[
+                generate_form_item_def(
+                    item_id=survey_layer.form_config[0].children[0].item_id,
+                    field_name="field_001",
+                    type="field",
+                    is_label_on_top=True,
+                ),
+                generate_form_item_def(
+                    item_id=survey_layer.form_config[0].children[1].item_id,
+                    field_name="field_002",
+                    type="field",
+                    is_label_on_top=True,
+                ),
+            ],
+        )
+        assert survey_layer.form_config[1] == generate_form_item_def(
+            item_id="item_container_2",
+            label="Group 001",
+            type="tab",
+            children=[
+                generate_form_item_def(
+                    item_id=survey_layer.form_config[1].children[0].item_id,
+                    field_name="field_003",
+                    type="field",
+                    is_label_on_top=True,
+                ),
             ],
         )
 
