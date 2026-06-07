@@ -691,6 +691,7 @@ class TestConverter:
                         "name": "field_003",
                         "label": "Field 003",
                         "label::english": "Field English 003",
+                        "label::french": "Field French 003",
                     }
                 ),
             ]
@@ -700,6 +701,7 @@ class TestConverter:
         )
 
         converter._xlsform_settings = converter._get_xlsform_settings()
+        converter._language = "English"
         converter.convert()
 
         assert len(converter.vector_datasets) == 1
@@ -729,6 +731,67 @@ class TestConverter:
             type="string",
             name="field_003",
             alias="Field English 003",
+            widget_type="TextEdit",
+        )
+
+    def test_xlsform_multilingual_label(self, converter):
+        converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
+            [
+                generate_survey_row(
+                    type="text",
+                    name="field_001",
+                ),
+                generate_survey_row(
+                    type="text",
+                    name="field_002",
+                    label="Field 002",
+                ),
+                generate_survey_row(
+                    **{
+                        "type": "text",
+                        "name": "field_003",
+                        "label": "Field 003",
+                        "label::english": "Field English 003",
+                        "label::french": "Field French 003",
+                    }
+                ),
+            ]
+        )
+        converter.settings_sheet.__iter__.return_value = to_parsed_sheet_rows(
+            [{"default_language": "English"}]
+        )
+
+        converter._xlsform_settings = converter._get_xlsform_settings()
+        converter._language = "French,English"
+        converter.convert()
+
+        assert len(converter.vector_datasets) == 1
+
+        survey_layer = converter.vector_datasets[0]
+
+        assert len(survey_layer.fields) == 4
+
+        assert survey_layer.fields[0] == generate_uuid_field_def(
+            field_id=survey_layer.fields[0].field_id,
+        )
+        assert survey_layer.fields[1] == generate_field_def(
+            field_id=survey_layer.fields[1].field_id,
+            type="string",
+            name="field_001",
+            widget_type="TextEdit",
+        )
+        assert survey_layer.fields[2] == generate_field_def(
+            field_id=survey_layer.fields[2].field_id,
+            type="string",
+            name="field_002",
+            alias="Field 002",
+            widget_type="TextEdit",
+        )
+        assert survey_layer.fields[3] == generate_field_def(
+            field_id=survey_layer.fields[3].field_id,
+            type="string",
+            name="field_003",
+            alias="Field French 003 | Field English 003",
             widget_type="TextEdit",
         )
 
