@@ -71,6 +71,12 @@ class TestTokenizerStrings:
             ('"hello"', '"hello"', "hello"),
             # Opening: [U+2018] Left Single Quotation Mark; Closing: [U+2019] Right Single Quotation Mark: \u2018\u2019
             ("\u2018hello\u2019", "\u2018hello\u2019", "hello"),
+            # Opening: [U+2019] Right Single Quotation Mark; Closing: [U+2019] Right Single Quotation Mark: \u2018\u2019
+            ("\u2019hello\u2019", "\u2019hello\u2019", "hello"),
+            # Opening: [U+2018] Left Single Quotation Mark; Closing: [U+2018] Left Single Quotation Mark: \u2018\u2019
+            ("\u2018hello\u2018", "\u2018hello\u2018", "hello"),
+            # Opening: [U+2019] Right Single Quotation Mark; Closing: [U+2018] Left Single Quotation Mark: \u2019\u2018
+            ("\u2019hello\u2018", "\u2019hello\u2018", "hello"),
             # Opening: [U+201A] Single Low-9 Quotation Mark; Closing: [U+2019] Right Single Quotation Mark: \u201A\u2019
             ("\u201ahello\u2019", "\u201ahello\u2019", "hello"),
             # Opening: [U+201A] Single Low-9 Quotation Mark; Closing: [U+201B] Single High-Reversed-9 Quotation Mark: \u201A\u201B

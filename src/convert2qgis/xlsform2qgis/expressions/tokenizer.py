@@ -44,9 +44,9 @@ EXPRESSION_LEXICON: Lexicon = (
             # Closing: [U+0022] Quotation Mark: "
             r'|"(?:\\.|[^"\\])*"'
             # allow the more exotic quotes; unicode notation is used, as ruff complains with RUF001 in comments
-            # Opening: [U+2018] Left Single Quotation Mark: \u2018
-            # Closing: [U+2019] Right Single Quotation Mark: \u2019
-            r"|‘(?:\\.|[^’\\])*’"  # noqa: RUF001
+            # Opening: [U+2018] Left Single Quotation Mark or [U+2019] Right Single Quotation Mark: \u2018 or \u2019
+            # Closing: [U+2018] Left Single Quotation Mark or [U+2019] Right Single Quotation Mark: \u2018 or \u2019
+            r"|[‘’](?:\\.|[^‘’\\])*[‘’]"  # noqa: RUF001
             # Opening: [U+201A] Single Low-9 Quotation Mark; \u201A
             # Closing: [U+201B] Single High-Reversed-9 Quotation Mark: \u201B
             # OR
