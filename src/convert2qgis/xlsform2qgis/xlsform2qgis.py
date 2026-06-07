@@ -281,16 +281,19 @@ class XlsformConverter:
         self._skip_failed_expressions = skip_failed_expressions
 
         # settings
+        self._xlsform_settings = {
+            **self._get_xlsform_settings(),
+            **cast("XlsformSettings", settings.get("xlsform_settings", {})),
+        }
+        self._language = str(
+            settings.get("language") or self._xlsform_settings["default_language"]
+        )
         self._form_group_type = settings.get("form_group_type") or "group_box"
         self._use_groups_as_tabs = settings.get("use_groups_as_tabs", True)
         self._project_crs = settings.get("crs") or "EPSG:3857"
         self._project_author = settings.get("author") or ""
         self._project_extent = settings.get("extent", "").strip() or ""
         self._use_multipart_geoms = settings.get("use_multipart_geoms", True)
-        self._xlsform_settings = {
-            **self._get_xlsform_settings(),
-            **cast("XlsformSettings", settings.get("xlsform_settings", {})),
-        }
 
         basemap_url = settings.get("basemap_url", None)
         if basemap_url:
@@ -548,18 +551,22 @@ class XlsformConverter:
         return current_container
 
     def _get_label(self, sheet_row: ParsedSheetRow) -> str:
+        labels = []
+        languages = self._language.lower().split(",")
+        for language in languages:
+            if language:
+                label_key = f"label::{language}"
+
+                if sheet_row.get(label_key):
+                    labels.append(strip_html(sheet_row[label_key] or ""))
+
         label = ""
-        default_language = self._xlsform_settings["default_language"].lower()
-        if default_language:
-            label_key = f"label::{default_language}"
-
-            if sheet_row.get(label_key):
-                label = strip_html(sheet_row[label_key] or "")
-
-        if not label:
+        if labels:
+            label = " | ".join(labels)
+        else:
             logger.debug(
-                "Label for default language `%s` not found in row index %d, falling back to `label` column!",
-                default_language,
+                "Label for language(s) `%s` not found in row index %d, falling back to `label` column!",
+                self._language,
                 sheet_row.idx,
             )
 
