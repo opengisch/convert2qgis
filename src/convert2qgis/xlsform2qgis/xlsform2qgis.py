@@ -268,6 +268,9 @@ class XlsformConverter:
     _max_pixels: Optional[int]
     """Keep track of the maximum pixels for image fields, to be able to set it as a project level property if at least one image field is present in the survey."""
 
+    _show_unique_label: bool
+    """Whether to ensure unique labels by appending suffixes to duplicates, or to keep the original labels even if they are duplicated."""
+
     def __init__(
         self,
         survey_sheet: ParsedSheet,
@@ -298,6 +301,7 @@ class XlsformConverter:
         self._project_author = settings.get("author") or ""
         self._project_extent = settings.get("extent", "").strip() or ""
         self._use_multipart_geoms = settings.get("use_multipart_geoms", True)
+        self._show_unique_label = settings.get("show_unique_label", True)
 
         basemap_url = settings.get("basemap_url", None)
         if basemap_url:
@@ -582,14 +586,24 @@ class XlsformConverter:
         label = self._get_label(sheet_row)
 
         existing_labels = [f.alias for f in self._current_dataset().fields]
-        unique_label = get_unique_label(label, existing_labels)
+
+        if self._show_unique_label:
+            unique_label = get_unique_label(label, existing_labels)
+        else:
+            unique_label = label
 
         if label != unique_label:
-            logger.warning(
+            logger.info(
                 "Duplicate label `%s` found in dataset `%s`, renamed to `%s` to ensure uniqueness!",
                 label,
                 self._current_dataset().name,
                 unique_label,
+            )
+        elif label in existing_labels:
+            logger.debug(
+                "Duplicate label `%s` found in dataset `%s`!",
+                label,
+                self._current_dataset().name,
             )
 
         return unique_label

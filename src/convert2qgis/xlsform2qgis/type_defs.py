@@ -74,3 +74,6 @@ class ConverterSettings(TypedDict, total=False):
 
     use_multipart_geoms: bool
     """Whether XLSForm geometry types should be stored using their multipart equivalent."""
+
+    show_unique_label: bool
+    """Whether to ensure unique labels by appending suffixes to duplicates, or to keep the original labels even if they are duplicated."""
