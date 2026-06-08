@@ -22,6 +22,7 @@ from convert2qgis.json2qgis.errors import (
     Qgis2JsonError,
     UnknownVectorLayerDataproviderError,
 )
+from convert2qgis.json2qgis.qgis_utils import flush_all_gpkg_wal
 from convert2qgis.json2qgis.type_defs import (
     DatasetDef,
     PathOrStr,
@@ -192,6 +193,8 @@ class ProjectCreator:
                 project_filename,
                 self._project.error(),
             )
+
+        flush_all_gpkg_wal(self._project)
 
         return self._project
 

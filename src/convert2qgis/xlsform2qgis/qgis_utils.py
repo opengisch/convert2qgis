@@ -2,9 +2,7 @@ import atexit
 import gc
 import logging
 import os
-import sqlite3
 import tempfile
-from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
 from qgis.core import (
@@ -23,6 +21,8 @@ from qgis.core import (
     QgsVectorLayerUtils,
 )
 from qgis.PyQt.QtCore import QObject, pyqtSignal
+
+from convert2qgis.json2qgis.qgis_utils import flush_gpkg_wal
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -266,25 +266,6 @@ def transform_bounding_box(
         )
 
         return QgsRectangle()
-
-
-def flush_gpkg_wal(layer: QgsVectorLayer) -> None:
-    """Flushes the WAL file of a GPKG database to make sure all changes are written to the main file."""
-    data_provider = layer.dataProvider()
-
-    if data_provider is None or data_provider.storageType() != "GPKG":
-        return
-
-    filename = layer.source().split("|")[0]
-    path = Path(filename).parent.joinpath(str(filename) + "-wal")
-
-    if path.exists() and path.stat().st_size > 0:
-        conn = sqlite3.connect(str(filename))
-
-        with conn:
-            logger.debug('Flushing GPKG WAL file for layer "%s"', layer.name())
-
-            conn.execute("PRAGMA wal_checkpoint")
 
 
 class LoggingSignals(QObject):
