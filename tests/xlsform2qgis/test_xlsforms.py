@@ -833,6 +833,66 @@ class TestConverter:
         assert survey_layer.fields[3].widget_type == "TextEdit"
         assert survey_layer.virtual_fields == []
 
+    def test_xlsform_duplicate_labels_can_keep_original_labels(self, caplog):
+        survey_sheet = MagicMock()
+        choices_sheet = MagicMock()
+        settings_sheet = MagicMock()
+        converter = XlsformConverter(
+            survey_sheet,
+            choices_sheet,
+            settings_sheet,
+            settings={
+                "basemap_url": "",
+                "show_unique_label": False,
+            },
+        )
+        caplog.set_level(logging.DEBUG, logger="convert2qgis.xlsform2qgis.xlsform2qgis")
+        converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(  # type: ignore[attr-defined]
+            [
+                generate_survey_row(
+                    type="text",
+                    name="field_001",
+                    label="Field",
+                ),
+                generate_survey_row(
+                    type="text",
+                    name="field_002",
+                    label="Field",
+                ),
+                generate_survey_row(
+                    type="calculate",
+                    name="field_003",
+                    label="Field",
+                    calculation="1 + 2",
+                ),
+            ]
+        )
+
+        converter.convert()
+
+        assert len(converter.vector_datasets) == 1
+
+        survey_layer = converter.vector_datasets[0]
+
+        assert [field.alias for field in survey_layer.fields] == [
+            "UUID",
+            "Field",
+            "Field",
+            "Field",
+        ]
+        assert survey_layer.fields[3].name == "field_003"
+        assert survey_layer.fields[3].widget_type == "TextEdit"
+        assert survey_layer.virtual_fields == []
+        assert [
+            record.message
+            for record in caplog.records
+            if "Duplicate label" in record.message
+        ] == [
+            "Duplicate label `Field` found in dataset `Survey`!",
+            "Duplicate label `Field` found in dataset `Survey`!",
+            "Duplicate label `Field` found in dataset `Survey`!",
+        ]
+
     def test_xlsform_calculate_rows_are_fields(self, converter):
         converter.survey_sheet.__iter__.return_value = to_parsed_sheet_rows(
             [
