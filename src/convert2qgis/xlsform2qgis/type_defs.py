@@ -54,6 +54,9 @@ class ConverterSettings(TypedDict, total=False):
     form_group_type: FormItemGroupTypes
     """How the groups in the XLSForm Survey form should be represented. E.g. groups or tabs."""
 
+    languages: str
+    """A comma-separated list of languages to use when generating labels."""
+
     use_groups_as_tabs: bool
     """Whether top-level XLSForm groups should be root form items instead of being nested under the fallback Survey container."""
 

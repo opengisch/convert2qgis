@@ -701,7 +701,7 @@ class TestConverter:
         )
 
         converter._xlsform_settings = converter._get_xlsform_settings()
-        converter._language = "English"
+        converter._languages = "English"
         converter.convert()
 
         assert len(converter.vector_datasets) == 1
@@ -762,7 +762,7 @@ class TestConverter:
         )
 
         converter._xlsform_settings = converter._get_xlsform_settings()
-        converter._language = "French,English"
+        converter._languages = "French,English"
         converter.convert()
 
         assert len(converter.vector_datasets) == 1

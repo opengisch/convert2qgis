@@ -95,6 +95,7 @@ XLS_TYPES_MAP = {
     "hidden": "string",
 }
 
+MULTILANGUAL_LABEL_SEPARATOR = " | "
 
 _FALLBACK_BASEMAP_NAME = "Basemap"
 _DEFAULT_BASEMAP_URL = "type=xyz&tilePixelRatio=1&url=https://tile.openstreetmap.org/%7Bz%7D/%7Bx%7D/%7By%7D.png&zmax=19&zmin=0&crs=EPSG3857"
@@ -228,6 +229,9 @@ class XlsformConverter:
     _xlsform_settings: XlsformSettings
     """Settings as defined in the `settings` sheet of the XLSForm, with some defaults if not specified."""
 
+    _languages: str
+    """A comma-separated list of languages to use when generating labels."""
+
     _skip_failed_expressions: bool
     """Return empty string instead of throwing an error when a row expression cannot be converted."""
 
@@ -285,8 +289,8 @@ class XlsformConverter:
             **self._get_xlsform_settings(),
             **cast("XlsformSettings", settings.get("xlsform_settings", {})),
         }
-        self._language = str(
-            settings.get("language") or self._xlsform_settings["default_language"]
+        self._languages = str(
+            settings.get("languages") or self._xlsform_settings["default_language"]
         )
         self._form_group_type = settings.get("form_group_type") or "group_box"
         self._use_groups_as_tabs = settings.get("use_groups_as_tabs", True)
@@ -552,7 +556,7 @@ class XlsformConverter:
 
     def _get_label(self, sheet_row: ParsedSheetRow) -> str:
         labels = []
-        languages = self._language.lower().split(",")
+        languages = self._languages.lower().split(",")
         for language in languages:
             if language:
                 label_key = f"label::{language}"
@@ -562,11 +566,11 @@ class XlsformConverter:
 
         label = ""
         if labels:
-            label = " | ".join(labels)
+            label = MULTILANGUAL_LABEL_SEPARATOR.join(labels)
         else:
             logger.debug(
                 "Label for language(s) `%s` not found in row index %d, falling back to `label` column!",
-                self._language,
+                self._languages,
                 sheet_row.idx,
             )
 
