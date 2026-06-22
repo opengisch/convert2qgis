@@ -1916,6 +1916,11 @@ class TestConverter:
             alias="",
             alias_expression="'Your company is employing  a total of ' || \"employee_total\" || ' correct ?'",
             widget_type="CheckBox",
+            widget_config={
+                "checked_state": True,
+                "unchecked_state": False,
+                "allow_null": False,
+            },
             default_value="",
             set_default_value_on_update=False,
         )
