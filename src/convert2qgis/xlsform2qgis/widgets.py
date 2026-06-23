@@ -290,9 +290,17 @@ def widget_text(ctx: WidgetContext) -> ParsedRow:
 
 @register_type(["acknowledge"])
 def widget_acknowledge(_ctx: WidgetContext) -> ParsedRow:
+    widget_config = {
+        "checked_state": True,
+        "unchecked_state": False,
+        "allow_null": False,
+    }
+
     return ParsedRow(
         field={
+            "type": "boolean",
             "widget_type": "CheckBox",
+            "widget_config": widget_config,
         }
     )
 
