@@ -242,30 +242,7 @@ class ProjectCreator:
         map_settings.writeXml(map_canvas_node, document)
 
     def _create_layer(self, dataset_def: DatasetDef) -> None:
-        layer_type = dataset_def.layer_type
-
-        if layer_type == "vector":
-            assert isinstance(dataset_def, VectorDatasetDef)
-            layer = self._create_vector_layer(dataset_def)
-
-            if layer.geometryType() not in (
-                Qgis.GeometryType.Unknown,
-                Qgis.GeometryType.Null,
-            ):
-                self._has_geometry = True
-
-        elif layer_type == "raster":
-            assert isinstance(dataset_def, RasterDatasetDef)
-            layer = self._create_raster_layer(dataset_def)
-        # Additional layer types can be handled here
-        elif layer_type == "mesh":  # type: ignore[unreachable]
-            layer = self._create_mesh_layer(dataset_def)
-        elif layer_type == "vector_tile":
-            layer = self._create_vector_tile_layer(dataset_def)
-        elif layer_type == "point_cloud":
-            layer = self._create_point_cloud_layer(dataset_def)
-        else:
-            raise NotImplementedError(f"Unsupported layer type: {layer_type}")
+        layer = self._create_map_layer(dataset_def)
 
         if self._has_geometry:
             crs = str_to_crs(dataset_def.crs)
@@ -307,6 +284,34 @@ class ProjectCreator:
             raise NotImplementedError(f"Unsupported geometry type: {geometry_type}")
 
         return geometry_type
+
+    def _create_map_layer(self, dataset_def: DatasetDef) -> QgsMapLayer:
+        layer_type = dataset_def.layer_type
+
+        if layer_type == "vector":
+            assert isinstance(dataset_def, VectorDatasetDef)
+            layer = self._create_vector_layer(dataset_def)
+
+            if layer.geometryType() not in (
+                Qgis.GeometryType.Unknown,
+                Qgis.GeometryType.Null,
+            ):
+                self._has_geometry = True
+
+        elif layer_type == "raster":
+            assert isinstance(dataset_def, RasterDatasetDef)
+            layer = self._create_raster_layer(dataset_def)
+        # Additional layer types can be handled here
+        elif layer_type == "mesh":  # type: ignore[unreachable]
+            layer = self._create_mesh_layer(dataset_def)
+        elif layer_type == "vector_tile":
+            layer = self._create_vector_tile_layer(dataset_def)
+        elif layer_type == "point_cloud":
+            layer = self._create_point_cloud_layer(dataset_def)
+        else:
+            raise NotImplementedError(f"Unsupported layer type: {layer_type}")
+
+        return layer
 
     def _create_vector_layer(self, dataset_def: VectorDatasetDef) -> QgsVectorLayer:
         geometry_type = self._get_geometry_type(dataset_def.geometry_type)
