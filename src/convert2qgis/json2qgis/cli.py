@@ -35,3 +35,7 @@ def main() -> None:
     start_app()
     creator = ProjectCreator(project_def)
     creator.build(args.output_dir)
+
+
+if __name__ == "__main__":
+    main()
