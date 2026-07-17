@@ -1,4 +1,5 @@
 import logging
+from unittest.mock import MagicMock
 
 import pytest
 from qgis.core import (
@@ -23,7 +24,11 @@ from convert2qgis.json2qgis.errors import (
     UnexpectedSchemaValueError,
     UnknownCrsSystemError,
 )
-from convert2qgis.json2qgis.type_defs import FormItemDef, ProjectDef
+from convert2qgis.json2qgis.type_defs import (
+    FormItemDef,
+    ProjectDef,
+    VisualStyleDef,
+)
 from convert2qgis.json2qgis.utils import (
     check_output,
     create_field,
@@ -45,6 +50,7 @@ from convert2qgis.json2qgis.utils import (
     set_layer_fields,
     set_layer_tree,
     set_layer_virtual_fields,
+    set_layer_visual_styles,
     set_project_custom_properties,
     str_to_crs,
 )
@@ -1800,6 +1806,47 @@ class TestUtils:
 
         assert layer.customProperty("fresh_key") == "fresh_value"
         assert layer.customProperty("stale_key") is None
+
+    def test_set_layer_visual_styles_loads_named_style_file(self):
+        layer = MagicMock(spec=QgsMapLayer)
+        layer.loadNamedStyle.return_value = ("", True)
+
+        result = set_layer_visual_styles(
+            layer,
+            [
+                VisualStyleDef(
+                    qml_filename="style.qml",
+                )
+            ],
+        )
+
+        assert result is True
+        layer.loadNamedStyle.assert_called_once_with(
+            "style.qml",
+            QgsMapLayer.StyleCategory.AllStyleCategories,
+        )
+        layer.importNamedStyle.assert_not_called()
+
+    def test_set_layer_visual_styles_imports_inline_qml_content(self):
+        layer = MagicMock(spec=QgsMapLayer)
+        layer.importNamedStyle.return_value = (True, "")
+
+        result = set_layer_visual_styles(
+            layer,
+            [
+                VisualStyleDef(
+                    qml_content='<qgis><renderer-v2 type="singleSymbol" /></qgis>',
+                )
+            ],
+        )
+
+        assert result is True
+        layer.loadNamedStyle.assert_not_called()
+        layer.importNamedStyle.assert_called_once()
+
+        style_dom, style_category = layer.importNamedStyle.call_args.args
+        assert style_dom.documentElement().tagName() == "qgis"
+        assert style_category == QgsMapLayer.StyleCategory.AllStyleCategories
 
     def test_str_to_crs(self):
         """Test converting a CRS string to a QGIS CRS."""
