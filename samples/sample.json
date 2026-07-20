@@ -56,7 +56,7 @@
               "constraint_expression": "length(\"uuid\") = 36",
               "constraint_expression_description": "Opa",
               "constraint_expression_strength": "hard",
-              "default_value": "",
+              "default_value": "uuid(format:='WithOutBraces')",
               "is_not_null_strength": "soft",
               "is_not_null": false,
               "is_unique_strength": "hard",
