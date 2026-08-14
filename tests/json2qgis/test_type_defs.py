@@ -1,8 +1,15 @@
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
-from qgis.core import Qgis, QgsProject, QgsVectorFileWriter, QgsVectorLayer
+from qgis.core import (
+    Qgis,
+    QgsProject,
+    QgsProviderRegistry,
+    QgsVectorFileWriter,
+    QgsVectorLayer,
+)
 
 from convert2qgis.json2qgis.errors import Qgis2JsonError
 from convert2qgis.json2qgis.generate import (
@@ -259,6 +266,22 @@ def test_project_creator_accepts_empty_crs_for_no_geometry_layer(tmp_path) -> No
     assert layer is not None
     assert not layer.crs().isValid()
     assert layer.crs().authid() == ""
+
+
+def test_project_creator_resolves_relative_output_dir(tmp_path, monkeypatch) -> None:
+    project_dict = build_project_dict()
+
+    monkeypatch.chdir(tmp_path)
+
+    creator = ProjectCreator(project_dict)
+    project = creator.build(Path("output"))
+    layer = project.mapLayer("layer_1")
+
+    assert layer is not None
+
+    uri = QgsProviderRegistry.instance().decodeUri("ogr", layer.source())
+
+    assert Path(uri["path"]).is_absolute()
 
 
 def test_project_creator_rejects_empty_crs_for_spatial_layer() -> None:
