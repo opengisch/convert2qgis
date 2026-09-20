@@ -100,7 +100,7 @@ class ProjectCreator:
         self._created_files = set()
 
     def build(self, output_dir: PathOrStr) -> QgsProject:
-        self._output_dir = Path(output_dir)
+        self._output_dir = Path(output_dir).resolve()
 
         if self._output_dir.is_file():
             raise Qgis2JsonError(f"Output directory is a file: {self._output_dir}")
