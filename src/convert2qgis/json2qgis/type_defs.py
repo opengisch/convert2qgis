@@ -427,6 +427,12 @@ class FormItemDef(DataclassModelMixin):
 
 
 @dataclass
+class VisualStyleDef(DataclassModelMixin):
+    qml_filename: str | None = None
+    qml_content: str | None = None
+
+
+@dataclass
 class WeakDatasetDef(DataclassModelMixin):
     layer_id: str | None = None
     name: str | None = None
@@ -465,6 +471,7 @@ class BaseDatasetDef(DataclassModelMixin):
     layer_type: LayerType = "vector"
     crs: CrsDef = "EPSG:4326"
     custom_properties: dict[str, Any] = field(default_factory=dict)
+    visual_styles: list[VisualStyleDef] = field(default_factory=list)
     is_read_only: bool = False
     is_identifiable: bool = False
     is_private: bool = False
@@ -506,6 +513,9 @@ class VectorDatasetDef(BaseDatasetDef):
             fields=[FieldDef.from_data(item) for item in data.get("fields", [])],
             virtual_fields=[
                 FieldDef.from_data(item) for item in data.get("virtual_fields", [])
+            ],
+            visual_styles=[
+                VisualStyleDef.from_data(item) for item in data.get("visual_styles", [])
             ],
             form_config=[
                 FormItemDef.from_data(item) for item in data.get("form_config", [])

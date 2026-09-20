@@ -157,6 +157,40 @@
       },
       "type": "array"
     },
+    "VisualStyle": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "theme": {
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            "qml_filename": {
+              "type": "string",
+              "description": "A path to a QGIS Layer Style file (.qlr) that defines the visual style for the layer. The path can be absolute or relative to the JSON file."
+            }
+          }
+        },
+        {
+          "type": "object",
+          "properties": {
+            "theme": {
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            "qml_content": {
+              "type": "string",
+              "description": "The content of a QGIS Layer Style file (.qlr) that defines the visual style for the layer."
+            }
+          }
+        }
+      ]
+    },
     "FormItem": {
       "oneOf": [
         {
@@ -398,6 +432,12 @@
         },
         "form_config": {
           "$ref": "#/definitions/FormConfig"
+        },
+        "visual_styles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VisualStyle"
+          }
         },
         "geometry_type": {
           "enum": [

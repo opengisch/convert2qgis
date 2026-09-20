@@ -45,6 +45,7 @@ from convert2qgis.json2qgis.utils import (
     set_layer_fields,
     set_layer_tree,
     set_layer_virtual_fields,
+    set_layer_visual_styles,
     set_project_custom_properties,
     str_to_crs,
 )
@@ -248,6 +249,11 @@ class ProjectCreator:
             crs = str_to_crs(dataset_def.crs)
         else:
             crs = str_to_crs(dataset_def.crs, empty_crs_ok=True)
+
+        if dataset_def.visual_styles:
+            logger.debug("Set layer visual style...")
+
+            set_layer_visual_styles(layer, dataset_def.visual_styles)
 
         logger.debug('Set layer CRS to "%s"...', crs.authid())
 

@@ -37,6 +37,7 @@ from qgis.core import (
 )
 from qgis.PyQt.QtCore import QMetaType
 from qgis.PyQt.QtGui import QColor
+from qgis.PyQt.QtXml import QDomDocument
 
 from convert2qgis.json2qgis.errors import (
     InvalidCustomPropertyError,
@@ -59,6 +60,7 @@ from convert2qgis.json2qgis.type_defs import (
     RelationStrength,
     VectorDatasetDef,
     VectorLayerDataprovider,
+    VisualStyleDef,
     dataset_from_data,
 )
 
@@ -865,6 +867,37 @@ def set_layer_custom_properties(
         properties.setValue(key, value)
 
     layer.setCustomProperties(properties)
+
+
+def set_layer_visual_styles(
+    layer: QgsMapLayer, visual_styles: list[VisualStyleDef]
+) -> bool:
+    if len(visual_styles) > 1:
+        raise NotImplementedError("Unsupported multiple visual styles per layer!")
+
+    is_success = False
+    visual_style = visual_styles[0]
+
+    if visual_style.qml_filename:
+        msg, is_success = layer.loadNamedStyle(
+            visual_style.qml_filename, QgsMapLayer.StyleCategory.AllStyleCategories
+        )
+    elif visual_style.qml_content:
+        style_dom = QDomDocument()
+        style_dom.setContent(visual_style.qml_content)
+        is_success, msg = layer.importNamedStyle(
+            style_dom, QgsMapLayer.StyleCategory.AllStyleCategories
+        )
+    else:
+        raise NotImplementedError(
+            'Expected that either "qml_filename" or "qml_content" is provided in visual style definition!'
+        )
+
+    if not is_success:
+        logger.error("Failed to set layer style: %s", msg)
+
+    # NOTE redundant `bool` conversion as `mypy` was not happy with `is_success` being an `Any` type
+    return bool(is_success)
 
 
 def str_to_crs(
