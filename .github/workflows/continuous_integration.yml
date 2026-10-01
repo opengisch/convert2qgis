@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        qgis-tag: ["3.40", "3.44", "ltr", "stable"]
+        qgis-tag: ["3.40", "3.44", "ltr", "4.2"]
 
     container:
       image: qgis/qgis:${{ matrix.qgis-tag }}
