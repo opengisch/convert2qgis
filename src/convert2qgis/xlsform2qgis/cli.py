@@ -1,6 +1,6 @@
 import argparse
 
-from convert2qgis.xlsform2qgis.qgis_utils import start_app
+from convert2qgis.json2qgis.qgis_utils import start_app
 from convert2qgis.xlsform2qgis.xlsform2qgis import convert_xlsform
 
 

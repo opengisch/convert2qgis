@@ -3,7 +3,7 @@ import json
 import logging
 
 from convert2qgis.json2qgis.json2qgis import ProjectCreator
-from convert2qgis.xlsform2qgis.qgis_utils import start_app
+from convert2qgis.json2qgis.qgis_utils import start_app
 
 logging.basicConfig(
     level=logging.INFO,
