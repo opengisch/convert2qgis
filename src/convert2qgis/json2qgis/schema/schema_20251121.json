@@ -404,10 +404,18 @@
           },
           "type": "array"
         },
+        "datasource": {
+          "type": "object",
+          "description": "An existing layer to load instead of creating a new one. Its properties depend on `datasource_format`: `OgrDatasource` for `gpkg` and `ogr`, `PostgresDatasource` for `postgres`, `WfsDatasource` for `wfs` and `OapifDatasource` for `oapif`. `geometry_type` is then ignored as the data provider decides it, `crs` is still set on the layer, and `data` is not supported. Required for the `ogr`, `postgres`, `wfs` and `oapif` formats, which only load existing layers, and not supported for `memory`."
+        },
         "datasource_format": {
           "enum": [
             "gpkg",
-            "memory"
+            "memory",
+            "ogr",
+            "postgres",
+            "oapif",
+            "wfs"
           ],
           "type": "string"
         },
@@ -522,10 +530,282 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "datasource_format": {
+                "enum": [
+                  "gpkg",
+                  "ogr"
+                ]
+              }
+            },
+            "required": [
+              "datasource_format"
+            ]
+          },
+          "then": {
+            "properties": {
+              "datasource": {
+                "$ref": "#/definitions/OgrDatasource"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "datasource_format": {
+                "const": "postgres"
+              }
+            },
+            "required": [
+              "datasource_format"
+            ]
+          },
+          "then": {
+            "properties": {
+              "datasource": {
+                "$ref": "#/definitions/PostgresDatasource"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "datasource_format": {
+                "const": "wfs"
+              }
+            },
+            "required": [
+              "datasource_format"
+            ]
+          },
+          "then": {
+            "properties": {
+              "datasource": {
+                "$ref": "#/definitions/WfsDatasource"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "datasource_format": {
+                "const": "oapif"
+              }
+            },
+            "required": [
+              "datasource_format"
+            ]
+          },
+          "then": {
+            "properties": {
+              "datasource": {
+                "$ref": "#/definitions/OapifDatasource"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "datasource_format": {
+                "const": "memory"
+              }
+            },
+            "required": [
+              "datasource_format"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "datasource"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "datasource_format": {
+                "enum": [
+                  "ogr",
+                  "postgres",
+                  "oapif",
+                  "wfs"
+                ]
+              }
+            },
+            "required": [
+              "datasource_format"
+            ]
+          },
+          "then": {
+            "required": [
+              "datasource"
+            ]
+          }
         }
       ],
       "title": "Vector Dataset",
       "type": "object"
+    },
+    "OgrDatasource": {
+      "title": "OGR Datasource",
+      "description": "An existing layer in a file readable by OGR, e.g. a GeoPackage, a Shapefile or a GeoJSON file.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The path to the file, e.g. `/path/to/data.gpkg`."
+        },
+        "layer_name": {
+          "type": "string",
+          "description": "The name of the layer in the file, e.g. `roads`. If not set, the first layer of the file is loaded."
+        }
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "PostgresDatasource": {
+      "title": "PostgreSQL Datasource",
+      "description": "An existing table or view in a PostgreSQL database. The connection is set either with a `service` from the `pg_service.conf` file, or with `host`, `port` and `dbname`. Prefer `service` or `authcfg` over `username` and `password`, as these are stored as plain text in the project file.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "table": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The name of the table or view, e.g. `roads`."
+        },
+        "schema": {
+          "type": "string",
+          "description": "The schema of the table or view, e.g. `public`."
+        },
+        "geometry_column": {
+          "type": "string",
+          "description": "The name of the geometry column, e.g. `geom`. Not set for tables without geometry."
+        },
+        "key_column": {
+          "type": "string",
+          "description": "The name of the column that uniquely identifies the features, e.g. `id`. QGIS detects the primary key of tables, so it is mostly needed for views."
+        },
+        "service": {
+          "type": "string",
+          "description": "The name of a service in the `pg_service.conf` file, e.g. `my_db`."
+        },
+        "host": {
+          "type": "string",
+          "description": "The database server host name, e.g. `db.example.com`."
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "The database server port, e.g. `5432`."
+        },
+        "dbname": {
+          "type": "string",
+          "description": "The name of the database, e.g. `gis`."
+        },
+        "username": {
+          "type": "string",
+          "description": "The database user name."
+        },
+        "password": {
+          "type": "string",
+          "description": "The database user password, stored as plain text in the project file."
+        },
+        "authcfg": {
+          "type": "string",
+          "description": "The ID of a QGIS authentication configuration holding the credentials, e.g. `abc1234`."
+        },
+        "sslmode": {
+          "enum": [
+            "disable",
+            "allow",
+            "prefer",
+            "require",
+            "verify-ca",
+            "verify-full"
+          ],
+          "type": "string",
+          "description": "The SSL mode of the connection, `prefer` if not set."
+        }
+      },
+      "required": [
+        "table"
+      ]
+    },
+    "WfsDatasource": {
+      "title": "WFS Datasource",
+      "description": "A feature type of an OGC Web Feature Service (WFS).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "url": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The URL of the service, e.g. `https://example.com/wfs`."
+        },
+        "type_name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The name of the feature type, e.g. `ns:roads`."
+        },
+        "version": {
+          "enum": [
+            "auto",
+            "1.0.0",
+            "1.1.0",
+            "2.0.0"
+          ],
+          "type": "string",
+          "description": "The WFS version, detected from the service if not set or `auto`."
+        },
+        "authcfg": {
+          "type": "string",
+          "description": "The ID of a QGIS authentication configuration holding the credentials, e.g. `abc1234`."
+        }
+      },
+      "required": [
+        "url",
+        "type_name"
+      ]
+    },
+    "OapifDatasource": {
+      "title": "OGC API Features Datasource",
+      "description": "A collection of an OGC API - Features service.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "url": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The URL of the service landing page, e.g. `https://example.com/ogcapi`."
+        },
+        "collection": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The ID of the collection, e.g. `roads`."
+        },
+        "authcfg": {
+          "type": "string",
+          "description": "The ID of a QGIS authentication configuration holding the credentials, e.g. `abc1234`."
+        }
+      },
+      "required": [
+        "url",
+        "collection"
+      ]
     },
     "RasterDataset": {
       "additionalProperties": false,

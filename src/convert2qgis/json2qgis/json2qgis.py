@@ -24,6 +24,7 @@ from convert2qgis.json2qgis.errors import (
 )
 from convert2qgis.json2qgis.qgis_utils import flush_all_gpkg_wal
 from convert2qgis.json2qgis.type_defs import (
+    VECTOR_DATASOURCE_DEFS_BY_FORMAT,
     DatasetDef,
     PathOrStr,
     ProjectDef,
@@ -39,6 +40,7 @@ from convert2qgis.json2qgis.utils import (
     get_layer_edit_form,
     get_layer_flags,
     get_schema_validator,
+    get_vector_datasource_uri,
     normalize_name,
     parse_extent_str,
     set_layer_custom_properties,
@@ -320,6 +322,9 @@ class ProjectCreator:
         return layer
 
     def _create_vector_layer(self, dataset_def: VectorDatasetDef) -> QgsVectorLayer:
+        if dataset_def.datasource is not None:
+            return self._create_vector_layer_from_datasource(dataset_def)
+
         geometry_type = self._get_geometry_type(dataset_def.geometry_type)
         source = f"{geometry_type}?crs={dataset_def.crs}"
 
@@ -416,6 +421,52 @@ class ProjectCreator:
         )
 
         return new_layer
+
+    def _create_vector_layer_from_datasource(
+        self, dataset_def: VectorDatasetDef
+    ) -> QgsVectorLayer:
+        assert dataset_def.datasource is not None
+
+        datasource_def_class = VECTOR_DATASOURCE_DEFS_BY_FORMAT.get(
+            dataset_def.datasource_format
+        )
+
+        if datasource_def_class is None or not isinstance(
+            dataset_def.datasource, datasource_def_class
+        ):
+            raise UnknownVectorLayerDataproviderError(
+                f'Unsupported vector layer data provider "{dataset_def.datasource_format}" for layer "{dataset_def.name}" with an existing datasource of type "{type(dataset_def.datasource).__name__}".'
+            )
+
+        if dataset_def.data:
+            raise NotImplementedError(
+                f'Cannot add data to vector layer "{dataset_def.name}" with an existing datasource, data can only be written to created layers.'
+            )
+
+        provider_key = dataset_def.datasource.provider_key
+
+        # NOTE the datasource URI is not logged, as it might contain credentials
+        logger.info(
+            'Loading vector layer "%s" from an existing datasource with provider "%s"...',
+            dataset_def.name,
+            provider_key,
+        )
+
+        layer = QgsVectorLayer(
+            get_vector_datasource_uri(dataset_def.datasource),
+            dataset_def.name,
+            provider_key,
+        )
+
+        if not layer.isValid():
+            raise Qgis2JsonError(f"Vector layer invalid: {dataset_def.name}")
+
+        set_layer_virtual_fields(layer, dataset_def)
+        set_layer_fields(layer, dataset_def)
+
+        layer.setReadOnly(dataset_def.is_read_only)
+
+        return layer
 
     def _set_fields(self, layer: QgsVectorLayer, dataset_def: VectorDatasetDef) -> None:
         layer_data_provider = layer.dataProvider()

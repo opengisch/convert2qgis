@@ -29,6 +29,10 @@ GeometryType = Literal[
 FormItemTypes = Literal["field", "relation", "group_box", "tab", "row", "text"]
 FormItemGroupTypes = Literal["group_box", "tab"]
 LayerType = Literal["vector", "raster", "mesh", "vector_tile", "point_cloud"]
+PostgresSslMode = Literal[
+    "disable", "allow", "prefer", "require", "verify-ca", "verify-full"
+]
+WfsVersion = Literal["auto", "1.0.0", "1.1.0", "2.0.0"]
 
 
 T = TypeVar("T", bound="DataclassModelMixin")
@@ -433,6 +437,90 @@ class VisualStyleDef(DataclassModelMixin):
 
 
 @dataclass
+class VectorDatasourceBaseDef(DataclassModelMixin):
+    provider_key: ClassVar[str]
+    """The QGIS data provider key to load the layer with."""
+
+
+@dataclass
+class OgrDatasourceDef(VectorDatasourceBaseDef):
+    provider_key: ClassVar[str] = "ogr"
+
+    path: str = ""
+    layer_name: str | None = None
+
+
+@dataclass
+class PostgresDatasourceDef(VectorDatasourceBaseDef):
+    provider_key: ClassVar[str] = "postgres"
+
+    table: str = ""
+    schema: str | None = None
+    geometry_column: str | None = None
+    key_column: str | None = None
+    service: str | None = None
+    host: str | None = None
+    port: int | None = None
+    dbname: str | None = None
+    username: str | None = None
+    password: str | None = None
+    authcfg: str | None = None
+    sslmode: PostgresSslMode | None = None
+
+
+@dataclass
+class WfsDatasourceDef(VectorDatasourceBaseDef):
+    provider_key: ClassVar[str] = "WFS"
+
+    url: str = ""
+    type_name: str = ""
+    version: WfsVersion | None = None
+    authcfg: str | None = None
+
+
+@dataclass
+class OapifDatasourceDef(VectorDatasourceBaseDef):
+    provider_key: ClassVar[str] = "OAPIF"
+
+    url: str = ""
+    collection: str = ""
+    authcfg: str | None = None
+
+
+VectorDatasourceDef = Union[
+    OgrDatasourceDef, PostgresDatasourceDef, WfsDatasourceDef, OapifDatasourceDef
+]
+
+VECTOR_DATASOURCE_DEFS_BY_FORMAT: dict[str, type[VectorDatasourceDef]] = {
+    "gpkg": OgrDatasourceDef,
+    "ogr": OgrDatasourceDef,
+    "postgres": PostgresDatasourceDef,
+    "oapif": OapifDatasourceDef,
+    "wfs": WfsDatasourceDef,
+}
+"""Datasource definition classes by `datasource_format`, used to load vector layers from an existing `datasource`."""
+
+
+def vector_datasource_from_data(
+    datasource_format: str, data: VectorDatasourceDef | Mapping[str, Any]
+) -> VectorDatasourceDef:
+    if isinstance(
+        data,
+        (OgrDatasourceDef, PostgresDatasourceDef, WfsDatasourceDef, OapifDatasourceDef),
+    ):
+        return data
+
+    datasource_def_class = VECTOR_DATASOURCE_DEFS_BY_FORMAT.get(datasource_format)
+
+    if datasource_def_class is None:
+        raise NotImplementedError(
+            f"Unsupported datasource format for an existing datasource: {datasource_format}"
+        )
+
+    return datasource_def_class.from_data(data)
+
+
+@dataclass
 class WeakDatasetDef(DataclassModelMixin):
     layer_id: str | None = None
     name: str | None = None
@@ -483,6 +571,7 @@ class BaseDatasetDef(DataclassModelMixin):
 class VectorDatasetDef(BaseDatasetDef):
     layer_type: Literal["vector"] = "vector"  # type: ignore[assignment]
     geometry_type: GeometryType = "NoGeometry"
+    datasource: VectorDatasourceDef | None = None
     datasource_format: str = VectorLayerDataprovider.GPKG
     fields: list[FieldDef] = field(default_factory=list)
     virtual_fields: list[FieldDef] = field(default_factory=list)
@@ -495,6 +584,9 @@ class VectorDatasetDef(BaseDatasetDef):
 
     @classmethod
     def _from_dict(cls, data: Mapping[str, Any]) -> VectorDatasetDef:
+        datasource_format = data.get("datasource_format", VectorLayerDataprovider.GPKG)
+        datasource = data.get("datasource")
+
         return cls(
             layer_id=data.get("layer_id", ""),
             name=data.get("name", ""),
@@ -507,9 +599,12 @@ class VectorDatasetDef(BaseDatasetDef):
             is_searchable=data.get("is_searchable", False),
             is_removable=data.get("is_removable", True),
             geometry_type=data.get("geometry_type", "NoGeometry"),
-            datasource_format=data.get(
-                "datasource_format", VectorLayerDataprovider.GPKG
+            datasource=(
+                vector_datasource_from_data(datasource_format, datasource)
+                if datasource is not None
+                else None
             ),
+            datasource_format=datasource_format,
             fields=[FieldDef.from_data(item) for item in data.get("fields", [])],
             virtual_fields=[
                 FieldDef.from_data(item) for item in data.get("virtual_fields", [])

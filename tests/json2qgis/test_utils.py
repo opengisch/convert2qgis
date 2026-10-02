@@ -7,12 +7,14 @@ from qgis.core import (
     QgsAttributeEditorContainer,
     QgsAttributeEditorField,
     QgsCoordinateReferenceSystem,
+    QgsDataSourceUri,
     QgsEditFormConfig,
     QgsField,
     QgsFieldConstraints,
     QgsMapLayer,
     QgsPointXY,
     QgsProject,
+    QgsProviderRegistry,
     QgsRectangle,
     QgsVectorLayer,
 )
@@ -26,8 +28,12 @@ from convert2qgis.json2qgis.errors import (
 )
 from convert2qgis.json2qgis.type_defs import (
     FormItemDef,
+    OapifDatasourceDef,
+    OgrDatasourceDef,
+    PostgresDatasourceDef,
     ProjectDef,
     VisualStyleDef,
+    WfsDatasourceDef,
 )
 from convert2qgis.json2qgis.utils import (
     check_output,
@@ -40,6 +46,7 @@ from convert2qgis.json2qgis.utils import (
     get_extent_or_defaults,
     get_layer_edit_form,
     get_layer_flags,
+    get_vector_datasource_uri,
     normalize_name,
     parse_extent_str,
     prune_form_definition,
@@ -1847,6 +1854,95 @@ class TestUtils:
         style_dom, style_category = layer.importNamedStyle.call_args.args
         assert style_dom.documentElement().tagName() == "qgis"
         assert style_category == QgsMapLayer.StyleCategory.AllStyleCategories
+
+    def test_get_vector_datasource_uri_for_ogr(self):
+        uri = get_vector_datasource_uri(
+            OgrDatasourceDef(path="/data/my roads.gpkg", layer_name="roads")
+        )
+
+        assert OgrDatasourceDef.provider_key == "ogr"
+        assert QgsProviderRegistry.instance().decodeUri("ogr", uri) == {
+            "layerId": None,
+            "layerName": "roads",
+            "path": "/data/my roads.gpkg",
+        }
+
+    def test_get_vector_datasource_uri_for_ogr_without_layer_name(self):
+        uri = get_vector_datasource_uri(OgrDatasourceDef(path="/data/roads.geojson"))
+
+        assert OgrDatasourceDef.provider_key == "ogr"
+        assert uri == "/data/roads.geojson"
+
+    def test_get_vector_datasource_uri_for_postgres(self):
+        uri = get_vector_datasource_uri(
+            PostgresDatasourceDef(
+                schema="public",
+                table="roads",
+                geometry_column="geom",
+                key_column="id",
+                service="my_db",
+                host="db.example.com",
+                port=5433,
+                dbname="gis",
+                username="user",
+                password="pass'word",  # noqa: S106
+                authcfg="abc1234",
+                sslmode="require",
+            )
+        )
+
+        datasource_uri = QgsDataSourceUri(uri)
+
+        assert PostgresDatasourceDef.provider_key == "postgres"
+        assert datasource_uri.service() == "my_db"
+        assert datasource_uri.host() == "db.example.com"
+        assert datasource_uri.port() == "5433"
+        assert datasource_uri.database() == "gis"
+        assert datasource_uri.username() == "user"
+        assert datasource_uri.password() == "pass'word"
+        assert datasource_uri.authConfigId() == "abc1234"
+        assert datasource_uri.sslMode() == QgsDataSourceUri.SslMode.SslRequire
+        assert datasource_uri.schema() == "public"
+        assert datasource_uri.table() == "roads"
+        assert datasource_uri.geometryColumn() == "geom"
+        assert datasource_uri.keyColumn() == "id"
+
+    def test_get_vector_datasource_uri_for_postgres_table_only(self):
+        uri = get_vector_datasource_uri(PostgresDatasourceDef(table="roads"))
+
+        assert PostgresDatasourceDef.provider_key == "postgres"
+        # unset connection values are not written to the URI
+        assert uri.split() == ['table="roads"']
+
+    def test_get_vector_datasource_uri_for_wfs(self):
+        uri = get_vector_datasource_uri(
+            WfsDatasourceDef(
+                url="https://example.com/wfs?map=roads&lang=en",
+                type_name="ns:roads",
+                version="2.0.0",
+                authcfg="abc1234",
+            )
+        )
+        datasource_uri = QgsDataSourceUri(uri)
+
+        assert WfsDatasourceDef.provider_key == "WFS"
+        assert (
+            datasource_uri.param("url") == "https://example.com/wfs?map=roads&lang=en"
+        )
+        assert datasource_uri.param("typename") == "ns:roads"
+        assert datasource_uri.param("version") == "2.0.0"
+        assert datasource_uri.authConfigId() == "abc1234"
+
+    def test_get_vector_datasource_uri_for_oapif(self):
+        uri = get_vector_datasource_uri(
+            OapifDatasourceDef(url="https://example.com/ogcapi", collection="roads")
+        )
+        datasource_uri = QgsDataSourceUri(uri)
+
+        assert OapifDatasourceDef.provider_key == "OAPIF"
+        assert datasource_uri.param("url") == "https://example.com/ogcapi"
+        assert datasource_uri.param("typename") == "roads"
+        assert datasource_uri.authConfigId() == ""
 
     def test_str_to_crs(self):
         """Test converting a CRS string to a QGIS CRS."""

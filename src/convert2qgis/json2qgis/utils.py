@@ -14,6 +14,7 @@ from qgis.core import (
     QgsAttributeEditorTextElement,
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransform,
+    QgsDataSourceUri,
     QgsDefaultValue,
     QgsEditFormConfig,
     QgsEditorWidgetSetup,
@@ -31,6 +32,7 @@ from qgis.core import (
     QgsProject,
     QgsProperty,
     QgsPropertyCollection,
+    QgsProviderRegistry,
     QgsRectangle,
     QgsRelation,
     QgsVectorLayer,
@@ -54,13 +56,18 @@ from convert2qgis.json2qgis.type_defs import (
     LegendTreeGroupDef,
     LegendTreeItemDef,
     LegendTreeLayerDef,
+    OapifDatasourceDef,
+    OgrDatasourceDef,
     PolymorphicRelationDef,
+    PostgresDatasourceDef,
     ProjectDef,
     RelationDef,
     RelationStrength,
     VectorDatasetDef,
+    VectorDatasourceDef,
     VectorLayerDataprovider,
     VisualStyleDef,
+    WfsDatasourceDef,
     dataset_from_data,
 )
 
@@ -519,6 +526,108 @@ def create_fields(dataset_def: "VectorDatasetDef | dict[str, Any]") -> QgsFields
         fields.append(field)
 
     return fields
+
+
+def get_ogr_datasource_uri(datasource: OgrDatasourceDef) -> str:
+    provider_registry = QgsProviderRegistry.instance()
+
+    assert provider_registry is not None
+
+    uri_parts = {"path": datasource.path}
+
+    if datasource.layer_name:
+        uri_parts["layerName"] = datasource.layer_name
+
+    return cast("str", provider_registry.encodeUri("ogr", uri_parts))
+
+
+def get_postgres_datasource_uri(datasource: PostgresDatasourceDef) -> str:
+    uri = QgsDataSourceUri()
+
+    # NOTE set as params like the QGIS postgres provider `encodeUri` does, so `service` can be combined with `host` and `port`
+    for key, value in (
+        ("service", datasource.service),
+        ("host", datasource.host),
+        ("port", datasource.port),
+    ):
+        if value:
+            uri.setParam(key, str(value))
+
+    # NOTE empty connection values are skipped when the URI is serialized
+    uri.setDatabase(datasource.dbname or "")
+    uri.setUsername(datasource.username or "")
+    uri.setPassword(datasource.password or "")
+    uri.setAuthConfigId(datasource.authcfg or "")
+
+    if datasource.sslmode:
+        # NOTE `QgsDataSourceUri.setSslMode` is only available since QGIS 3.42
+        if Qgis.versionInt() >= 34200:  # noqa: PLR2004
+            uri.setSslMode(QgsDataSourceUri.decodeSslMode(datasource.sslmode))
+        else:
+            uri.setParam("sslmode", datasource.sslmode)
+
+    uri.setDataSource(
+        datasource.schema or "",
+        datasource.table,
+        datasource.geometry_column or "",
+        "",
+        datasource.key_column or "",
+    )
+
+    return cast("str", uri.uri(False))
+
+
+def get_wfs_datasource_uri(datasource: WfsDatasourceDef) -> str:
+    uri = QgsDataSourceUri()
+    uri.setParam("url", datasource.url)
+    uri.setParam("typename", datasource.type_name)
+    uri.setAuthConfigId(datasource.authcfg or "")
+
+    if datasource.version:
+        uri.setParam("version", datasource.version)
+
+    return cast("str", uri.uri(False))
+
+
+def get_oapif_datasource_uri(datasource: OapifDatasourceDef) -> str:
+    uri = QgsDataSourceUri()
+    uri.setParam("url", datasource.url)
+    uri.setParam("typename", datasource.collection)
+    uri.setAuthConfigId(datasource.authcfg or "")
+
+    return cast("str", uri.uri(False))
+
+
+_VECTOR_DATASOURCE_URI_GETTERS: dict[
+    type[VectorDatasourceDef], Callable[[Any], str]
+] = {
+    OgrDatasourceDef: get_ogr_datasource_uri,
+    PostgresDatasourceDef: get_postgres_datasource_uri,
+    WfsDatasourceDef: get_wfs_datasource_uri,
+    OapifDatasourceDef: get_oapif_datasource_uri,
+}
+"""Data source URI getters by datasource definition class."""
+
+
+def get_vector_datasource_uri(datasource: VectorDatasourceDef) -> str:
+    """
+    Builds the QGIS data source URI to load an existing vector layer with the `datasource.provider_key` data provider.
+
+    Args:
+        datasource: The existing vector layer datasource definition.
+
+    Returns:
+        The data source URI.
+
+    """
+    uri_getter = _VECTOR_DATASOURCE_URI_GETTERS.get(type(datasource))
+
+    if uri_getter is None:
+        raise NotImplementedError(
+            f"Unsupported vector datasource: {type(datasource).__name__}"
+        )
+
+    return uri_getter(datasource)
 
 
 def set_layer_virtual_fields(
