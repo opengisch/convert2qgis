@@ -15,13 +15,13 @@ It maps XLSForm field types, widgets, labels, constraints, calculations, groups,
 The converter can write the intermediate JSON definition and can also build the final QGIS project directly.
 
 ```shell
-uv run xlsform2qgis samples/xlsforms/service_rating.xlsx --output-dir ./output/service_rating
+uv run xlsform2qgis src/convert2qgis/samples/xlsforms/service_rating.xlsx --output-dir ./output/service_rating
 ```
 
 Use `--output-json` to also keep the generated JSON definition.
 
 ```shell
-uv run xlsform2qgis samples/xlsforms/service_rating.xlsx --output-json ./output/service_rating.json --output-dir ./output/service_rating
+uv run xlsform2qgis src/convert2qgis/samples/xlsforms/service_rating.xlsx --output-json ./output/service_rating.json --output-dir ./output/service_rating
 ```
 
 
@@ -34,7 +34,7 @@ It writes the resulting `.qgz` project.
 The JSON structure is validated against the bundled schema in `src/convert2qgis/json2qgis/schema/`.
 
 ```shell
-uv run json2qgis ./samples/sample.json --output-dir ./output/project
+uv run json2qgis ./src/convert2qgis/samples/json2qgis/sample.json --output-dir ./output/project
 ```
 
 
@@ -87,7 +87,7 @@ uv run ruff check
 Generate a QGIS project from the sample JSON.
 
 ```shell
-uv run json2qgis ./samples/sample.json --output-dir ./output/project
+uv run json2qgis ./src/convert2qgis/samples/json2qgis/sample.json --output-dir ./output/project
 ```
 
 Generate a QGIS project from an XLSForm.
